@@ -76,7 +76,7 @@ tables = [
         applied_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES Users(user_id),
         FOREIGN KEY (scheme_id) REFERENCES Schemes(scheme_id),
-        UNIQUE(user_id, scheme_id) --  prevent duplicates
+        UNIQUE(user_id, scheme_id)
     )
     """,
 
@@ -150,7 +150,6 @@ for query in tables:
 
 # 3. Stored Procedure
 cursor.execute("DROP PROCEDURE IF EXISTS check_user_eligibility")
-cursor.execute("DELIMITER $$")
 
 procedure = """
 CREATE PROCEDURE check_user_eligibility(IN p_user_id INT)
@@ -221,10 +220,10 @@ BEGIN
 
     END LOOP;
     CLOSE cur;
-END$$
+END
 """
+
 cursor.execute(procedure)
-cursor.execute("DELIMITER ;")
 
 # 4. Triggers
 triggers = [
