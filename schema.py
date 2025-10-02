@@ -269,3 +269,126 @@ for t in triggers:
 db.commit()
 cursor.close()
 db.close()
+
+from django.db import models
+
+class Users(models.Model):
+    name = models.CharField(max_length=255)
+    dob = models.DateField()
+    gender = models.CharField(max_length=20)
+    email = models.EmailField(null=True, blank=True)
+    phone = models.CharField(max_length=20, null=True, blank=True)
+    aadhaar_no = models.CharField(max_length=20, unique=True)
+    address = models.CharField(max_length=255, null=True, blank=True)
+    income = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    occupation = models.CharField(max_length=100, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class Categories(models.Model):
+    category_name = models.CharField(max_length=100)
+    description = models.TextField(null=True, blank=True)
+
+class UserCategories(models.Model):
+    user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    category = models.ForeignKey(Categories, on_delete=models.CASCADE)
+
+class Schemes(models.Model):
+    scheme_name = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    target_category = models.ForeignKey(Categories, on_delete=models.CASCADE)
+    eligibility_rules = models.JSONField(null=True, blank=True)
+    benefits = models.TextField(null=True, blank=True)
+
+class User_Eligibility(models.Model):
+    user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    scheme = models.ForeignKey(Schemes, on_delete=models.CASCADE)
+    eligibility_status = models.CharField(max_length=10, choices=[
+        ('Eligible','Eligible'),
+        ('Not Eligible','Not Eligible'),
+        ('Pending','Pending')
+    ], default='Pending')
+    applied_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'scheme')
+
+class Rule_Engine(models.Model):
+    category = models.ForeignKey(Categories, on_delete=models.CASCADE)
+    age_min = models.IntegerField(null=True, blank=True)
+    age_max = models.IntegerField(null=True, blank=True)
+    gender = models.CharField(max_length=10, null=True, blank=True)
+    location = models.CharField(max_length=100, null=True, blank=True)
+    min_income = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    max_income = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    pension_status = models.BooleanField(null=True, blank=True)
+    disability_cert = models.BooleanField(null=True, blank=True)
+    unemployment_status = models.BooleanField(null=True, blank=True)
+    business_turnover_limit = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    scheme = models.ForeignKey(Schemes, on_delete=models.CASCADE)
+
+class Applications(models.Model):
+    user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    scheme = models.ForeignKey(Schemes, on_delete=models.CASCADE)
+    status = models.CharField(max_length=50, default='Pending')
+    remarks = models.TextField(null=True, blank=True)
+    applied_on = models.DateTimeField(auto_now_add=True)
+
+class Grievances(models.Model):
+    user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    scheme = models.ForeignKey(Schemes, on_delete=models.SET_NULL, null=True, blank=True)
+    complaint = models.TextField()
+    status = models.CharField(max_length=20, default='Open')
+    raised_on = models.DateTimeField(auto_now_add=True)
+    resolved_on = models.DateTimeField(null=True, blank=True)
+
+class Verification_Documents(models.Model):
+    user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    category = models.ForeignKey(Categories, on_delete=models.CASCADE)
+    doc_type = models.CharField(max_length=100)
+    file_path = models.CharField(max_length=255, null=True, blank=True)
+    verified = models.BooleanField(default=False)
+
+
+from django.contrib import admin
+from .models import Users, Categories, Schemes, User_Eligibility, Rule_Engine, Applications, Grievances, Verification_Documents
+
+admin.site.register(Users)
+admin.site.register(Categories)
+admin.site.register(Schemes)
+admin.site.register(User_Eligibility)
+admin.site.register(Rule_Engine)
+admin.site.register(Applications)
+admin.site.register(Grievances)
+admin.site.register(Verification_Documents)
+
+from django.shortcuts import render, redirect
+from .models import Schemes, Applications
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def scheme_list(request):
+    schemes = Schemes.objects.all()
+    return render(request, 'schemes/scheme_list.html', {'schemes': schemes})
+
+@login_required
+def apply_scheme(request, scheme_id):
+    if request.method == 'POST':
+        application = Applications.objects.create(
+            user=request.user.users,  # Assumes 'users' is linked to auth.User
+            scheme_id=scheme_id,
+            status='Pending'
+        )
+        return redirect('scheme_list')
+    scheme = Schemes.objects.get(id=scheme_id)
+    return render(request, 'schemes/apply_scheme.html', {'scheme': scheme})
+
+#napping urls using this . urls of scheme available
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('schemes/', views.scheme_list, name='scheme_list'),
+    path('schemes/apply/<int:scheme_id>/', views.apply_scheme, name='apply_scheme'),
+    path('admin/', admin.site.urls),
+]
+
