@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Smart Beneficiary</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>Welcome, {{ user.name }}!</h2>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-success">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        
+        <h4>Past Searches</h4>
+        {% if past_categories %}
+            <div class="row">
+                {% for uc in past_categories %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>{{ uc.category.category_name }}</h6>
+                                <p class="small">{{ uc.user_cat_id }} - {{ uc.user_cat_id|date:"M d, Y" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">No past searches. Start one!</div>
+        {% endif %}
+
+        <h4>Eligible Schemes</h4>
+        {% if eligible_schemes %}
+            <div class="row">
+                {% for el in eligible_schemes %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ el.scheme.scheme_name }}</h5>
+                                <p class="card-text">{{ el.scheme.description }}</p>
+                                <p><strong>Reason:</strong> {{ el.reason }}</p>
+                                <a href="{{ el.scheme.official_link }}" target="_blank" class="btn btn-success">Apply</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">No eligible schemes yet. Search categories!</div>
+        {% endif %}
+
+        <a href="{% url 'categories' %}" class="btn btn-primary mt-3">Search New Categories</a>
+        <a href="{% url 'logout' %}" class="btn btn-secondary mt-3">Logout</a>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

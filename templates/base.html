@@ -1,0 +1,9 @@
+<div class="navbar-nav ms-auto">
+    <a class="nav-link" href="{% url 'register' %}">Register</a>
+    {% if user.is_authenticated %}
+        <a class="nav-link" href="{% url 'eligibility' %}">Eligibility</a>
+        <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+    {% else %}
+        <a class="nav-link" href="{% url 'login' %}">Login</a>
+    {% endif %}
+</div>

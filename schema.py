@@ -18,20 +18,21 @@ tables = [
 
     # Users
     """
-    CREATE TABLE IF NOT EXISTS Users (
-        user_id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        dob DATE NOT NULL,
-        gender VARCHAR(20),
-        email VARCHAR(255),
-        phone VARCHAR(20),
-        aadhaar_no VARCHAR(20) UNIQUE NOT NULL,
-        address VARCHAR(255),
-        income DECIMAL(15,2),
-        occupation VARCHAR(100),
-        education VARCHAR(100),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
+CREATE TABLE IF NOT EXISTS Users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    dob DATE NOT NULL,
+    gender VARCHAR(20),
+    email VARCHAR(255),
+    phone VARCHAR(20),
+    aadhaar_no VARCHAR(20) UNIQUE NOT NULL,
+    address VARCHAR(255),
+    income DECIMAL(15,2),
+    occupation VARCHAR(100),
+    education VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP NULL
+)
     """,
 
     # Categories
@@ -134,25 +135,20 @@ tables = [
         FOREIGN KEY (user_id) REFERENCES Users(user_id),
         FOREIGN KEY (scheme_id) REFERENCES Schemes(scheme_id)
     )
-    """,
-
-    # Verification Documents
-    """
-    CREATE TABLE IF NOT EXISTS Verification_Documents (
-        doc_id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        category_id INT NOT NULL,
-        doc_type VARCHAR(100),
-        file_path VARCHAR(255),
-        verified BOOLEAN DEFAULT FALSE,
-        FOREIGN KEY (user_id) REFERENCES Users(user_id),
-        FOREIGN KEY (category_id) REFERENCES Categories(category_id)
-    )
     """
 ]
 
 for query in tables:
     cursor.execute(query)
+
+# Safe add last_login column (ignores if already exists)
+try:
+    cursor.execute("ALTER TABLE Users ADD COLUMN last_login TIMESTAMP NULL")
+except mysql.connector.Error as err:
+    if err.errno in (1050, 1060):  # 1050 for table, 1060 for duplicate column
+        print("Column last_login already exists—skipping.")
+    else:
+        print(f"Column add error: {err}")
 
 # 4. Drop old procedure if exists
 cursor.execute("DROP PROCEDURE IF EXISTS check_user_eligibility")
@@ -229,8 +225,8 @@ BEGIN
             SET @reason := CONCAT('Must be resident of ', loc);
         END IF;
 
-        -- Education check
-        IF edu_req IS NOT NULL AND edu_req <> '' AND u_education <> edu_req THEN
+        -- Education check (FIX: Skip if 'Any')
+        IF edu_req IS NOT NULL AND edu_req <> '' AND edu_req != 'Any' AND u_education <> edu_req THEN
             SET @eligible := 'Not Eligible';
             SET @reason := CONCAT('Required education: ', edu_req);
         END IF;
@@ -248,46 +244,45 @@ END
 cursor.execute(procedure)
 
 # 6. Triggers
-triggers = [
-    """
-    CREATE TRIGGER after_user_category_insert
-    AFTER INSERT ON UserCategories
-    FOR EACH ROW
-    BEGIN
-        CALL check_user_eligibility(NEW.user_id);
-    END
-    """,
+# Drop existing triggers first
+cursor.execute("DROP TRIGGER IF EXISTS after_user_category_insert")
+cursor.execute("DROP TRIGGER IF EXISTS after_user_category_update")
+cursor.execute("DROP TRIGGER IF EXISTS before_user_delete")
 
-    """
-    CREATE TRIGGER after_user_category_update
-    AFTER UPDATE ON UserCategories
-    FOR EACH ROW
-    BEGIN
-        CALL check_user_eligibility(NEW.user_id);
-    END
-    """,
+# Create triggers one by one
+cursor.execute("""
+CREATE TRIGGER after_user_category_insert
+AFTER INSERT ON UserCategories
+FOR EACH ROW
+BEGIN
+    CALL check_user_eligibility(NEW.user_id);
+END
+""")
 
-    """
-    CREATE TRIGGER before_user_delete
-    BEFORE DELETE ON Users
-    FOR EACH ROW
-    BEGIN
-        DELETE FROM UserCategories WHERE user_id = OLD.user_id;
-        DELETE FROM User_Eligibility WHERE user_id = OLD.user_id;
-        DELETE FROM Applications WHERE user_id = OLD.user_id;
-        DELETE FROM Grievances WHERE user_id = OLD.user_id;
-        DELETE FROM Verification_Documents WHERE user_id = OLD.user_id;
-    END
-    """
-]
+cursor.execute("""
+CREATE TRIGGER after_user_category_update
+AFTER UPDATE ON UserCategories
+FOR EACH ROW
+BEGIN
+    CALL check_user_eligibility(NEW.user_id);
+END
+""")
 
-for t in triggers:
-    try:
-        cursor.execute(t)
-    except mysql.connector.Error as err:
-        print(f"Trigger error: {err}")
+cursor.execute("""
+CREATE TRIGGER before_user_delete
+BEFORE DELETE ON Users
+FOR EACH ROW
+BEGIN
+    DELETE FROM UserCategories WHERE user_id = OLD.user_id;
+    DELETE FROM User_Eligibility WHERE user_id = OLD.user_id;
+    DELETE FROM Applications WHERE user_id = OLD.user_id;
+    DELETE FROM Grievances WHERE user_id = OLD.user_id;
+END
+""")
 
 # Commit changes
 db.commit()
 cursor.close()
 db.close()
+
+print("✅ Database + Tables + Procedure + Triggers updated successfully.")
