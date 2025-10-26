@@ -1,0 +1,19 @@
+scheme_id,scheme_name,category,description,official_link,benefit_type,state
+1,National Scholarship Portal (NSP),Student,Central scholarship portal for academic schemes,https://scholarships.gov.in/,Scholarship,Central
+3,PM-Kisan Samman Nidhi,Farmer,₹6000 annual income support,https://pmkisan.gov.in/,Income Support,Central
+4,Kerala Fishermen Welfare Schemes,Fishermen,Welfare and subsidies for fishermen,https://fisheries.kerala.gov.in/en/schemes,Subsidy/Insurance,Kerala
+5,Janani Suraksha Yojana (JSY),Pregnant & Lactating Mothers,Incentive for institutional delivery,https://nhm.gov.in/index1.php?lang=1&level=3&lid=309&sublinkid=841,Maternity,Central
+6,Kudumbashree Women SHG Program,Women,Entrepreneurship and skill development via SHGs,https://lsgd.kerala.gov.in/en/waste-management/supporting-institutions/kudumbashree/,Skill Training,Kerala
+7,Rajasthan Senior Citizen Travel Concession,Elderly,Travel concession for senior citizens,https://rajasthan.gov.in,Travel Concession,Rajasthan
+8,Disability ID Card Scheme (UDID),Disabled,Unique ID and welfare card for PwDs,https://www.swavlambancard.gov.in/,Certification,Central
+9,Bihar Unemployed Youth Allowance,Unemployed Youth,Monthly allowance for unemployed graduates,https://www.gktoday.in/bihar-launches-%E2%82%B91000-allowance-for-unemployed-graduates/,Allowance,Bihar
+10,Karnataka MSME Support,Small Business,MSME support and loan schemes,https://dcmsme.gov.in/Karnataka.aspx,Loan/Subsidy,Karnataka
+13,Ayushman Bharat Health Coverage,General,Health insurance for poor families,https://pmjay.gov.in,Health Insurance,Central
+16,Ujjwala Yojana,Low-Income Families,LPG connection subsidy,https://www.pmuy.gov.in,Subsidy,Central
+21,National Social Assistance Program,Old Age Pension,Pension scheme for elderly below poverty line,https://socialjustice.gov.in,Pension,Central
+28,Rural Housing Scheme,Low Income Families,Housing scheme for rural poor,https://pmayg.nic.in,Housing,Central
+38,Stand Up India,Women/SC/ST,Loan scheme for entrepreneurship,https://www.standupmitra.in/,Loan,Central
+64,Smart Village Campaign,Rural,Improving village infrastructure,https://smartvillages.gov.in/,Development,Central
+80,National Backward Classes Finance and Development Corporation,Scheduled Castes,Financial assistance to SC families,https://nbcsc.nic.in/,Finance,Central
+81,National Scheduled Tribes Finance and Development Corporation,Scheduled Tribes,Assistance for tribal welfare,https://nstfdc.nic.in/,Finance,Central
+103,Delhi Migrant Worker Support,Migrant Workers,Support and welfare,https://delhi.gov.in/,Welfare,Delhi
