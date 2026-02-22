@@ -3,73 +3,256 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Smart Beneficiary</title>
+    <title>Register — BenefitBridge</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --saffron: #FF6B00;
+            --saffron-light: #FF8C38;
+            --navy: #0A1628;
+            --navy-mid: #162035;
+            --gold: #F5A623;
+        }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--navy);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+        .page-wrap {
+            max-width: 680px; margin: 0 auto;
+            animation: slideUp 0.5s ease both;
+        }
+        @keyframes slideUp {
+            from { opacity:0; transform: translateY(20px); }
+            to { opacity:1; transform: translateY(0); }
+        }
+        .top-nav {
+            display: flex; align-items: center; justify-content: space-between;
+            padding-bottom: 2rem;
+        }
+        .auth-logo {
+            display: flex; align-items: center; gap: 0.6rem;
+            font-family: 'Sora', sans-serif;
+            font-weight: 700; color: #fff; text-decoration: none;
+        }
+        .logo-dot {
+            width: 28px; height: 28px; border-radius: 7px;
+            background: linear-gradient(135deg, var(--saffron), var(--gold));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem;
+        }
+        .back-link {
+            color: rgba(255,255,255,0.4); font-size: 0.85rem;
+            text-decoration: none; transition: color 0.2s;
+        }
+        .back-link:hover { color: rgba(255,255,255,0.7); }
+
+        .auth-card {
+            background: var(--navy-mid);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+        }
+        .auth-title {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.65rem; font-weight: 800;
+            color: #fff; margin-bottom: 0.4rem;
+        }
+        .auth-sub {
+            color: rgba(255,255,255,0.45);
+            font-size: 0.9rem; margin-bottom: 2rem;
+        }
+
+        .section-divider {
+            font-family: 'Sora', sans-serif;
+            font-size: 0.75rem; font-weight: 600;
+            color: var(--saffron);
+            letter-spacing: 0.1em; text-transform: uppercase;
+            padding: 1.25rem 0 0.75rem;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            margin-top: 0.75rem;
+        }
+        .section-divider:first-of-type { border-top: none; padding-top: 0; }
+
+        .form-label {
+            color: rgba(255,255,255,0.65);
+            font-size: 0.82rem; font-weight: 500;
+            margin-bottom: 0.4rem;
+        }
+        .form-control, .form-select {
+            background: rgba(255,255,255,0.05);
+            border: 1.5px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: #fff;
+            padding: 0.72rem 1rem;
+            font-family: 'DM Sans', sans-serif;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .form-control:focus, .form-select:focus {
+            background: rgba(255,255,255,0.08);
+            border-color: var(--saffron);
+            box-shadow: 0 0 0 3px rgba(255,107,0,0.15);
+            color: #fff;
+        }
+        .form-control::placeholder { color: rgba(255,255,255,0.2); }
+        .form-select option { background: var(--navy-mid); color: #fff; }
+        .text-danger { color: #f87171 !important; font-size: 0.82rem; margin-top: 0.3rem; }
+
+        .alert-success {
+            background: rgba(19,136,8,0.12);
+            border: 1px solid rgba(19,136,8,0.3);
+            color: #6ee75f; border-radius: 10px;
+            font-size: 0.88rem;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 0.9rem;
+            background: linear-gradient(135deg, var(--saffron), var(--saffron-light));
+            border: none; border-radius: 10px;
+            font-family: 'Sora', sans-serif;
+            font-weight: 600; font-size: 1rem;
+            color: #fff; cursor: pointer;
+            transition: all 0.25s;
+            box-shadow: 0 6px 20px rgba(255,107,0,0.3);
+            margin-top: 1.5rem;
+        }
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 28px rgba(255,107,0,0.4);
+        }
+        .auth-footer {
+            text-align: center; margin-top: 1.5rem;
+            color: rgba(255,255,255,0.4); font-size: 0.88rem;
+        }
+        .auth-footer a { color: var(--saffron-light); text-decoration: none; font-weight: 500; }
+        .auth-footer a:hover { color: var(--gold); }
+        .required-star { color: var(--saffron); margin-left: 2px; }
+        .google-badge {
+            display: flex; align-items: center; gap: 0.75rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.88rem;
+            margin-top: 1rem;
+        }
+        .google-badge strong { color: #fff; }
+    </style>
 </head>
 <body>
-    <div class="container mt-4">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <h2>Register</h2>
-                {% if messages %}
-                    <ul class="list-unstyled">
-                        {% for message in messages %}
-                            <li class="alert alert-success">{{ message }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        {{ form.name.label_tag }}
+    <div class="page-wrap">
+        <div class="top-nav">
+            <a href="{% url 'home' %}" class="auth-logo">
+                <div class="logo-dot">🇮🇳</div>
+                BenefitBridge
+            </a>
+            <a href="{% url 'home' %}" class="back-link">← Back</a>
+        </div>
+
+        <div class="auth-card">
+            <h1 class="auth-title">Create your profile</h1>
+            <p class="auth-sub">Your information is used only to match you with the right government schemes.</p>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-success py-2 mb-3">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="section-divider">Personal Information</div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">{{ form.name.label }} <span class="required-star">*</span></label>
                         {{ form.name }}
+                        {% if form.name.errors %}<div class="text-danger">{{ form.name.errors }}</div>{% endif %}
                     </div>
-                    <div class="mb-3">
-                        {{ form.dob.label_tag }}
+                    <div class="col-md-6">
+                        <label class="form-label">{{ form.dob.label }} <span class="required-star">*</span></label>
                         {{ form.dob }}
+                        {% if form.dob.errors %}<div class="text-danger">{{ form.dob.errors }}</div>{% endif %}
                     </div>
-                    <div class="mb-3">
-                        {{ form.gender.label_tag }}
+                    <div class="col-md-6">
+                        <label class="form-label">{{ form.gender.label }}</label>
                         {{ form.gender }}
+                        {% if form.gender.errors %}<div class="text-danger">{{ form.gender.errors }}</div>{% endif %}
                     </div>
-                    <div class="mb-3">
-                        {{ form.email.label_tag }}
-                        {{ form.email }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form.phone.label_tag }}
+                    <div class="col-md-6">
+                        <label class="form-label">{{ form.phone.label }}</label>
                         {{ form.phone }}
+                        {% if form.phone.errors %}<div class="text-danger">{{ form.phone.errors }}</div>{% endif %}
                     </div>
-                    <div class="mb-3">
-                        {{ form.aadhaar_no.label_tag }}
+                    <div class="col-md-6">
+                        <label class="form-label">{{ form.aadhaar_no.label }} <span class="required-star">*</span></label>
                         {{ form.aadhaar_no }}
+                        {% if form.aadhaar_no.errors %}<div class="text-danger">{{ form.aadhaar_no.errors }}</div>{% endif %}
                     </div>
-                    <div class="mb-3">
-                        {{ form.address.label_tag }}
+                    <div class="col-12">
+                        <label class="form-label">{{ form.address.label }}</label>
                         {{ form.address }}
                     </div>
-                    <div class="mb-3">
-                        {{ form.income.label_tag }}
+                </div>
+
+                <div class="section-divider">Socioeconomic Details</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">{{ form.income.label }}</label>
                         {{ form.income }}
                     </div>
-                    <div class="mb-3">
-                        {{ form.occupation.label_tag }}
+                    <div class="col-md-6">
+                        <label class="form-label">{{ form.occupation.label }}</label>
                         {{ form.occupation }}
                     </div>
-                    <div class="mb-3">
-                        {{ form.education.label_tag }}
+                    <div class="col-12">
+                        <label class="form-label">{{ form.education.label }}</label>
                         {{ form.education }}
                     </div>
-                    <!-- Add this for password -->
-                    <div class="mb-3">
-                        {{ form.password.label_tag }}
-                        {{ form.password }}
+                </div>
+
+                {% if is_google_user %}
+                    {# Hidden fields needed for form submission #}
+                    {{ form.email }}
+                    {{ form.password }}
+                    <div class="google-badge">
+                        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                        <span>Signed in as <strong>{{ request.user.email }}</strong> via Google — no password needed</span>
                     </div>
-                    <button type="submit" class="btn btn-primary">Register</button>
-                </form>
+                {% else %}
+                    <div class="section-divider">Account Credentials</div>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">{{ form.email.label }} <span class="required-star">*</span></label>
+                            {{ form.email }}
+                            {% if form.email.errors %}<div class="text-danger">{{ form.email.errors }}</div>{% endif %}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">{{ form.password.label }} <span class="required-star">*</span></label>
+                            {{ form.password }}
+                            {% if form.password.errors %}<div class="text-danger">{{ form.password.errors }}</div>{% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <button type="submit" class="btn-submit">
+                    {% if is_google_user %}Complete Profile & Check Eligibility →{% else %}Create Account & Check Eligibility →{% endif %}
+                </button>
+            </form>
+
+            {% if not is_google_user %}
+            <div class="auth-footer">
+                Already have an account? <a href="{% url 'login' %}">Sign in</a>
             </div>
+            {% endif %}
         </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

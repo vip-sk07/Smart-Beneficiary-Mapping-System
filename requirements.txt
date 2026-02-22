@@ -1,0 +1,7 @@
+Django>=5.2
+mysqlclient
+django-allauth
+PyJWT
+Pillow
+gunicorn
+whitenoise

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP — BenefitBridge</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root{--saffron:#FF6B00;--saffron-light:#FF8C38;--navy:#0A1628;--navy-mid:#162035;--gold:#F5A623;}
+        body{font-family:'DM Sans',sans-serif;background:var(--navy);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem;}
+        .auth-card{background:var(--navy-mid);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:2.5rem;width:100%;max-width:420px;box-shadow:0 40px 80px rgba(0,0,0,.4);animation:slideUp .5s ease both;}
+        @keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+        .auth-logo{display:flex;align-items:center;gap:.6rem;margin-bottom:2rem;font-family:'Sora',sans-serif;font-weight:700;color:#fff;}
+        .logo-dot{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--saffron),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.9rem;}
+        .step-indicator{display:flex;gap:.5rem;margin-bottom:1.75rem;}
+        .step{width:28px;height:4px;border-radius:2px;background:rgba(255,255,255,.12);}
+        .step.active{background:var(--saffron);}
+        .step.done{background:rgba(19,136,8,.7);}
+        .auth-title{font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:800;color:#fff;margin-bottom:.4rem;}
+        .auth-sub{color:rgba(255,255,255,.45);font-size:.9rem;margin-bottom:2rem;line-height:1.5;}
+        .icon-wrap{width:52px;height:52px;border-radius:14px;background:rgba(255,107,0,.12);border:1px solid rgba(255,107,0,.25);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:1.25rem;}
+        /* Big OTP input */
+        .otp-input{
+            background:rgba(255,255,255,.05);
+            border:2px solid rgba(255,107,0,.4);
+            border-radius:14px;
+            color:#fff;
+            font-family:'Sora',sans-serif;
+            font-size:2rem;
+            font-weight:700;
+            letter-spacing:.5rem;
+            text-align:center;
+            padding:1rem;
+            width:100%;
+            transition:border-color .2s,background .2s;
+        }
+        .otp-input:focus{
+            background:rgba(255,255,255,.08);
+            border-color:var(--saffron);
+            box-shadow:0 0 0 4px rgba(255,107,0,.15);
+            color:#fff;
+            outline:none;
+        }
+        .otp-input::placeholder{color:rgba(255,255,255,.15);letter-spacing:.3rem;}
+        .form-label{color:rgba(255,255,255,.7);font-size:.85rem;font-weight:500;margin-bottom:.6rem;}
+        .btn-submit{width:100%;padding:.85rem;background:linear-gradient(135deg,var(--saffron),var(--saffron-light));border:none;border-radius:10px;font-family:'Sora',sans-serif;font-weight:600;font-size:1rem;color:#fff;cursor:pointer;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,0,.3);margin-top:.75rem;}
+        .btn-submit:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(255,107,0,.4);}
+        .alert-danger{background:rgba(220,53,69,.1);border:1px solid rgba(220,53,69,.3);color:#f87171;border-radius:10px;font-size:.88rem;}
+        .text-danger{color:#f87171!important;font-size:.82rem;margin-top:.35rem;}
+        .auth-footer{text-align:center;margin-top:1.5rem;color:rgba(255,255,255,.4);font-size:.88rem;}
+        .auth-footer a{color:var(--saffron-light);text-decoration:none;font-weight:500;}
+        .back-link{display:flex;align-items:center;gap:.4rem;color:rgba(255,255,255,.35);font-size:.82rem;text-decoration:none;margin-bottom:1.5rem;transition:color .2s;}
+        .back-link:hover{color:rgba(255,255,255,.7);}
+        /* Dev hint box */
+        .dev-hint{background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.2);border-radius:10px;padding:.75rem 1rem;font-size:.8rem;color:rgba(245,166,35,.8);margin-bottom:1.25rem;display:flex;gap:.5rem;align-items:flex-start;}
+        .timer{color:rgba(255,255,255,.4);font-size:.82rem;text-align:center;margin-top:.75rem;}
+        .timer span{color:var(--saffron-light);font-weight:600;}
+    </style>
+</head>
+<body>
+<div class="auth-card">
+    <a href="{% url 'forgot_password' %}" class="back-link">← Back</a>
+
+    <div class="auth-logo">
+        <div class="logo-dot">🇮🇳</div>
+        BenefitBridge
+    </div>
+
+    <!-- Step progress: 2 of 3 -->
+    <div class="step-indicator">
+        <div class="step done"></div>
+        <div class="step active"></div>
+        <div class="step"></div>
+    </div>
+
+    <div class="icon-wrap">🔐</div>
+    <h1 class="auth-title">Enter your OTP</h1>
+    <p class="auth-sub">We've sent a 6-digit code to your email. Enter it below to continue.</p>
+
+    <!-- Dev mode reminder -->
+    <div class="dev-hint">
+        💡 <span><strong>Dev mode:</strong> OTP is printed in your terminal (Django console email backend). Check your <code>runserver</code> output.</span>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-danger py-2 mb-3">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-2">
+            <label class="form-label">{{ form.otp.label }}</label>
+            <input type="text"
+                   name="otp"
+                   class="otp-input"
+                   placeholder="------"
+                   maxlength="6"
+                   inputmode="numeric"
+                   autocomplete="one-time-code"
+                   autofocus
+                   {% if form.otp.value %}value="{{ form.otp.value }}"{% endif %}>
+            {% if form.otp.errors %}<div class="text-danger">{{ form.otp.errors }}</div>{% endif %}
+        </div>
+
+        <!-- Countdown timer (cosmetic) -->
+        <div class="timer">Code expires in <span id="countdown">10:00</span></div>
+
+        <button type="submit" class="btn-submit">Verify OTP →</button>
+    </form>
+
+    <div class="auth-footer">
+        Didn't receive it? <a href="{% url 'forgot_password' %}">Resend OTP</a>
+    </div>
+</div>
+
+<script>
+    // Countdown timer — cosmetic only (real expiry handled server-side via session)
+    var seconds = 600;
+    var el = document.getElementById('countdown');
+    var timer = setInterval(function() {
+        seconds--;
+        if (seconds <= 0) {
+            clearInterval(timer);
+            el.textContent = 'Expired';
+            el.style.color = '#f87171';
+            return;
+        }
+        var m = Math.floor(seconds / 60);
+        var s = seconds % 60;
+        el.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+    }, 1000);
+
+    // Auto-submit when 6 digits entered
+    document.querySelector('.otp-input').addEventListener('input', function() {
+        if (this.value.length === 6 && /^\d{6}$/.test(this.value)) {
+            this.closest('form').submit();
+        }
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
