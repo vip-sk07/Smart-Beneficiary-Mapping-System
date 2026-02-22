@@ -1,5 +1,5 @@
 Django>=5.2
-mysqlclient
+PyMySQL
 django-allauth
 PyJWT
 Pillow
