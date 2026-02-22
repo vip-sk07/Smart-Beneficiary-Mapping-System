@@ -5,3 +5,4 @@ PyJWT
 Pillow
 gunicorn
 whitenoise
+requests
