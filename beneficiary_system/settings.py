@@ -91,24 +91,48 @@ TEMPLATES = [
 WSGI_APPLICATION = 'beneficiary_system.wsgi.application'
 
 # ── Database ───────────────────────────────────────────────────────────────
-# During Railway build (collectstatic), MYSQL_HOST is not set → use SQLite
-# At runtime, Railway injects MYSQL_HOST → use MySQL via PyMySQL
-MYSQL_HOST = os.environ.get('MYSQL_HOST', '')
+# Railway provides MYSQLHOST (no underscore) AND MYSQL_HOST (with underscore)
+# We check both to be safe
+MYSQL_HOST = (
+    os.environ.get('MYSQL_HOST') or
+    os.environ.get('MYSQLHOST') or
+    ''
+)
+MYSQL_USER = (
+    os.environ.get('MYSQL_USER') or
+    os.environ.get('MYSQLUSER') or
+    'root'
+)
+MYSQL_PASSWORD = (
+    os.environ.get('MYSQL_PASSWORD') or
+    os.environ.get('MYSQLPASSWORD') or
+    ''
+)
+MYSQL_DATABASE = (
+    os.environ.get('MYSQL_DATABASE') or
+    os.environ.get('MYSQLDATABASE') or
+    'railway'
+)
+MYSQL_PORT = (
+    os.environ.get('MYSQL_PORT') or
+    os.environ.get('MYSQLPORT') or
+    '3306'
+)
 
 if MYSQL_HOST:
     DATABASES = {
         'default': {
             'ENGINE':   'django.db.backends.mysql',
-            'NAME':     os.environ.get('MYSQL_DATABASE', 'railway'),
-            'USER':     os.environ.get('MYSQL_USER',     'root'),
-            'PASSWORD': os.environ.get('MYSQL_PASSWORD', ''),
+            'NAME':     MYSQL_DATABASE,
+            'USER':     MYSQL_USER,
+            'PASSWORD': MYSQL_PASSWORD,
             'HOST':     MYSQL_HOST,
-            'PORT':     os.environ.get('MYSQL_PORT',     '3306'),
+            'PORT':     MYSQL_PORT,
             'OPTIONS':  {'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"},
         }
     }
 else:
-    # Build-time fallback — collectstatic only, no real data
+    # Build-time fallback — no real data needed
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
