@@ -9,21 +9,22 @@ import openpyxl
 import os
 
 # ── Dataset path ───────────────────────────────────────────────────────────
-DATASET_PATH = r"D:\Academics\sem-3\Mini Project\Python+DBMS\coding\dataset\BenefitBridge_Dataset.xlsx"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATASET_PATH = os.path.join(BASE_DIR, 'dataset', 'BenefitBridge_Dataset.xlsx')
 
 if not os.path.exists(DATASET_PATH):
     print(f"❌ File not found: {DATASET_PATH}")
-    print("   Please check the path and filename.")
     exit(1)
 
 print(f"📂 Using dataset: {DATASET_PATH}")
 
-# ── DB connection ──────────────────────────────────────────────────────────
+# ── DB connection — reads env vars (Railway) or falls back to localhost ────
 db = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    passwd="2006",
-    database="smart_beneficiary_system"
+    host=os.environ.get('MYSQLHOST', 'localhost'),
+    port=int(os.environ.get('MYSQLPORT', 3306)),
+    user=os.environ.get('MYSQLUSER', 'root'),
+    password=os.environ.get('MYSQLPASSWORD', '2006'),
+    database=os.environ.get('MYSQLDATABASE', 'smart_beneficiary_system'),
 )
 cursor = db.cursor()
 
@@ -53,8 +54,6 @@ db.commit()
 print(f"  ✅  {cat_count} categories loaded.")
 
 # ── 2. SCHEMES (300 rows) ─────────────────────────────────────────────────
-# Columns: scheme_id, scheme_name, target_category_id, category_name,
-#          description, benefits, benefit_type, state, official_link, registration_link
 print("\n[2/3] Loading Schemes...")
 cursor.execute("TRUNCATE TABLE Schemes")
 ws_sch = wb['Schemes']
@@ -63,7 +62,6 @@ for row in ws_sch.iter_rows(min_row=2, values_only=True):
     sid      = row[0]
     sname    = row[1]
     tcat     = row[2]
-    # row[3] = category_name (skip)
     desc     = row[4]
     benefits = row[5]
     btype    = row[6]
@@ -88,31 +86,25 @@ db.commit()
 print(f"  ✅  {sch_count} schemes loaded.")
 
 # ── 3. RULE ENGINE (300 rows) ─────────────────────────────────────────────
-# Columns: rule_id, scheme_id, scheme_name, category_id, category_name,
-#          age_min, age_max, gender, location, min_income, max_income,
-#          education_required, pension_status, disability_cert,
-#          unemployment_status, business_turnover_limit
 print("\n[3/3] Loading Rule Engine...")
 cursor.execute("TRUNCATE TABLE Rule_Engine")
 ws_rule = wb['Rule_Engine']
 rule_count = 0
 for row in ws_rule.iter_rows(min_row=2, values_only=True):
-    rid       = row[0]
-    sid       = row[1]
-    # row[2]  = scheme_name (skip)
-    cid       = row[3]
-    # row[4]  = category_name (skip)
-    a_min     = row[5]
-    a_max     = row[6]
-    gender    = row[7]
-    loc       = row[8]
-    min_inc   = row[9]
-    max_inc   = row[10]
-    edu       = row[11]
-    pension   = row[12]
-    disability= row[13]
-    unemployed= row[14]
-    turnover  = row[15]
+    rid        = row[0]
+    sid        = row[1]
+    cid        = row[3]
+    a_min      = row[5]
+    a_max      = row[6]
+    gender     = row[7]
+    loc        = row[8]
+    min_inc    = row[9]
+    max_inc    = row[10]
+    edu        = row[11]
+    pension    = row[12]
+    disability = row[13]
+    unemployed = row[14]
+    turnover   = row[15]
 
     if rid is None:
         continue
