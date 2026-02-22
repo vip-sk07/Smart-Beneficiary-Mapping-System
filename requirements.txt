@@ -1,5 +1,5 @@
 Django>=5.2
-PyMySQL
+PyMySQL>=1.1.0
 django-allauth
 PyJWT
 Pillow
