@@ -3,59 +3,350 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Smart Beneficiary</title>
+    <title>Dashboard — BenefitBridge</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --saffron: #FF6B00;
+            --saffron-light: #FF8C38;
+            --navy: #0A1628;
+            --navy-mid: #162035;
+            --navy-card: #1C2A40;
+            --gold: #F5A623;
+            --india-green: #138808;
+            --border: rgba(255,255,255,0.08);
+        }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--navy);
+            color: #fff;
+            min-height: 100vh;
+        }
+        .sidebar {
+            position: fixed; left: 0; top: 0; bottom: 0;
+            width: 220px;
+            background: var(--navy-mid);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            padding: 1.5rem 1rem;
+            z-index: 100;
+        }
+        .sidebar-logo {
+            display: flex; align-items: center; gap: 0.6rem;
+            font-family: 'Sora', sans-serif;
+            font-weight: 700; color: #fff;
+            text-decoration: none;
+            margin-bottom: 2.5rem;
+            padding: 0 0.5rem;
+        }
+        .logo-dot {
+            width: 30px; height: 30px; border-radius: 8px;
+            background: linear-gradient(135deg, var(--saffron), var(--gold));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 0.7rem;
+            padding: 0.65rem 0.75rem;
+            border-radius: 10px;
+            color: rgba(255,255,255,0.5);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            margin-bottom: 0.25rem;
+        }
+        .nav-item:hover, .nav-item.active { background: rgba(255,107,0,0.1); color: #fff; }
+        .nav-item.active { color: var(--saffron-light); }
+        .nav-item i { font-size: 1rem; width: 18px; }
+        .nav-spacer { flex: 1; }
+        .user-chip {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.75rem;
+        }
+        .user-chip .name { font-size: 0.88rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-chip .email { font-size: 0.75rem; color: rgba(255,255,255,0.35); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .main { margin-left: 220px; padding: 2rem 2.5rem; min-height: 100vh; }
+        .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 2.5rem; }
+        .page-title { font-family: 'Sora', sans-serif; font-size: 1.6rem; font-weight: 800; }
+        .page-sub { color: rgba(255,255,255,0.4); font-size: 0.88rem; margin-top: 0.2rem; }
+        .btn-search {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.6rem 1.25rem;
+            background: var(--saffron); color: #fff; border: none;
+            border-radius: 10px; font-family: 'Sora', sans-serif;
+            font-weight: 600; font-size: 0.88rem; text-decoration: none; transition: all 0.2s;
+        }
+        .btn-search:hover { background: var(--saffron-light); color: #fff; transform: translateY(-1px); }
+        .flash-alert {
+            background: rgba(255,107,0,0.08); border: 1px solid rgba(255,107,0,0.2);
+            border-radius: 10px; color: var(--saffron-light); padding: 0.7rem 1rem;
+            font-size: 0.88rem; margin-bottom: 1.5rem;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .section-label {
+            font-family: 'Sora', sans-serif; font-size: 0.75rem; font-weight: 700;
+            color: rgba(255,255,255,0.35); letter-spacing: 0.1em; text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+        .search-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; }
+        .search-card {
+            background: var(--navy-card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 1rem 1rem 1rem 1.1rem;
+            position: relative; transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .search-card:hover { border-color: rgba(255,107,0,0.3); box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+        .search-card-name { font-weight: 600; font-size: 0.92rem; padding-right: 1.5rem; }
+        .search-card-meta { font-size: 0.78rem; color: rgba(255,255,255,0.3); margin-top: 0.2rem; }
+        .btn-remove {
+            position: absolute; top: 8px; right: 8px;
+            background: none; border: none; padding: 4px;
+            color: rgba(255,255,255,0.2); cursor: pointer;
+            border-radius: 6px; transition: all 0.15s; line-height: 1;
+        }
+        .btn-remove:hover { color: #f87171; background: rgba(248,113,113,0.1); }
+        .confirm-overlay {
+            display: none; position: absolute; inset: 0;
+            background: rgba(22,32,53,0.97); border-radius: 12px; z-index: 10;
+            align-items: center; justify-content: center;
+            flex-direction: column; gap: 0.75rem; text-align: center;
+        }
+        .confirm-overlay.active { display: flex; }
+        .confirm-overlay p { font-size: 0.82rem; color: rgba(255,255,255,0.7); margin: 0; }
+        .btn-confirm-del { padding: 0.4rem 1rem; background: #dc3545; color: #fff; border: none; border-radius: 7px; font-size: 0.8rem; cursor: pointer; }
+        .btn-confirm-cancel { padding: 0.4rem 1rem; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); border: none; border-radius: 7px; font-size: 0.8rem; cursor: pointer; }
+        .scheme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+        .scheme-card {
+            background: var(--navy-card); border: 1.5px solid rgba(19,136,8,0.3);
+            border-radius: 14px; padding: 1.4rem;
+            display: flex; flex-direction: column;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .scheme-card:hover { border-color: rgba(19,136,8,0.6); box-shadow: 0 6px 24px rgba(19,136,8,0.12); }
+        .scheme-badge {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            background: rgba(19,136,8,0.12); border: 1px solid rgba(19,136,8,0.25);
+            border-radius: 100px; padding: 0.2rem 0.65rem;
+            font-size: 0.72rem; color: #6ee75f; margin-bottom: 0.85rem; width: fit-content;
+        }
+        .scheme-name { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 0.4rem; }
+        .scheme-desc { color: rgba(255,255,255,0.45); font-size: 0.83rem; line-height: 1.5; flex: 1; margin-bottom: 1rem; }
+        .scheme-reason {
+            background: rgba(255,255,255,0.04); border-radius: 8px;
+            padding: 0.5rem 0.75rem; font-size: 0.8rem; color: rgba(255,255,255,0.55); margin-bottom: 1rem;
+        }
+        .scheme-reason strong { color: rgba(255,255,255,0.8); }
+        /* ── Apply button updated to link to guide page ── */
+        .btn-apply {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.55rem 1.1rem;
+            background: var(--india-green); color: #fff;
+            border: none; border-radius: 8px;
+            font-size: 0.85rem; font-weight: 600;
+            text-decoration: none; transition: all 0.2s; width: fit-content;
+        }
+        .btn-apply:hover { background: #0fa806; color: #fff; }
+        .empty-state {
+            background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.1);
+            border-radius: 12px; padding: 2rem; text-align: center;
+            color: rgba(255,255,255,0.35); font-size: 0.9rem;
+        }
+        .empty-state a { color: var(--saffron-light); text-decoration: none; font-weight: 500; }
+        .section { margin-bottom: 3rem; }
+        .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+        .btn-clear-all {
+            background: none; border: none; color: rgba(248,113,113,0.6); font-size: 0.82rem;
+            cursor: pointer; display: flex; align-items: center; gap: 0.3rem; transition: color 0.2s;
+        }
+        .btn-clear-all:hover { color: #f87171; }
+        .modal-content { background: var(--navy-mid); border: 1px solid var(--border); border-radius: 16px; color: #fff; }
+        .modal-body { padding: 2rem; text-align: center; }
+        .btn-danger { background: #dc3545; border-color: #dc3545; }
+        .btn-secondary { background: rgba(255,255,255,0.08); border-color: transparent; color: rgba(255,255,255,0.7); }
+        /* Scheme meta tags */
+        .scheme-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+        .scheme-tag {
+            font-size: 0.7rem; padding: 0.2rem 0.5rem;
+            border-radius: 6px; background: rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.08);
+        }
+        .scheme-tag.state { color: var(--gold); border-color: rgba(245,166,35,0.2); background: rgba(245,166,35,0.06); }
+        @media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; padding: 1.5rem 1rem; } }
+    </style>
 </head>
 <body>
-    <div class="container mt-4">
-        <h2>Welcome, {{ user.name }}!</h2>
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-success">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-        
-        <h4>Past Searches</h4>
-        {% if past_categories %}
-            <div class="row">
-                {% for uc in past_categories %}
-                    <div class="col-md-4 mb-3">
-                        <div class="card">
-                            <div class="card-body">
-                                <h6>{{ uc.category.category_name }}</h6>
-                                <p class="small">{{ uc.user_cat_id }} - {{ uc.user_cat_id|date:"M d, Y" }}</p>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="alert alert-info">No past searches. Start one!</div>
-        {% endif %}
 
-        <h4>Eligible Schemes</h4>
-        {% if eligible_schemes %}
-            <div class="row">
-                {% for el in eligible_schemes %}
-                    <div class="col-md-6 mb-4">
-                        <div class="card border-success">
-                            <div class="card-body">
-                                <h5 class="card-title">{{ el.scheme.scheme_name }}</h5>
-                                <p class="card-text">{{ el.scheme.description }}</p>
-                                <p><strong>Reason:</strong> {{ el.reason }}</p>
-                                <a href="{{ el.scheme.official_link }}" target="_blank" class="btn btn-success">Apply</a>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="alert alert-info">No eligible schemes yet. Search categories!</div>
-        {% endif %}
-
-        <a href="{% url 'categories' %}" class="btn btn-primary mt-3">Search New Categories</a>
-        <a href="{% url 'logout' %}" class="btn btn-secondary mt-3">Logout</a>
+<!-- Sidebar -->
+<nav class="sidebar">
+    <a href="{% url 'home' %}" class="sidebar-logo">
+        <div class="logo-dot">🇮🇳</div>
+        BenefitBridge
+    </a>
+    <a href="{% url 'dashboard' %}" class="nav-item active">
+        <i class="bi bi-grid-1x2"></i> Dashboard
+    </a>
+    <a href="{% url 'categories' %}" class="nav-item">
+        <i class="bi bi-search"></i> Search Schemes
+    </a>
+    <div class="nav-spacer"></div>
+    <div class="user-chip">
+        <div class="name">{{ user.name }}</div>
+        <div class="email">{{ user.email }}</div>
+        <a href="{% url 'logout' %}" class="nav-item mt-2" style="padding: 0.4rem 0; color: rgba(248,113,113,0.6);">
+            <i class="bi bi-box-arrow-right"></i> Sign out
+        </a>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</nav>
+
+<!-- Main -->
+<main class="main">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Hello, {{ user.name|truncatechars:18 }} 👋</h1>
+            <p class="page-sub">Here's your benefit eligibility overview</p>
+        </div>
+        <a href="{% url 'categories' %}" class="btn-search">
+            <i class="bi bi-search"></i> Search Categories
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="flash-alert">
+                <span>{{ message }}</span>
+                <button onclick="this.parentElement.remove()" style="background:none;border:none;color:inherit;cursor:pointer;font-size:1rem;line-height:1;">×</button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Past Searches -->
+    <div class="section">
+        <div class="section-head">
+            <div class="section-label"><i class="bi bi-clock-history me-1"></i> Past Searches</div>
+            {% if past_categories %}
+                <button class="btn-clear-all" id="clearAllBtn">
+                    <i class="bi bi-trash"></i> Clear all
+                </button>
+            {% endif %}
+        </div>
+        {% if past_categories %}
+            <div class="search-cards">
+                {% for uc in past_categories %}
+                    <div class="search-card" id="card-wrap-{{ uc.user_cat_id }}">
+                        <button class="btn-remove" data-id="{{ uc.user_cat_id }}" data-action="show-confirm" title="Remove">
+                            <i class="bi bi-x"></i>
+                        </button>
+                        <div class="search-card-name">{{ uc.category.category_name }}</div>
+                        <div class="search-card-meta">Search #{{ uc.user_cat_id }}</div>
+                        <div class="confirm-overlay" id="confirm-{{ uc.user_cat_id }}">
+                            <p>Remove this search?</p>
+                            <div class="d-flex gap-2">
+                                <form method="POST" action="{% url 'delete_search' uc.user_cat_id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-confirm-del">Remove</button>
+                                </form>
+                                <button class="btn-confirm-cancel" data-id="{{ uc.user_cat_id }}" data-action="hide-confirm">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <form method="POST" action="{% url 'delete_search_all' %}" id="clearAllForm">
+                {% csrf_token %}
+            </form>
+        {% else %}
+            <div class="empty-state">
+                No past searches yet. <a href="{% url 'categories' %}">Start here →</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Eligible Schemes -->
+    <div class="section">
+        <div class="section-label"><i class="bi bi-patch-check me-1 text-success"></i> Eligible Schemes</div>
+        {% if eligible_schemes %}
+            <div class="scheme-grid">
+                {% for el in eligible_schemes %}
+                    <div class="scheme-card">
+                        <div class="scheme-badge">
+                            <i class="bi bi-check-circle-fill"></i> Eligible
+                        </div>
+                        <div class="scheme-name">{{ el.scheme.scheme_name }}</div>
+
+                        <!-- State & type tags -->
+                        <div class="scheme-meta">
+                            {% if el.scheme.state %}
+                                <span class="scheme-tag state">{{ el.scheme.state }}</span>
+                            {% endif %}
+                            {% if el.scheme.benefit_type %}
+                                <span class="scheme-tag">{{ el.scheme.benefit_type }}</span>
+                            {% endif %}
+                        </div>
+
+                        <p class="scheme-desc">{{ el.scheme.description }}</p>
+                        {% if el.reason %}
+                            <div class="scheme-reason">
+                                <strong>Why:</strong> {{ el.reason }}
+                            </div>
+                        {% endif %}
+
+                        <!-- ── CHANGED: links to apply guide instead of direct official_link ── -->
+                        <a href="{% url 'scheme_apply_guide' el.scheme.scheme_id %}" class="btn-apply">
+                            Apply Now <i class="bi bi-arrow-up-right"></i>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                No eligible schemes yet. <a href="{% url 'categories' %}">Search categories to check eligibility →</a>
+            </div>
+        {% endif %}
+    </div>
+</main>
+
+<!-- Clear All Modal -->
+<div class="modal fade" id="clearAllModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-body">
+                <i class="bi bi-exclamation-triangle-fill text-warning fs-2 mb-3 d-block"></i>
+                <p class="fw-bold mb-1" style="font-family:'Sora',sans-serif;">Clear all past searches?</p>
+                <p style="color:rgba(255,255,255,0.4);font-size:0.85rem;" class="mb-3">This also removes all associated eligibility records.</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-danger btn-sm px-3" id="confirmClearAllBtn">Yes, clear all</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        var action = btn.dataset.action;
+        var id = btn.dataset.id;
+        if (action === 'show-confirm') document.getElementById('confirm-' + id).classList.add('active');
+        if (action === 'hide-confirm') document.getElementById('confirm-' + id).classList.remove('active');
+    });
+    var clearAllBtn = document.getElementById('clearAllBtn');
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', function() {
+            new bootstrap.Modal(document.getElementById('clearAllModal')).show();
+        });
+    }
+    var confirmBtn = document.getElementById('confirmClearAllBtn');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', function() {
+            document.getElementById('clearAllForm').submit();
+        });
+    }
+</script>
 </body>
 </html>

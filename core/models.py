@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class Category(models.Model):
     category_id = models.AutoField(primary_key=True)
     category_name = models.CharField(max_length=100)
@@ -11,6 +12,7 @@ class Category(models.Model):
 
     def __str__(self):
         return self.category_name
+
 
 class CustomUser(models.Model):
     user_id = models.AutoField(primary_key=True)
@@ -34,24 +36,30 @@ class CustomUser(models.Model):
     def __str__(self):
         return self.name
 
+
 class UserCategories(models.Model):
     user_cat_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, db_column='user_id')
     category = models.ForeignKey(Category, on_delete=models.CASCADE, db_column='category_id')
+    selected_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         managed = False
         db_table = 'UserCategories'
         unique_together = ('user', 'category')
 
+
 class Scheme(models.Model):
     scheme_id = models.AutoField(primary_key=True)
     scheme_name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
-    target_category = models.ForeignKey(Category, on_delete=models.DO_NOTHING, db_column='target_category')
+    target_category = models.ForeignKey(
+        Category, on_delete=models.DO_NOTHING, db_column='target_category'
+    )
     eligibility_rules = models.JSONField(default=dict, blank=True, null=True)
     benefits = models.TextField(blank=True, null=True)
-    official_link = models.URLField(blank=True, null=True)
+    official_link = models.URLField(max_length=500, blank=True, null=True)
+    registration_link = models.URLField(max_length=500, blank=True, null=True)  # ← NEW
     benefit_type = models.CharField(max_length=100, blank=True, null=True)
     state = models.CharField(max_length=100, blank=True, null=True)
 
@@ -62,6 +70,7 @@ class Scheme(models.Model):
     def __str__(self):
         return self.scheme_name
 
+
 class UserEligibility(models.Model):
     ELIGIBILITY_CHOICES = [
         ('Eligible', 'Eligible'),
@@ -71,17 +80,20 @@ class UserEligibility(models.Model):
     eligibility_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, db_column='user_id')
     scheme = models.ForeignKey(Scheme, on_delete=models.CASCADE, db_column='scheme_id')
-    eligibility_status = models.CharField(max_length=20, choices=ELIGIBILITY_CHOICES, default='Pending')
+    eligibility_status = models.CharField(
+        max_length=20, choices=ELIGIBILITY_CHOICES, default='Pending'
+    )
     reason = models.TextField(blank=True, null=True)
     applied_on = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.user.name} - {self.scheme.scheme_name} ({self.eligibility_status})"
 
     class Meta:
         managed = False
         db_table = 'User_Eligibility'
         unique_together = ('user', 'scheme')
+
+    def __str__(self):
+        return f"{self.user.name} - {self.scheme.scheme_name} ({self.eligibility_status})"
+
 
 class RuleEngine(models.Model):
     rule_id = models.AutoField(primary_key=True)
@@ -96,11 +108,11 @@ class RuleEngine(models.Model):
     disability_cert = models.BooleanField(blank=True, null=True)
     unemployment_status = models.BooleanField(blank=True, null=True)
     education_required = models.CharField(max_length=100, blank=True, null=True)
-    business_turnover_limit = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    business_turnover_limit = models.DecimalField(
+        max_digits=15, decimal_places=2, blank=True, null=True
+    )
     scheme = models.ForeignKey(Scheme, on_delete=models.CASCADE, db_column='scheme_id')
 
     class Meta:
         managed = False
         db_table = 'Rule_Engine'
-        # Optional: Add unique_together if rules are unique per category-scheme
-        # unique_together = ('category', 'scheme')
