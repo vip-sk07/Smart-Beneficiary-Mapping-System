@@ -1,11 +1,7 @@
-[phases.build]
+[phases.install]
 cmds = [
-  "pip install -r requirements.txt",
-  "python manage.py collectstatic --noinput"
+  "pip install -r requirements.txt"
 ]
 
-[phases.deploy]
-cmds = []
-
 [start]
-cmd = "gunicorn beneficiary_system.wsgi:application --bind 0.0.0.0:$PORT --workers 2"
+cmd = "python manage.py collectstatic --noinput && gunicorn beneficiary_system.wsgi:application --bind 0.0.0.0:$PORT --workers 2"

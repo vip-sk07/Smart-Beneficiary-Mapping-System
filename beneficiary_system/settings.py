@@ -86,20 +86,29 @@ TEMPLATES = [
 WSGI_APPLICATION = 'beneficiary_system.wsgi.application'
 
 # ── Database — Railway MySQL ───────────────────────────────────────────────
-# Railway injects MYSQL_URL or individual vars automatically
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME':     os.environ.get('MYSQL_DATABASE', 'smart_beneficiary_system'),
-        'USER':     os.environ.get('MYSQL_USER',     'root'),
-        'PASSWORD': os.environ.get('MYSQL_PASSWORD', '2006'),
-        'HOST':     os.environ.get('MYSQL_HOST',     'localhost'),
-        'PORT':     os.environ.get('MYSQL_PORT',     '3306'),
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+# Use sqlite as fallback during build/collectstatic when MySQL isn't available
+if os.environ.get('MYSQL_HOST'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME':     os.environ.get('MYSQL_DATABASE', 'smart_beneficiary_system'),
+            'USER':     os.environ.get('MYSQL_USER',     'root'),
+            'PASSWORD': os.environ.get('MYSQL_PASSWORD', '2006'),
+            'HOST':     os.environ.get('MYSQL_HOST',     'localhost'),
+            'PORT':     os.environ.get('MYSQL_PORT',     '3306'),
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
+        }
     }
-}
+else:
+    # Fallback for build time (collectstatic doesn't need a real DB)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # ── Password validation ────────────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [
