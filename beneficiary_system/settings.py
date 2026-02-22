@@ -91,8 +91,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'beneficiary_system.wsgi.application'
 
 # ── Database ───────────────────────────────────────────────────────────────
-# Railway provides MYSQLHOST (no underscore) AND MYSQL_HOST (with underscore)
-# We check both to be safe
 MYSQL_HOST = (
     os.environ.get('MYSQL_HOST') or
     os.environ.get('MYSQLHOST') or
@@ -128,11 +126,14 @@ if MYSQL_HOST:
             'PASSWORD': MYSQL_PASSWORD,
             'HOST':     MYSQL_HOST,
             'PORT':     MYSQL_PORT,
-            'OPTIONS':  {'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"},
+            'OPTIONS':  {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                # Force PyMySQL — bypasses mysqlclient version check
+                'charset': 'utf8mb4',
+            },
         }
     }
 else:
-    # Build-time fallback — no real data needed
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

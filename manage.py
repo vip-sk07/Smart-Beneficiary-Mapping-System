@@ -3,12 +3,10 @@
 import os
 import sys
 
-# ── PyMySQL patch — MUST be before any Django import ──────────────────────
-try:
-    import pymysql
-    pymysql.install_as_MySQLdb()
-except ImportError:
-    pass
+# ── CRITICAL: Patch PyMySQL BEFORE Django loads ANYTHING ──────────────────
+import pymysql
+pymysql.install_as_MySQLdb()
+pymysql.version_info = (2, 2, 1, "final", 0)
 
 
 def main():
