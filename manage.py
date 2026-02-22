@@ -3,15 +3,16 @@
 import os
 import sys
 
-
-def main():
-    """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'beneficiary_system.settings')
-
-    # PyMySQL — pure-Python MySQL driver, works on Railway without system libs
+# ── PyMySQL patch — MUST be before any Django import ──────────────────────
+try:
     import pymysql
     pymysql.install_as_MySQLdb()
+except ImportError:
+    pass
 
+
+def main():
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'beneficiary_system.settings')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

@@ -4,8 +4,13 @@ Production-ready for Railway deployment.
 """
 from pathlib import Path
 import os
-import pymysql
-pymysql.install_as_MySQLdb()
+
+# PyMySQL must be installed BEFORE Django loads any MySQL backend
+try:
+    import pymysql
+    pymysql.install_as_MySQLdb()
+except ImportError:
+    pass
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -16,10 +21,10 @@ DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
-    '.railway.app',          # Railway public domain
+    '.railway.app',
     os.environ.get('RAILWAY_PUBLIC_DOMAIN', ''),
 ]
-ALLOWED_HOSTS = [h for h in ALLOWED_HOSTS if h]  # remove empty strings
+ALLOWED_HOSTS = [h for h in ALLOWED_HOSTS if h]
 
 # ── Installed Apps ─────────────────────────────────────────────────────────
 INSTALLED_APPS = [
@@ -55,7 +60,7 @@ AUTH_USER_MODEL     = 'auth.User'
 # ── Middleware ─────────────────────────────────────────────────────────────
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',   # serves static files in production
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -85,28 +90,29 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'beneficiary_system.wsgi.application'
 
-# ── Database — Railway MySQL ───────────────────────────────────────────────
-# Use sqlite as fallback during build/collectstatic when MySQL isn't available
-if os.environ.get('MYSQL_HOST'):
+# ── Database ───────────────────────────────────────────────────────────────
+# During Railway build (collectstatic), MYSQL_HOST is not set → use SQLite
+# At runtime, Railway injects MYSQL_HOST → use MySQL via PyMySQL
+MYSQL_HOST = os.environ.get('MYSQL_HOST', '')
+
+if MYSQL_HOST:
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME':     os.environ.get('MYSQL_DATABASE', 'smart_beneficiary_system'),
+            'ENGINE':   'django.db.backends.mysql',
+            'NAME':     os.environ.get('MYSQL_DATABASE', 'railway'),
             'USER':     os.environ.get('MYSQL_USER',     'root'),
-            'PASSWORD': os.environ.get('MYSQL_PASSWORD', '2006'),
-            'HOST':     os.environ.get('MYSQL_HOST',     'localhost'),
+            'PASSWORD': os.environ.get('MYSQL_PASSWORD', ''),
+            'HOST':     MYSQL_HOST,
             'PORT':     os.environ.get('MYSQL_PORT',     '3306'),
-            'OPTIONS': {
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            },
+            'OPTIONS':  {'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"},
         }
     }
 else:
-    # Fallback for build time (collectstatic doesn't need a real DB)
+    # Build-time fallback — collectstatic only, no real data
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME':   BASE_DIR / 'db.sqlite3',
         }
     }
 
@@ -124,15 +130,14 @@ TIME_ZONE     = 'Asia/Kolkata'
 USE_I18N      = True
 USE_TZ        = True
 
-# ── Static files — WhiteNoise serves them in production ───────────────────
-STATIC_URL  = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+# ── Static files ───────────────────────────────────────────────────────────
+STATIC_URL   = '/static/'
+STATIC_ROOT  = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# ── Email — Gmail SMTP ─────────────────────────────────────────────────────
-# Set these in Railway environment variables
+# ── Email ──────────────────────────────────────────────────────────────────
 EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST          = 'smtp.gmail.com'
 EMAIL_PORT          = 587
@@ -157,17 +162,15 @@ SOCIALACCOUNT_PROVIDERS = {
         'OAUTH_PKCE_ENABLED': True,
     }
 }
-SOCIALACCOUNT_LOGIN_ON_GET       = True
-SOCIALACCOUNT_AUTO_SIGNUP        = True
-SOCIALACCOUNT_SIGNUP_FIELDS      = []
-SOCIALACCOUNT_EMAIL_REQUIRED     = True
-SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
+SOCIALACCOUNT_LOGIN_ON_GET          = True
+SOCIALACCOUNT_AUTO_SIGNUP           = True
+SOCIALACCOUNT_SIGNUP_FIELDS         = []
+SOCIALACCOUNT_EMAIL_REQUIRED        = True
+SOCIALACCOUNT_EMAIL_VERIFICATION    = 'none'
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 
-# ── CSRF trusted origins for Railway ──────────────────────────────────────
-CSRF_TRUSTED_ORIGINS = [
-    'https://*.railway.app',
-]
+# ── CSRF ───────────────────────────────────────────────────────────────────
+CSRF_TRUSTED_ORIGINS = ['https://*.railway.app']
 railway_domain = os.environ.get('RAILWAY_PUBLIC_DOMAIN', '')
 if railway_domain:
     CSRF_TRUSTED_ORIGINS.append(f'https://{railway_domain}')
