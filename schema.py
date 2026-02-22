@@ -3,17 +3,18 @@ schema.py
 Run this ONCE to create all tables, procedures, and triggers.
 Usage: python schema.py
 """
+import os
 import mysql.connector
 
+# Read from environment variables (Railway) or fall back to localhost
 db = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    passwd="2006"
+    host=os.environ.get('MYSQLHOST', 'localhost'),
+    port=int(os.environ.get('MYSQLPORT', 3306)),
+    user=os.environ.get('MYSQLUSER', 'root'),
+    password=os.environ.get('MYSQLPASSWORD', '2006'),
+    database=os.environ.get('MYSQLDATABASE', 'smart_beneficiary_system'),
 )
 cursor = db.cursor()
-
-cursor.execute("CREATE DATABASE IF NOT EXISTS smart_beneficiary_system")
-cursor.execute("USE smart_beneficiary_system")
 
 # ── Tables ─────────────────────────────────────────────────────────────────
 tables = [
@@ -237,8 +238,6 @@ BEGIN
             SET @reason = CONCAT('Available only in ', v_location);
         ELSEIF v_edu_req IS NOT NULL AND v_edu_req <> ''
                AND UPPER(v_edu_req) <> 'ANY' THEN
-            -- Education hierarchy: higher qualification satisfies lower requirement
-            -- Levels: 10th=1, 12th=2, Diploma=3, Graduate=4, Postgraduate=5, PhD=6
             SET @u_edu_level = CASE
                 WHEN LOWER(u_education) LIKE '%phd%'                        THEN 6
                 WHEN LOWER(u_education) LIKE '%postgrad%'
@@ -310,7 +309,6 @@ END
 db.commit()
 print("✅ Procedure check_user_eligibility created.")
 
-# ── Stored Procedure 2: get_user_eligible_schemes ─────────────────────────
 cursor.execute("""
 CREATE PROCEDURE get_user_eligible_schemes(IN p_user_id INT)
 BEGIN
@@ -329,7 +327,6 @@ END
 db.commit()
 print("✅ Procedure get_user_eligible_schemes created.")
 
-# ── Stored Procedure 3: get_schemes_by_category ───────────────────────────
 cursor.execute("""
 CREATE PROCEDURE get_schemes_by_category(IN p_category_id INT)
 BEGIN
@@ -343,7 +340,6 @@ END
 db.commit()
 print("✅ Procedure get_schemes_by_category created.")
 
-# ── Trigger 1: Auto eligibility check on category insert ─────────────────
 cursor.execute("""
 CREATE TRIGGER trg_after_usercategory_insert
 AFTER INSERT ON UserCategories
@@ -355,7 +351,6 @@ END
 db.commit()
 print("✅ Trigger trg_after_usercategory_insert created.")
 
-# ── Trigger 2: Clean eligibility on category delete ───────────────────────
 cursor.execute("""
 CREATE TRIGGER trg_after_usercategory_delete
 AFTER DELETE ON UserCategories
@@ -372,7 +367,6 @@ END
 db.commit()
 print("✅ Trigger trg_after_usercategory_delete created.")
 
-# ── Trigger 3: Cascade clean before user delete ────────────────────────────
 cursor.execute("""
 CREATE TRIGGER trg_before_user_delete
 BEFORE DELETE ON Users
@@ -387,7 +381,6 @@ END
 db.commit()
 print("✅ Trigger trg_before_user_delete created.")
 
-# ── Trigger 4: Audit log on new scheme insert ─────────────────────────────
 cursor.execute("""
 CREATE TRIGGER trg_after_scheme_insert
 AFTER INSERT ON Schemes
@@ -400,7 +393,6 @@ END
 db.commit()
 print("✅ Trigger trg_after_scheme_insert created.")
 
-# ── Trigger 5: Re-run eligibility when a rule changes ─────────────────────
 cursor.execute("""
 CREATE TRIGGER trg_after_rule_update
 AFTER UPDATE ON Rule_Engine
