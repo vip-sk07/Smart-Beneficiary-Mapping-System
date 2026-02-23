@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
-from .models import CustomUser, Category
+from .models import CustomUser, Category, Scheme
+
 
 
 class UserRegistrationForm(forms.ModelForm):
@@ -105,3 +106,50 @@ class ChangePasswordForm(PasswordChangeForm):
         self.fields['old_password'].widget.attrs['placeholder'] = 'Current password'
         self.fields['new_password1'].widget.attrs['placeholder'] = 'New password (min 8 chars)'
         self.fields['new_password2'].widget.attrs['placeholder'] = 'Confirm new password'
+
+
+# ── NEW: Grievance Form ────────────────────────────────────────────────────
+class GrievanceForm(forms.Form):
+    """
+    scheme_queryset is passed dynamically from the view — only the user's
+    eligible schemes appear in the dropdown.
+    """
+    scheme = forms.ModelChoiceField(
+        queryset=Scheme.objects.none(),   # overridden in __init__
+        required=False,
+        empty_label='— General (not scheme-specific) —',
+        label='Related Scheme (optional)',
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+    complaint = forms.CharField(
+        label='Describe your grievance',
+        min_length=20,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 5,
+            'placeholder': 'Describe your issue in detail (minimum 20 characters)...',
+        })
+    )
+
+    def __init__(self, *args, scheme_queryset=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if scheme_queryset is not None:
+            self.fields['scheme'].queryset = scheme_queryset
+
+
+# ── Edit Profile Form ──────────────────────────────────────────────────────
+class EditProfileForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = ['name', 'dob', 'gender', 'phone', 'address', 'income', 'occupation', 'education']
+        widgets = {
+            'name':       forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full Name'}),
+            'dob':        forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'gender':     forms.Select(attrs={'class': 'form-select'},
+                          choices=[('', 'Select gender'), ('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')]),
+            'phone':      forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+91 XXXXX XXXXX'}),
+            'address':    forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Your address'}),
+            'income':     forms.NumberInput(attrs={'class': 'form-control', 'step': '1', 'min': '0', 'placeholder': 'Annual income (Rs.)'}),
+            'occupation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Farmer, Teacher'}),
+            'education':  forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 10th Pass, Graduate'}),
+        }

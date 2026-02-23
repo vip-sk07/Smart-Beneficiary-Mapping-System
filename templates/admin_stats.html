@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Stats — BenefitBridge</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --saffron: #FF6B00;
+            --saffron-light: #FF8C38;
+            --navy: #0A1628;
+            --navy-mid: #162035;
+            --navy-card: #1C2A40;
+            --gold: #F5A623;
+            --india-green: #138808;
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--navy);
+            color: #fff;
+            min-height: 100vh;
+            padding: 2rem 2.5rem;
+        }
+
+        .page-title {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+        }
+
+        .page-sub {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.88rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: rgba(255, 255, 255, 0.45);
+            text-decoration: none;
+            font-size: 0.88rem;
+            padding: 0.4rem 0.75rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s;
+            margin-bottom: 2rem;
+        }
+
+        .btn-back:hover {
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Live dot */
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #2ecc71;
+            animation: pulse-dot 1.5s ease-in-out infinite;
+            display: inline-block;
+            margin-right: 0.4rem;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1)
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(1.3)
+            }
+        }
+
+        /* Eligibility rate hero */
+        .elig-hero {
+            background: linear-gradient(135deg, rgba(255, 107, 0, 0.1), rgba(245, 166, 35, 0.05));
+            border: 1px solid rgba(255, 107, 0, 0.2);
+            border-radius: 16px;
+            padding: 1.75rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .elig-num {
+            font-family: 'Sora', sans-serif;
+            font-size: 4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--saffron), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+
+        .elig-label {
+            font-size: 0.88rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 0.25rem;
+        }
+
+        .elig-meta {
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        /* KPI cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: var(--navy-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.4rem 1.6rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--accent-color, rgba(255, 107, 0, 0.06)), transparent);
+            pointer-events: none;
+        }
+
+        .kpi-icon {
+            font-size: 1.4rem;
+            margin-bottom: 0.65rem;
+        }
+
+        .kpi-num {
+            font-family: 'Sora', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 0.3rem;
+        }
+
+        .kpi-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+        }
+
+        /* AI alert */
+        .ai-alert {
+            background: rgba(255, 107, 0, 0.06);
+            border: 1px solid rgba(255, 107, 0, 0.2);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            font-size: 0.88rem;
+        }
+
+        .ai-alert i {
+            color: var(--saffron);
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            margin-top: 0.1rem;
+        }
+
+        /* Charts row */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media(max-width:900px) {
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--navy-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.5rem;
+        }
+
+        .chart-title {
+            font-family: 'Sora', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Stats tables */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media(max-width:900px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .stats-card {
+            background: var(--navy-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .stats-card-header {
+            padding: 1.1rem 1.4rem;
+            border-bottom: 1px solid var(--border);
+            font-family: 'Sora', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.45);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .stats-table td {
+            padding: 0.8rem 1.4rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 0.87rem;
+            vertical-align: middle;
+        }
+
+        .stats-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .stats-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.2rem 0.65rem;
+            border-radius: 100px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .status-pending {
+            background: rgba(245, 166, 35, 0.15);
+            color: var(--gold);
+            border: 1px solid rgba(245, 166, 35, 0.25);
+        }
+
+        .status-approved {
+            background: rgba(19, 136, 8, 0.15);
+            color: #6ee75f;
+            border: 1px solid rgba(19, 136, 8, 0.25);
+        }
+
+        .status-rejected {
+            background: rgba(220, 53, 69, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(220, 53, 69, 0.25);
+        }
+
+        .count-pill {
+            font-family: 'Sora', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #fff;
+        }
+
+        .scheme-rank {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-right: 0.5rem;
+        }
+
+        /* Recent users table */
+        .data-card {
+            background: var(--navy-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .data-card-header {
+            padding: 1.1rem 1.4rem;
+            border-bottom: 1px solid var(--border);
+            font-family: 'Sora', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.45);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+        }
+
+        .data-table td {
+            padding: 0.75rem 1rem;
+            font-size: 0.86rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            vertical-align: middle;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+    </style>
+</head>
+
+<body>
+
+    <a href="{% url 'dashboard' %}" class="btn-back"><i class="bi bi-arrow-left"></i> Dashboard</a>
+
+    <h1 class="page-title">
+        <i class="bi bi-bar-chart-fill me-2" style="color:var(--saffron);"></i>
+        Governance Intelligence Dashboard
+    </h1>
+    <p class="page-sub"><span class="live-dot"></span> Real-time monitoring — Admin Only</p>
+
+    <!-- Grievance Alert -->
+    {% if open_grievances > 0 %}
+    <div class="ai-alert">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <div>
+            <strong>{{ open_grievances }} Open Grievance{{ open_grievances|pluralize }}</strong> pending resolution.
+            <a href="{% url 'admin_grievances' %}" style="color:var(--saffron-light);font-weight:600;">Manage Grievances
+                →</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Eligibility Rate Hero -->
+    <div class="elig-hero">
+        <div>
+            <div class="elig-num">{{ eligibility_rate }}%</div>
+            <div class="elig-label">Overall Eligibility Rate</div>
+            <div class="elig-meta">{{ total_eligible }} eligible out of {{ total_checks }} checks run</div>
+        </div>
+        <div style="flex:1;min-width:200px;">
+            <div style="font-size:0.82rem;color:rgba(255,255,255,0.4);margin-bottom:0.5rem;">Eligible vs Not Eligible
+            </div>
+            <div style="height:8px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;">
+                <div
+                    style="height:100%;width:{{ eligibility_rate }}%;background:linear-gradient(90deg,var(--saffron),var(--gold));border-radius:4px;transition:width 1s ease;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card" style="--accent-color:rgba(19,136,8,0.08);">
+            <div class="kpi-icon">👥</div>
+            <div class="kpi-num" style="color:#6ee75f;">{{ total_users }}</div>
+            <div class="kpi-label">Registered Citizens</div>
+        </div>
+        <div class="kpi-card" style="--accent-color:rgba(255,107,0,0.06);">
+            <div class="kpi-icon">📋</div>
+            <div class="kpi-num" style="color:var(--saffron-light);">{{ total_apps }}</div>
+            <div class="kpi-label">Total Applications</div>
+        </div>
+        <div class="kpi-card" style="--accent-color:rgba(245,166,35,0.06);">
+            <div class="kpi-icon">⚠️</div>
+            <div class="kpi-num" style="color:var(--gold);">{{ open_grievances }}</div>
+            <div class="kpi-label">Open Grievances</div>
+        </div>
+        <div class="kpi-card" style="--accent-color:rgba(19,136,8,0.06);">
+            <div class="kpi-icon">✅</div>
+            <div class="kpi-num" style="color:#6ee75f;">{{ total_grievances }}</div>
+            <div class="kpi-label">Total Grievances</div>
+        </div>
+        <div class="kpi-card" style="--accent-color:rgba(52,152,219,0.06);">
+            <div class="kpi-icon">📊</div>
+            <div class="kpi-num" style="color:#3498db;">{{ total_schemes }}</div>
+            <div class="kpi-label">Total Schemes</div>
+        </div>
+        <div class="kpi-card" style="--accent-color:rgba(155,89,182,0.06);">
+            <div class="kpi-icon">🗂</div>
+            <div class="kpi-num" style="color:#9b59b6;">{{ total_categories }}</div>
+            <div class="kpi-label">Categories</div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-row">
+        <div class="chart-card">
+            <div class="chart-title"><i class="bi bi-bar-chart"></i> Schemes by Category</div>
+            <canvas id="categoryChart" height="230"></canvas>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title"><i class="bi bi-pie-chart"></i> Eligible vs Not Eligible</div>
+            <canvas id="eligChart" height="230"></canvas>
+        </div>
+    </div>
+
+    <!-- Stats Tables: Applications + Top Schemes -->
+    <div class="stats-grid">
+        <div class="stats-card">
+            <div class="stats-card-header"><i class="bi bi-pie-chart-fill"></i> Applications by Status</div>
+            <table class="stats-table">
+                {% for row in apps_by_status %}
+                <tr>
+                    <td>
+                        {% if row.status == 'Approved' %}<span class="status-badge status-approved">{{ row.status
+                            }}</span>
+                        {% elif row.status == 'Rejected' %}<span class="status-badge status-rejected">{{ row.status
+                            }}</span>
+                        {% else %}<span class="status-badge status-pending">{{ row.status }}</span>{% endif %}
+                    </td>
+                    <td class="count-pill" style="text-align:right;">{{ row.count }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2" style="color:rgba(255,255,255,0.3);text-align:center;padding:2rem;">No applications
+                        yet</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div class="stats-card">
+            <div class="stats-card-header"><i class="bi bi-trophy-fill"></i> Top Applied Schemes</div>
+            <table class="stats-table">
+                {% for s in top_schemes %}
+                <tr>
+                    <td>
+                        <span class="scheme-rank">{{ forloop.counter }}</span>
+                        <span style="font-size:0.85rem;">{{ s.scheme__scheme_name|truncatechars:40 }}</span>
+                    </td>
+                    <td class="count-pill" style="text-align:right;color:var(--gold);">{{ s.count }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2" style="color:rgba(255,255,255,0.3);text-align:center;padding:2rem;">No applications
+                        yet</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+    <!-- Recent Users -->
+    <div class="data-card">
+        <div class="data-card-header"><i class="bi bi-people"></i> Recent Registrations</div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Gender</th>
+                    <th>Occupation</th>
+                    <th>Registered</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in recent_users %}
+                <tr>
+                    <td style="font-weight:600;color:#fff;">{{ u.name }}</td>
+                    <td style="font-size:0.82rem;">{{ u.email }}</td>
+                    <td>{{ u.gender|default:"—" }}</td>
+                    <td style="color:rgba(255,255,255,0.5);">{{ u.occupation|default:"—" }}</td>
+                    <td style="font-size:0.78rem;color:rgba(255,255,255,0.35);">{{ u.created_at|date:"d M Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align:center;color:rgba(255,255,255,0.3);padding:2rem;">No users yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const catCtx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(catCtx, {
+            type: 'bar',
+            data: {
+                labels: [{% for c in schemes_by_category %}"{{ c.target_category__category_name|truncatechars:18 }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Schemes',
+                data: [{% for c in schemes_by_category %}{{ c.count }}{% if not forloop.last %}, {% endif %} {% endfor %}],
+        backgroundColor: 'rgba(255,107,0,0.55)',
+            borderColor: '#FF6B00',
+                borderWidth: 1,
+                    borderRadius: 5,
+        }]
+    },
+        options: {
+            responsive: true,
+                plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { ticks: { color: 'rgba(255,255,255,0.4)' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+        }
+});
+
+        const eligCtx = document.getElementById('eligChart').getContext('2d');
+        new Chart(eligCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Eligible', 'Not Eligible'],
+                datasets: [{
+                    data: [{{ total_eligible }}, {{ total_checks }} - {{ total_eligible }}],
+            backgroundColor: ['rgba(46,204,113,0.7)', 'rgba(255,255,255,0.08)'],
+            borderColor: ['#2ecc71', 'rgba(255,255,255,0.1)'],
+            borderWidth: 2,
+        }]
+    },
+            options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: 'rgba(255,255,255,0.5)', font: { size: 12 } } } },
+            cutout: '65%'
+        }
+});
+    </script>
+</body>
+
+</html>
