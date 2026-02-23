@@ -967,10 +967,8 @@
                     <div class="scheme-badge"><i class="bi bi-check-circle-fill"></i> Eligible</div>
                     <div class="scheme-name">{{ item.eligibility.scheme.scheme_name }}</div>
                     <div class="scheme-meta">
-                        {% if item.eligibility.scheme.state %}<span class="scheme-tag state">{{
-                            item.eligibility.scheme.state }}</span>{% endif %}
-                        {% if item.eligibility.scheme.benefit_type %}<span class="scheme-tag">{{
-                            item.eligibility.scheme.benefit_type }}</span>{% endif %}
+                        {% if item.eligibility.scheme.state %}<span class="scheme-tag state">{{ item.eligibility.scheme.state }}</span>{% endif %}
+                        {% if item.eligibility.scheme.benefit_type %}<span class="scheme-tag">{{ item.eligibility.scheme.benefit_type }}</span>{% endif %}
                     </div>
                     <p class="scheme-desc">{{ item.eligibility.scheme.description }}</p>
                     {% if item.eligibility.reason %}
