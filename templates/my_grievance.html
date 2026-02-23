@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Grievances — BenefitBridge</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --saffron: #FF6B00;
+            --saffron-light: #FF8C38;
+            --navy: #0A1628;
+            --navy-mid: #162035;
+            --navy-card: #1C2A40;
+            --gold: #F5A623;
+            --india-green: #138808;
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--navy);
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 220px;
+            background: var(--navy-mid);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 1rem;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-family: 'Sora', sans-serif;
+            font-weight: 700;
+            color: #fff;
+            text-decoration: none;
+            margin-bottom: 2.5rem;
+            padding: 0 0.5rem;
+        }
+
+        .logo-dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--saffron), var(--gold));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0.65rem 0.75rem;
+            border-radius: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: rgba(255, 107, 0, 0.1);
+            color: #fff;
+        }
+
+        .nav-item.active {
+            color: var(--saffron-light);
+        }
+
+        .nav-item i {
+            font-size: 1rem;
+            width: 18px;
+        }
+
+        .nav-spacer {
+            flex: 1;
+        }
+
+        .user-chip {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.75rem;
+        }
+
+        .user-chip .name {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-chip .email {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.35);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .main {
+            margin-left: 220px;
+            padding: 2rem 2.5rem;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .page-title {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+        }
+
+        .page-sub {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.88rem;
+            margin-top: 0.25rem;
+        }
+
+        .btn-new {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.65rem 1.25rem;
+            background: var(--saffron);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Sora', sans-serif;
+            font-weight: 600;
+            font-size: 0.88rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-new:hover {
+            background: var(--saffron-light);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: rgba(255, 255, 255, 0.45);
+            text-decoration: none;
+            font-size: 0.88rem;
+            padding: 0.4rem 0.75rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-back:hover {
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .flash-alert {
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            font-size: 0.88rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .flash-alert.success {
+            background: rgba(19, 136, 8, 0.1);
+            border: 1px solid rgba(19, 136, 8, 0.25);
+            color: #6ee75f;
+        }
+
+        .table-wrap {
+            background: var(--navy-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .grv-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .grv-table th {
+            font-family: 'Sora', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.35);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+        }
+
+        .grv-table td {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 0.88rem;
+            color: rgba(255, 255, 255, 0.75);
+            vertical-align: top;
+        }
+
+        .grv-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .grv-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .grv-id {
+            font-family: monospace;
+            font-weight: 700;
+            color: var(--saffron-light);
+            font-size: 0.9rem;
+        }
+
+        .complaint-text {
+            color: rgba(255, 255, 255, 0.65);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.22rem 0.7rem;
+            border-radius: 100px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .status-open {
+            background: rgba(255, 107, 0, 0.15);
+            color: var(--saffron-light);
+            border: 1px solid rgba(255, 107, 0, 0.25);
+        }
+
+        .status-resolved {
+            background: rgba(19, 136, 8, 0.15);
+            color: #6ee75f;
+            border: 1px solid rgba(19, 136, 8, 0.25);
+        }
+
+        .empty-state {
+            padding: 3rem 2rem;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .empty-state a {
+            color: var(--saffron-light);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        @media(max-width:768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main {
+                margin-left: 0;
+                padding: 1.5rem 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="sidebar">
+        <a href="{% url 'home' %}" class="sidebar-logo">
+            <div class="logo-dot">🇮🇳</div>BenefitBridge
+        </a>
+        <a href="{% url 'dashboard' %}" class="nav-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+        <a href="{% url 'categories' %}" class="nav-item"><i class="bi bi-search"></i> Search Schemes</a>
+        <a href="{% url 'my_applications' %}" class="nav-item"><i class="bi bi-file-earmark-check"></i> My
+            Applications</a>
+        <a href="{% url 'my_grievances' %}" class="nav-item active"><i class="bi bi-exclamation-circle"></i> My
+            Grievances</a>
+        <a href="{% url 'edit_profile' %}" class="nav-item"><i class="bi bi-person-gear"></i> Edit Profile</a>
+        <div class="nav-spacer"></div>
+        <div class="user-chip">
+            <div class="name">{{ user.name }}</div>
+            <div class="email">{{ user.email }}</div>
+            <a href="{% url 'logout' %}" class="nav-item mt-2" style="padding:0.4rem 0;color:rgba(248,113,113,0.6);"><i
+                    class="bi bi-box-arrow-right"></i> Sign out</a>
+        </div>
+    </nav>
+
+    <main class="main">
+        <a href="{% url 'dashboard' %}" class="btn-back"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="flash-alert success">
+            <span><i class="bi bi-check-circle-fill me-2"></i>{{ message }}</span>
+            <button onclick="this.parentElement.remove()"
+                style="background:none;border:none;color:inherit;cursor:pointer;">×</button>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <div class="page-header">
+            <div>
+                <h1 class="page-title"><i class="bi bi-exclamation-circle me-2" style="color:var(--saffron);"></i>My
+                    Grievances</h1>
+                <p class="page-sub">All grievances you've raised and their resolution status</p>
+            </div>
+            <a href="{% url 'submit_grievance' %}" class="btn-new"><i class="bi bi-plus-circle"></i> New Grievance</a>
+        </div>
+
+        <div class="table-wrap">
+            {% if grievances %}
+            <table class="grv-table">
+                <thead>
+                    <tr>
+                        <th>GRV ID</th>
+                        <th>Related Scheme</th>
+                        <th>Complaint</th>
+                        <th>Status</th>
+                        <th>Raised On</th>
+                        <th>Resolved On</th>
+                        <th>Admin Remark</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for g in grievances %}
+                    <tr>
+                        <td><span class="grv-id">GRV-{{ g.grievance_id }}</span></td>
+                        <td style="font-size:0.83rem;">{{ g.scheme.scheme_name|truncatechars:35|default:"General" }}
+                        </td>
+                        <td>
+                            <div class="complaint-text">{{ g.complaint|truncatechars:120 }}</div>
+                            {% if g.complaint|length > 120 %}
+                            <button onclick="toggleFull(this, '{{ g.complaint|escapejs }}')"
+                                style="background:none;border:none;color:var(--saffron-light);font-size:0.78rem;cursor:pointer;padding:0.25rem 0;">
+                                Read more
+                            </button>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if g.status == 'Resolved' %}
+                            <span class="status-badge status-resolved"><i
+                                    class="bi bi-check-circle-fill me-1"></i>Resolved</span>
+                            {% else %}
+                            <span class="status-badge status-open"><i class="bi bi-hourglass-split me-1"></i>Open</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ g.raised_on|date:"d M Y" }}</td>
+                        <td style="color:rgba(255,255,255,0.4);">
+                            {% if g.resolved_on %}{{ g.resolved_on|date:"d M Y" }}{% else %}—{% endif %}
+                        </td>
+                        <td style="font-size:0.8rem;">
+                            {% if g.status == 'Resolved' %}
+                            <span style="color:rgba(110,231,95,0.8);font-style:italic;">{{
+                                g.admin_remark|default:"Resolved — no additional remarks." }}</span>
+                            {% else %}
+                            <span style="color:rgba(255,255,255,0.2);">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-emoji-smile" style="font-size:2.5rem;display:block;margin-bottom:1rem;"></i>
+                <p>No grievances raised. Everything looks good!</p>
+                <a href="{% url 'submit_grievance' %}">Raise a grievance if you face any issue →</a>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <script>
+        function toggleFull(btn, full) {
+            var td = btn.previousElementSibling;
+            if (btn.textContent === 'Read more') {
+                td.textContent = full;
+                btn.textContent = 'Show less';
+            } else {
+                td.textContent = full.substring(0, 120) + '...';
+                btn.textContent = 'Read more';
+            }
+        }
+    </script>
+</body>
+
+</html>

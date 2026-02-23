@@ -150,6 +150,14 @@ try:
 except Exception:
     pass  # Column already exists — that's fine
 
+# Add admin_remark to Grievances if not present
+try:
+    cursor.execute("ALTER TABLE Grievances ADD COLUMN admin_remark TEXT")
+    db.commit()
+    print("✅ Added admin_remark column to Grievances table.")
+except Exception:
+    pass  # Column already exists — that's fine
+
 # ── Drop existing procedures & triggers ────────────────────────────────────
 for proc in ["check_user_eligibility", "get_user_eligible_schemes", "get_schemes_by_category"]:
     cursor.execute(f"DROP PROCEDURE IF EXISTS {proc}")

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile — BenefitBridge</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root { --saffron:#FF6B00;--saffron-light:#FF8C38;--navy:#0A1628;--navy-mid:#162035;--navy-card:#1C2A40;--gold:#F5A623;--india-green:#138808;--border:rgba(255,255,255,0.08); }
+        body { font-family:'DM Sans',sans-serif;background:var(--navy);color:#fff;min-height:100vh; }
+        .sidebar { position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--navy-mid);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem 1rem;z-index:100; }
+        .sidebar-logo { display:flex;align-items:center;gap:0.6rem;font-family:'Sora',sans-serif;font-weight:700;color:#fff;text-decoration:none;margin-bottom:2.5rem;padding:0 0.5rem; }
+        .logo-dot { width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--saffron),var(--gold));display:flex;align-items:center;justify-content:center;font-size:1rem; }
+        .nav-item { display:flex;align-items:center;gap:0.7rem;padding:0.65rem 0.75rem;border-radius:10px;color:rgba(255,255,255,0.5);text-decoration:none;font-size:0.9rem;transition:all 0.2s;margin-bottom:0.25rem; }
+        .nav-item:hover,.nav-item.active { background:rgba(255,107,0,0.1);color:#fff; }
+        .nav-item.active { color:var(--saffron-light); }
+        .nav-item i { font-size:1rem;width:18px; }
+        .nav-spacer { flex:1; }
+        .user-chip { background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:12px;padding:0.75rem; }
+        .user-chip .name { font-size:0.88rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+        .user-chip .email { font-size:0.75rem;color:rgba(255,255,255,0.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+        .main { margin-left:220px;padding:2rem 2.5rem;min-height:100vh;display:flex;align-items:flex-start;justify-content:center; }
+        .form-wrap { width:100%;max-width:700px;padding-top:1rem; }
+        .btn-back { display:inline-flex;align-items:center;gap:0.4rem;color:rgba(255,255,255,0.45);text-decoration:none;font-size:0.88rem;padding:0.4rem 0.75rem;border-radius:8px;border:1px solid rgba(255,255,255,0.1);transition:all 0.2s;margin-bottom:2rem; }
+        .btn-back:hover { color:#fff;border-color:rgba(255,255,255,0.3); }
+        .page-title { font-family:'Sora',sans-serif;font-size:1.6rem;font-weight:800;margin-bottom:0.25rem; }
+        .page-sub { color:rgba(255,255,255,0.4);font-size:0.88rem;margin-bottom:2rem; }
+        .form-card { background:var(--navy-card);border:1px solid var(--border);border-radius:16px;padding:2rem; }
+        .section-label { font-family:'Sora',sans-serif;font-size:0.72rem;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.1em;margin:1.5rem 0 1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border); }
+        .section-label:first-of-type { margin-top:0; }
+        .form-label { font-family:'Sora',sans-serif;font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:0.5rem; }
+        .form-control, .form-select { background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;border-radius:10px;padding:0.75rem 1rem;font-size:0.9rem;transition:all 0.2s; }
+        .form-control:focus, .form-select:focus { background:rgba(255,255,255,0.08);border-color:var(--saffron);color:#fff;box-shadow:0 0 0 3px rgba(255,107,0,0.15);outline:none; }
+        .form-control option, .form-select option { background:var(--navy-mid);color:#fff; }
+        .form-control::placeholder { color:rgba(255,255,255,0.25); }
+        .error-text { font-size:0.8rem;color:#f87171;margin-top:0.35rem; }
+        .locked-field { background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:0.75rem 1rem;font-size:0.9rem;color:rgba(255,255,255,0.3); }
+        .locked-label { display:flex;align-items:center;gap:0.4rem;margin-bottom:0.5rem; }
+        .locked-label i { font-size:0.75rem;color:rgba(255,255,255,0.25); }
+        .info-box { background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.2);border-radius:10px;padding:0.85rem 1rem;font-size:0.83rem;color:rgba(245,166,35,0.85);display:flex;gap:0.6rem;align-items:flex-start;margin-bottom:1.5rem; }
+        .info-box i { flex-shrink:0;margin-top:0.1rem; }
+        .btn-save { display:flex;align-items:center;justify-content:center;gap:0.6rem;width:100%;padding:0.9rem;background:var(--saffron);color:#fff;border:none;border-radius:12px;font-family:'Sora',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;transition:all 0.2s;margin-top:1.5rem; }
+        .btn-save:hover { background:var(--saffron-light);transform:translateY(-1px);box-shadow:0 6px 20px rgba(255,107,0,0.3); }
+        .flash-alert { border-radius:10px;padding:0.75rem 1rem;font-size:0.88rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between; }
+        .flash-alert.success { background:rgba(19,136,8,0.1);border:1px solid rgba(19,136,8,0.25);color:#6ee75f; }
+        .flash-alert.error   { background:rgba(220,53,69,0.1);border:1px solid rgba(220,53,69,0.25);color:#f87171; }
+        @media(max-width:768px){.sidebar{display:none;}.main{margin-left:0;padding:1.5rem 1rem;}}
+    </style>
+</head>
+<body>
+<nav class="sidebar">
+    <a href="{% url 'home' %}" class="sidebar-logo"><div class="logo-dot">🇮🇳</div>BenefitBridge</a>
+    <a href="{% url 'dashboard' %}" class="nav-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+    <a href="{% url 'categories' %}" class="nav-item"><i class="bi bi-search"></i> Search Schemes</a>
+    <a href="{% url 'my_applications' %}" class="nav-item"><i class="bi bi-file-earmark-check"></i> My Applications</a>
+    <a href="{% url 'my_grievances' %}" class="nav-item"><i class="bi bi-exclamation-circle"></i> My Grievances</a>
+    <a href="{% url 'edit_profile' %}" class="nav-item active"><i class="bi bi-person-gear"></i> Edit Profile</a>
+    <div class="nav-spacer"></div>
+    <div class="user-chip">
+        <div class="name">{{ user.name }}</div>
+        <div class="email">{{ user.email }}</div>
+        <a href="{% url 'logout' %}" class="nav-item mt-2" style="padding:0.4rem 0;color:rgba(248,113,113,0.6);"><i class="bi bi-box-arrow-right"></i> Sign out</a>
+    </div>
+</nav>
+
+<main class="main">
+    <div class="form-wrap">
+        <a href="{% url 'dashboard' %}" class="btn-back"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+
+        <h1 class="page-title"><i class="bi bi-person-gear me-2" style="color:var(--saffron);"></i>Edit Profile</h1>
+        <p class="page-sub">Update your personal details. Eligibility will be automatically recalculated after saving.</p>
+
+        {% if messages %}
+            {% for message in messages %}
+            <div class="flash-alert {% if message.tags == 'error' %}error{% else %}success{% endif %}">
+                <span><i class="bi bi-{% if message.tags == 'error' %}exclamation-circle{% else %}check-circle{% endif %}-fill me-2"></i>{{ message }}</span>
+                <button onclick="this.parentElement.remove()" style="background:none;border:none;color:inherit;cursor:pointer;">×</button>
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="info-box">
+            <i class="bi bi-info-circle-fill"></i>
+            Aadhaar number and email cannot be changed. Contact support if you need to update these.
+        </div>
+
+        <div class="form-card">
+            <!-- Locked fields -->
+            <p class="section-label"><i class="bi bi-lock-fill me-1"></i>Locked Fields</p>
+            <div class="row g-3 mb-2">
+                <div class="col-md-6">
+                    <div class="locked-label"><label class="form-label mb-0">Email</label><i class="bi bi-lock-fill"></i></div>
+                    <div class="locked-field">{{ user.email|default:"—" }}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="locked-label"><label class="form-label mb-0">Aadhaar No.</label><i class="bi bi-lock-fill"></i></div>
+                    <div class="locked-field">{{ user.aadhaar_no }}</div>
+                </div>
+            </div>
+
+            <!-- Editable fields -->
+            <p class="section-label"><i class="bi bi-pencil-fill me-1"></i>Editable Details</p>
+            <form method="POST" novalidate>
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label">Full Name <span style="color:var(--saffron);">*</span></label>
+                        {{ form.name }}
+                        {% for e in form.name.errors %}<div class="error-text"><i class="bi bi-exclamation-circle me-1"></i>{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Date of Birth <span style="color:var(--saffron);">*</span></label>
+                        {{ form.dob }}
+                        {% for e in form.dob.errors %}<div class="error-text"><i class="bi bi-exclamation-circle me-1"></i>{{ e }}</div>{% endfor %}
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Gender</label>
+                        {{ form.gender }}
+                        {% for e in form.gender.errors %}<div class="error-text"><i class="bi bi-exclamation-circle me-1"></i>{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Phone</label>
+                        {{ form.phone }}
+                        {% for e in form.phone.errors %}<div class="error-text"><i class="bi bi-exclamation-circle me-1"></i>{{ e }}</div>{% endfor %}
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Address</label>
+                        {{ form.address }}
+                        {% for e in form.address.errors %}<div class="error-text"><i class="bi bi-exclamation-circle me-1"></i>{{ e }}</div>{% endfor %}
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Annual Income (₹)</label>
+                        {{ form.income }}
+                        {% for e in form.income.errors %}<div class="error-text"><i class="bi bi-exclamation-circle me-1"></i>{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Occupation</label>
+                        {{ form.occupation }}
+                        {% for e in form.occupation.errors %}<div class="error-text"><i class="bi bi-exclamation-circle me-1"></i>{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Education</label>
+                        {{ form.education }}
+                        {% for e in form.education.errors %}<div class="error-text"><i class="bi bi-exclamation-circle me-1"></i>{{ e }}</div>{% endfor %}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-save">
+                    <i class="bi bi-floppy-fill"></i> Save Changes & Recalculate Eligibility
+                </button>
+            </form>
+        </div>
+    </div>
+</main>
+</body>
+</html>

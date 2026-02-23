@@ -59,7 +59,7 @@ class Scheme(models.Model):
     eligibility_rules = models.JSONField(default=dict, blank=True, null=True)
     benefits = models.TextField(blank=True, null=True)
     official_link = models.URLField(max_length=500, blank=True, null=True)
-    registration_link = models.URLField(max_length=500, blank=True, null=True)  # ← NEW
+    registration_link = models.URLField(max_length=500, blank=True, null=True)
     benefit_type = models.CharField(max_length=100, blank=True, null=True)
     state = models.CharField(max_length=100, blank=True, null=True)
 
@@ -116,3 +116,50 @@ class RuleEngine(models.Model):
     class Meta:
         managed = False
         db_table = 'Rule_Engine'
+
+
+# ── NEW MODELS ─────────────────────────────────────────────────────────────
+
+class Application(models.Model):
+    STATUS_CHOICES = [
+        ('Pending',  'Pending'),
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
+        ('Withdrawn', 'Withdrawn'),
+    ]
+    app_id     = models.AutoField(primary_key=True)
+    user       = models.ForeignKey(CustomUser, on_delete=models.CASCADE, db_column='user_id')
+    scheme     = models.ForeignKey(Scheme, on_delete=models.CASCADE, db_column='scheme_id')
+    status     = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pending')
+    remarks    = models.TextField(blank=True, null=True)
+    applied_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = False          # table already exists in MySQL (created by schema.py)
+        db_table = 'Applications'
+
+    def __str__(self):
+        return f"BB-{self.app_id} | {self.user.name} → {self.scheme.scheme_name}"
+
+
+class Grievance(models.Model):
+    STATUS_CHOICES = [
+        ('Open',     'Open'),
+        ('Resolved', 'Resolved'),
+    ]
+    grievance_id = models.AutoField(primary_key=True)
+    user         = models.ForeignKey(CustomUser, on_delete=models.CASCADE, db_column='user_id')
+    scheme       = models.ForeignKey(Scheme, on_delete=models.CASCADE,
+                                     db_column='scheme_id', blank=True, null=True)
+    complaint    = models.TextField()
+    status       = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Open')
+    admin_remark = models.TextField(blank=True, null=True)
+    raised_on    = models.DateTimeField(auto_now_add=True)
+    resolved_on  = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        managed = False          # table already exists in MySQL (created by schema.py)
+        db_table = 'Grievances'
+
+    def __str__(self):
+        return f"GRV-{self.grievance_id} | {self.user.name} ({self.status})"
