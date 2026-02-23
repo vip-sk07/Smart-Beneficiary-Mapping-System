@@ -8,27 +8,22 @@ django.setup()
 
 from django.test import RequestFactory
 from django.urls import reverse
-from core.views import dashboard
-from core.models import CustomUser
+from core.views import my_grievances
 from django.contrib.auth.models import User
 
 try:
     factory = RequestFactory()
-    request = factory.get('/dashboard/')
-    
+    request = factory.get('/my-grievances/')
     user = User.objects.first()
     request.user = user
     request.session = {}
-    
     from django.contrib.messages.storage.fallback import FallbackStorage
     setattr(request, 'session', 'session')
     messages = FallbackStorage(request)
     setattr(request, '_messages', messages)
 
-    print("Got user:", user)
-    response = dashboard(request)
+    response = my_grievances(request)
     print("Response status:", response.status_code)
 except Exception as e:
     import traceback
     traceback.print_exc()
-
