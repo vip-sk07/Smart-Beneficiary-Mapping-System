@@ -930,13 +930,13 @@
                 <select name="state">
                     <option value="">All States</option>
                     {% for s in states %}
-                    <option value="{{ s }}" {% if filter_state==s %}selected{% endif %}>{{ s }}</option>
+                    <option value="{{ s }}" {% if filter_state == s %}selected{% endif %}>{{ s }}</option>
                     {% endfor %}
                 </select>
                 <select name="type">
                     <option value="">All Types</option>
                     {% for t in benefit_types %}
-                    <option value="{{ t }}" {% if filter_type==t %}selected{% endif %}>{{ t }}</option>
+                    <option value="{{ t }}" {% if filter_type == t %}selected{% endif %}>{{ t }}</option>
                     {% endfor %}
                 </select>
                 <button type="submit" class="btn-filter"><i class="bi bi-funnel me-1"></i>Filter</button>

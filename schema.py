@@ -5,6 +5,11 @@ Usage: python schema.py
 """
 import os
 import mysql.connector
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 # Read from environment variables (Railway) or fall back to localhost
 db = mysql.connector.connect(
