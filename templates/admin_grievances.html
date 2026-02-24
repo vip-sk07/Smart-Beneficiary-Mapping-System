@@ -1,603 +1,175 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
+{% load static %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Grievances — BenefitBridge Admin</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
-        rel="stylesheet">
-    <style>
-        :root {
-            --saffron: #FF6B00;
-            --saffron-light: #FF8C38;
-            --navy: #0A1628;
-            --navy-mid: #162035;
-            --navy-card: #1C2A40;
-            --gold: #F5A623;
-            --india-green: #138808;
-            --border: rgba(255, 255, 255, 0.08);
-        }
+{% block title %}Manage Grievances — BenefitBridge Admin{% endblock %}
 
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--navy);
-            color: #fff;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 220px;
-            background: var(--navy-mid);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            padding: 1.5rem 1rem;
-            z-index: 100;
-        }
-
-        .sidebar-logo {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            font-family: 'Sora', sans-serif;
-            font-weight: 700;
-            color: #fff;
-            text-decoration: none;
-            margin-bottom: 2.5rem;
-            padding: 0 0.5rem;
-        }
-
-        .logo-dot {
-            width: 30px;
-            height: 30px;
-            border-radius: 8px;
-            background: linear-gradient(135deg, var(--saffron), var(--gold));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-            padding: 0.65rem 0.75rem;
-            border-radius: 10px;
-            color: rgba(255, 255, 255, 0.5);
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-            margin-bottom: 0.25rem;
-        }
-
-        .nav-item:hover,
-        .nav-item.active {
-            background: rgba(255, 107, 0, 0.1);
-            color: #fff;
-        }
-
-        .nav-item.active {
-            color: var(--saffron-light);
-        }
-
-        .nav-item i {
-            font-size: 1rem;
-            width: 18px;
-        }
-
-        .nav-spacer {
-            flex: 1;
-        }
-
-        .main {
-            margin-left: 220px;
-            padding: 2rem 2.5rem;
-            min-height: 100vh;
-        }
-
-        .page-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .page-title {
-            font-family: 'Sora', sans-serif;
-            font-size: 1.6rem;
-            font-weight: 800;
-        }
-
-        .page-sub {
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 0.88rem;
-            margin-top: 0.25rem;
-        }
-
-        /* KPI bar */
-        .kpi-bar {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .kpi-card {
-            background: var(--navy-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            flex: 1;
-            min-width: 140px;
-        }
-
-        .kpi-num {
-            font-family: 'Sora', sans-serif;
-            font-size: 1.75rem;
-            font-weight: 800;
-        }
-
-        .kpi-label {
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.35);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            margin-top: 0.15rem;
-        }
-
-        /* Filter tabs */
-        .filter-tabs {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .filter-tab {
-            padding: 0.4rem 1rem;
-            border-radius: 8px;
-            font-size: 0.83rem;
-            font-weight: 600;
-            text-decoration: none;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.45);
-            transition: all 0.2s;
-        }
-
-        .filter-tab:hover {
-            color: #fff;
-            border-color: rgba(255, 255, 255, 0.25);
-        }
-
-        .filter-tab.active {
-            background: var(--saffron);
-            border-color: var(--saffron);
-            color: #fff;
-        }
-
-        /* Table */
-        .table-wrap {
-            background: var(--navy-card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            overflow: hidden;
-        }
-
-        .grv-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .grv-table th {
-            font-family: 'Sora', sans-serif;
-            font-size: 0.72rem;
-            font-weight: 700;
-            color: rgba(255, 255, 255, 0.35);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            padding: 1rem 1.25rem;
-            border-bottom: 1px solid var(--border);
-            text-align: left;
-        }
-
-        .grv-table td {
-            padding: 0.85rem 1.25rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.75);
-            vertical-align: top;
-        }
-
-        .grv-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .grv-table tr:hover td {
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        .grv-id {
-            font-family: monospace;
-            font-weight: 700;
-            color: var(--saffron-light);
-        }
-
-        .user-name {
-            font-weight: 600;
-            color: #fff;
-        }
-
-        .scheme-name {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.5);
-            margin-top: 0.1rem;
-        }
-
-        .complaint-preview {
-            max-width: 260px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.82rem;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 0.22rem 0.7rem;
-            border-radius: 100px;
-            font-size: 0.72rem;
-            font-weight: 700;
-        }
-
-        .status-open {
-            background: rgba(255, 107, 0, 0.15);
-            color: var(--saffron-light);
-            border: 1px solid rgba(255, 107, 0, 0.25);
-        }
-
-        .status-resolved {
-            background: rgba(19, 136, 8, 0.15);
-            color: #6ee75f;
-            border: 1px solid rgba(19, 136, 8, 0.25);
-        }
-
-        .btn-resolve {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            padding: 0.35rem 0.75rem;
-            background: rgba(19, 136, 8, 0.15);
-            border: 1px solid rgba(19, 136, 8, 0.3);
-            color: #6ee75f;
-            border-radius: 8px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-resolve:hover {
-            background: rgba(19, 136, 8, 0.25);
-        }
-
-        .empty-state {
-            padding: 3rem 2rem;
-            text-align: center;
-            color: rgba(255, 255, 255, 0.3);
-        }
-
-        .flash-alert {
-            border-radius: 10px;
-            padding: 0.75rem 1rem;
-            font-size: 0.88rem;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .flash-alert.success {
-            background: rgba(19, 136, 8, 0.1);
-            border: 1px solid rgba(19, 136, 8, 0.25);
-            color: #6ee75f;
-        }
-
-        .flash-alert.error {
-            background: rgba(220, 53, 69, 0.1);
-            border: 1px solid rgba(220, 53, 69, 0.25);
-            color: #f87171;
-        }
-
-        /* Resolve Modal */
-        .modal-backdrop-custom {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.65);
-            z-index: 200;
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-backdrop-custom.show {
-            display: flex;
-        }
-
-        .modal-box {
-            background: var(--navy-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 2rem;
-            width: 100%;
-            max-width: 480px;
-        }
-
-        .modal-title {
-            font-family: 'Sora', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-bottom: 0.25rem;
-        }
-
-        .modal-sub {
-            font-size: 0.82rem;
-            color: rgba(255, 255, 255, 0.4);
-            margin-bottom: 1.25rem;
-        }
-
-        .modal-textarea {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #fff;
-            border-radius: 10px;
-            padding: 0.75rem 1rem;
-            font-size: 0.9rem;
-            resize: vertical;
-            min-height: 100px;
-            font-family: 'DM Sans', sans-serif;
-        }
-
-        .modal-textarea:focus {
-            border-color: var(--india-green);
-            outline: none;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 0.75rem;
-            margin-top: 1rem;
-        }
-
-        .btn-confirm {
-            flex: 1;
-            padding: 0.7rem;
-            background: var(--india-green);
-            border: none;
-            border-radius: 10px;
-            color: #fff;
-            font-family: 'Sora', sans-serif;
-            font-weight: 700;
-            font-size: 0.88rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-confirm:hover {
-            background: #0fa306;
-        }
-
-        .btn-cancel {
-            flex: 1;
-            padding: 0.7rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            color: rgba(255, 255, 255, 0.5);
-            font-family: 'Sora', sans-serif;
-            font-weight: 600;
-            font-size: 0.88rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-cancel:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: #fff;
-        }
-
-        .admin-remark-cell {
-            font-size: 0.78rem;
-            color: rgba(255, 255, 255, 0.4);
-            font-style: italic;
-        }
-
-        @media(max-width:768px) {
-            .sidebar {
-                display: none;
-            }
-
-            .main {
-                margin-left: 0;
-                padding: 1.5rem 1rem;
-            }
-        }
-    </style>
-</head>
-
-<body>
-    <nav class="sidebar">
-        <a href="{% url 'home' %}" class="sidebar-logo">
-            <div class="logo-dot">🇮🇳</div>BenefitBridge
+{% block content %}
+<div class="mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+            <h1 class="h3 fw-bold mb-1 text-dark">
+                <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Manage Grievances
+            </h1>
+            <p class="text-muted mb-0">Review and resolve user-submitted grievances</p>
+        </div>
+        <a href="{% url 'admin_stats' %}" class="btn btn-outline-secondary btn-sm px-3 rounded-pill fw-bold">
+            <i class="bi bi-bar-chart-fill me-1"></i> Governance Dashboard
         </a>
-        <a href="{% url 'dashboard' %}" class="nav-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
-        <a href="{% url 'admin_stats' %}" class="nav-item"><i class="bi bi-bar-chart-line"></i> Admin Stats</a>
-        <a href="{% url 'admin_grievances' %}" class="nav-item active"><i class="bi bi-exclamation-triangle"></i>
-            Grievances</a>
-        <div class="nav-spacer"></div>
-        <a href="{% url 'logout' %}" class="nav-item" style="color:rgba(248,113,113,0.6);"><i
-                class="bi bi-box-arrow-right"></i> Sign out</a>
-    </nav>
+    </div>
+</div>
 
-    <main class="main">
-        {% if messages %}
-        {% for message in messages %}
-        <div class="flash-alert {% if message.tags == 'error' %}error{% else %}success{% endif %}">
-            <span><i
-                    class="bi bi-{% if message.tags == 'error' %}exclamation-circle{% else %}check-circle{% endif %}-fill me-2"></i>{{
-                message }}</span>
-            <button onclick="this.parentElement.remove()"
-                style="background:none;border:none;color:inherit;cursor:pointer;">×</button>
-        </div>
-        {% endfor %}
-        {% endif %}
-
-        <div class="page-header">
-            <div>
-                <h1 class="page-title"><i class="bi bi-exclamation-triangle me-2"
-                        style="color:var(--saffron);"></i>Manage Grievances</h1>
-                <p class="page-sub">Review and resolve all user-submitted grievances</p>
-            </div>
-            <a href="{% url 'admin_stats' %}"
-                style="display:inline-flex;align-items:center;gap:0.4rem;color:rgba(255,255,255,0.4);text-decoration:none;font-size:0.85rem;padding:0.4rem 0.75rem;border-radius:8px;border:1px solid rgba(255,255,255,0.1);">
-                <i class="bi bi-arrow-left"></i> Back to Stats
-            </a>
-        </div>
-
-        <!-- KPI bar -->
-        <div class="kpi-bar">
-            <div class="kpi-card">
-                <div class="kpi-num" style="color:var(--saffron-light);">{{ open_count }}</div>
-                <div class="kpi-label">Open Grievances</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-num" style="color:#6ee75f;">{{ resolved_count }}</div>
-                <div class="kpi-label">Resolved</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-num">{{ open_count|add:resolved_count }}</div>
-                <div class="kpi-label">Total</div>
-            </div>
-        </div>
-
-        <!-- Filter tabs -->
-        <div class="filter-tabs">
-            <a href="?status=Open" class="filter-tab {% if status_filter == 'Open' %}active{% endif %}"><i
-                    class="bi bi-hourglass-split me-1"></i>Open ({{ open_count }})</a>
-            <a href="?status=Resolved" class="filter-tab {% if status_filter == 'Resolved' %}active{% endif %}"><i
-                    class="bi bi-check-circle me-1"></i>Resolved ({{ resolved_count }})</a>
-            <a href="?status=All" class="filter-tab {% if status_filter == 'All' %}active{% endif %}"><i
-                    class="bi bi-list-ul me-1"></i>All</a>
-        </div>
-
-        <div class="table-wrap">
-            {% if grievances %}
-            <table class="grv-table">
-                <thead>
-                    <tr>
-                        <th>GRV ID</th>
-                        <th>User</th>
-                        <th>Scheme</th>
-                        <th>Complaint</th>
-                        <th>Status</th>
-                        <th>Raised On</th>
-                        <th>Action / Remark</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for g in grievances %}
-                    <tr>
-                        <td><span class="grv-id">GRV-{{ g.grievance_id }}</span></td>
-                        <td>
-                            <div class="user-name">{{ g.user.name }}</div>
-                            <div class="scheme-name">{{ g.user.email }}</div>
-                        </td>
-                        <td style="font-size:0.82rem;">{{ g.scheme.scheme_name|default:"General"|truncatechars:30 }}
-                        </td>
-                        <td>
-                            <div class="complaint-preview" title="{{ g.complaint }}">{{ g.complaint }}</div>
-                        </td>
-                        <td>
-                            {% if g.status == 'Resolved' %}
-                            <span class="status-badge status-resolved"><i
-                                    class="bi bi-check-circle-fill me-1"></i>Resolved</span>
-                            {% else %}
-                            <span class="status-badge status-open"><i class="bi bi-hourglass-split me-1"></i>Open</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ g.raised_on|date:"d M Y" }}</td>
-                        <td>
-                            {% if g.status == 'Open' %}
-                            <button class="btn-resolve"
-                                onclick="openModal({{ g.grievance_id }}, '{{ g.user.name|escapejs }}', '{{ g.scheme.scheme_name|default:'General'|escapejs }}')">
-                                <i class="bi bi-check-lg"></i> Resolve
-                            </button>
-                            {% else %}
-                            <span class="admin-remark-cell">{{ g.admin_remark|default:"Resolved"|truncatechars:40
-                                }}</span>
-                            {% if g.resolved_on %}<div
-                                style="font-size:0.75rem;color:rgba(255,255,255,0.25);margin-top:0.2rem;">{{
-                                g.resolved_on|date:"d M Y" }}</div>{% endif %}
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <div class="empty-state">
-                <i class="bi bi-emoji-smile" style="font-size:2.5rem;display:block;margin-bottom:1rem;"></i>
-                <p>No grievances in this category.</p>
-            </div>
-            {% endif %}
-        </div>
-    </main>
-
-    <!-- Resolve Modal -->
-    <div class="modal-backdrop-custom" id="resolveModal">
-        <div class="modal-box">
-            <div class="modal-title"><i class="bi bi-check-circle me-2" style="color:#6ee75f;"></i>Resolve Grievance
-            </div>
-            <div class="modal-sub" id="modalSub">Enter your resolution remark for this grievance.</div>
-            <form id="resolveForm" method="POST" action="">
-                {% csrf_token %}
-                <textarea name="admin_remark" class="modal-textarea" placeholder="Enter resolution remark (optional)..."
-                    id="remarkTextarea"></textarea>
-                <div class="modal-actions">
-                    <button type="submit" class="btn-confirm"><i class="bi bi-check-lg me-1"></i>Mark as
-                        Resolved</button>
-                    <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
-                </div>
-            </form>
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="bb-card p-4 border-top border-4 border-warning h-100">
+            <h3 class="fw-bold mb-1 text-dark">{{ open_count }}</h3>
+            <p class="text-muted small fw-semibold text-uppercase m-0">Open Grievances</p>
         </div>
     </div>
+    <div class="col-md-4">
+        <div class="bb-card p-4 border-top border-4 border-success h-100">
+            <h3 class="fw-bold mb-1 text-dark">{{ resolved_count }}</h3>
+            <p class="text-muted small fw-semibold text-uppercase m-0">Resolved</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="bb-card p-4 border-top border-4 border-primary h-100">
+            <h3 class="fw-bold mb-1 text-dark">{{ open_count|add:resolved_count }}</h3>
+            <p class="text-muted small fw-semibold text-uppercase m-0">Total</p>
+        </div>
+    </div>
+</div>
 
-    <script>
-        function openModal(grvId, userName, schemeName) {
-            document.getElementById('resolveForm').action = '/admin/grievances/' + grvId + '/resolve/';
-            document.getElementById('modalSub').textContent =
-                'Resolving GRV-' + grvId + ' for ' + userName + ' (' + schemeName + ')';
-            document.getElementById('remarkTextarea').value = '';
-            document.getElementById('resolveModal').classList.add('show');
-        }
-        function closeModal() {
-            document.getElementById('resolveModal').classList.remove('show');
-        }
-        document.getElementById('resolveModal').addEventListener('click', function (e) {
-            if (e.target === this) closeModal();
-        });
-    </script>
-</body>
+<!-- Filter Tabs -->
+<div class="d-flex gap-2 mb-4 overflow-auto pb-2" style="scrollbar-width: none;">
+    <a href="?status=Open" class="btn {% if status_filter == 'Open' %}btn-primary shadow-sm{% else %}btn-outline-secondary border-opacity-25{% endif %} rounded-pill px-4 fw-semibold border-2" style="white-space: nowrap;">
+        <i class="bi bi-hourglass-split me-1"></i> Open ({{ open_count }})
+    </a>
+    <a href="?status=Resolved" class="btn {% if status_filter == 'Resolved' %}btn-success text-white shadow-sm{% else %}btn-outline-secondary border-opacity-25{% endif %} rounded-pill px-4 fw-semibold border-2" style="white-space: nowrap;">
+        <i class="bi bi-check-circle-fill me-1"></i> Resolved ({{ resolved_count }})
+    </a>
+    <a href="?status=All" class="btn {% if status_filter == 'All' %}btn-dark text-white shadow-sm{% else %}btn-outline-secondary border-opacity-25{% endif %} rounded-pill px-4 fw-semibold border-2" style="white-space: nowrap;">
+        <i class="bi bi-list-ul me-1"></i> All
+    </a>
+</div>
 
-</html>
+<div class="bb-card p-0 overflow-hidden mb-5 border-top border-4 border-dark">
+    {% if grievances %}
+    <div class="table-responsive">
+        <table class="table bb-table table-hover align-middle m-0">
+            <thead class="bg-light border-bottom">
+                <tr>
+                    <th scope="col" class="py-3 px-4 text-muted small fw-bold text-uppercase border-0">GRV ID</th>
+                    <th scope="col" class="py-3 px-4 text-muted small fw-bold text-uppercase border-0">User Profile</th>
+                    <th scope="col" class="py-3 px-4 text-muted small fw-bold text-uppercase border-0">Scheme</th>
+                    <th scope="col" class="py-3 px-4 text-muted small fw-bold text-uppercase border-0" style="min-width: 250px;">Complaint Details</th>
+                    <th scope="col" class="py-3 px-4 text-muted small fw-bold text-uppercase border-0 text-nowrap">Status</th>
+                    <th scope="col" class="py-3 px-4 text-muted small fw-bold text-uppercase border-0 text-nowrap">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for g in grievances %}
+                <tr>
+                    <td class="px-4 py-3">
+                        <span class="font-monospace fw-bold text-accent">GRV-{{ g.grievance_id }}</span>
+                        <div class="text-muted mt-1" style="font-size: 0.75rem;">{{ g.raised_on|date:"d M Y" }}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="fw-bold text-dark">{{ g.user.name }}</div>
+                        <div class="text-muted" style="font-size: 0.8rem;">{{ g.user.email }}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="bb-tag">{{ g.scheme.scheme_name|default:"General Issue"|truncatechars:35 }}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="text-muted small ps-2 border-start border-3 border-warning border-opacity-50" style="line-height: 1.5; font-style: italic;">
+                            "{{ g.complaint }}"
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-nowrap">
+                        {% if g.status == 'Resolved' %}
+                        <span class="bb-badge bb-badge-success"><i class="bi bi-check-circle-fill me-1"></i>Resolved</span>
+                        {% else %}
+                        <span class="bb-badge bb-badge-warning"><i class="bi bi-hourglass-split me-1"></i>Open</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-end text-nowrap">
+                        {% if g.status == 'Open' %}
+                        <button class="btn btn-sm btn-success text-white fw-bold rounded-pill px-3 shadow-sm" onclick="openModal({{ g.grievance_id }}, '{{ g.user.name|escapejs }}', '{{ g.scheme.scheme_name|default:'General'|escapejs }}')">
+                            <i class="bi bi-check-lg me-1"></i> Resolve
+                        </button>
+                        {% else %}
+                        <div class="text-success small fw-medium pb-1 d-inline-block border-bottom border-success border-opacity-25 border-1 text-wrap text-start mt-2" style="max-width: 180px;">
+                            {{ g.admin_remark|default:"Resolved"|truncatechars:40 }}
+                        </div>
+                        {% if g.resolved_on %}
+                        <div class="text-muted mt-1" style="font-size: 0.7rem;">{{ g.resolved_on|date:"d M Y" }}</div>
+                        {% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center p-5">
+        <div class="display-3 text-muted mb-3"><i class="bi bi-emoji-smile"></i></div>
+        <h5 class="fw-bold text-dark">Inbox Zero!</h5>
+        <p class="text-muted mb-0">No grievances found matching this filter.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Resolve Modal Overlay (Native HTML/Vanilla JS) -->
+<div class="modal fade" id="resolveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden bb-card">
+            <div class="modal-header bg-light border-bottom p-4">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-check-circle-fill text-success me-2"></i>Resolve Grievance</h5>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted small fw-semibold mb-3" id="modalSub">Enter your resolution remark for this grievance.</p>
+                <form id="resolveForm" method="POST" action="">
+                    {% csrf_token %}
+                    <label class="form-label fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">Admin Remark</label>
+                    <textarea name="admin_remark" class="form-control shadow-none border-2" placeholder="Enter resolution remark (optional)..." id="remarkTextarea" rows="4"></textarea>
+                    
+                    <div class="d-flex gap-2 mt-4 pt-2">
+                        <button type="button" class="btn btn-outline-secondary fw-bold rounded-pill w-50" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success text-white fw-bold rounded-pill w-50 shadow-sm"><i class="bi bi-check-lg me-1"></i> Mark Resolved</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let resolveModalInstance = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize Bootstrap modal if available
+        if (typeof bootstrap !== 'undefined') {
+            resolveModalInstance = new bootstrap.Modal(document.getElementById('resolveModal'));
+        }
+    });
+
+    function openModal(grvId, userName, schemeName) {
+        document.getElementById('resolveForm').action = '/admin/grievances/' + grvId + '/resolve/';
+        document.getElementById('modalSub').innerHTML = `Resolving <span class="fw-bold text-dark">GRV-${grvId}</span> for <span class="text-primary fw-medium">${userName}</span> (${schemeName})`;
+        document.getElementById('remarkTextarea').value = '';
+        
+        if (resolveModalInstance) {
+            resolveModalInstance.show();
+        } else {
+            console.error("Bootstrap modal is not initialized.");
+            // Fallback for vanilla functionality if required
+        }
+    }
+</script>
+{% endblock %}

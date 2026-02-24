@@ -1,439 +1,118 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
+{% load static %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Applications — BenefitBridge</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
-        rel="stylesheet">
-    <style>
-        :root {
-            --saffron: #FF6B00;
-            --saffron-light: #FF8C38;
-            --navy: #0A1628;
-            --navy-mid: #162035;
-            --navy-card: #1C2A40;
-            --gold: #F5A623;
-            --india-green: #138808;
-            --border: rgba(255, 255, 255, 0.08);
-        }
+{% block title %}My Applications — BenefitBridge{% endblock %}
 
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--navy);
-            color: #fff;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 220px;
-            background: var(--navy-mid);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            padding: 1.5rem 1rem;
-            z-index: 100;
-        }
-
-        .sidebar-logo {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            font-family: 'Sora', sans-serif;
-            font-weight: 700;
-            color: #fff;
-            text-decoration: none;
-            margin-bottom: 2.5rem;
-            padding: 0 0.5rem;
-        }
-
-        .logo-dot {
-            width: 30px;
-            height: 30px;
-            border-radius: 8px;
-            background: linear-gradient(135deg, var(--saffron), var(--gold));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-            padding: 0.65rem 0.75rem;
-            border-radius: 10px;
-            color: rgba(255, 255, 255, 0.5);
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-            margin-bottom: 0.25rem;
-        }
-
-        .nav-item:hover,
-        .nav-item.active {
-            background: rgba(255, 107, 0, 0.1);
-            color: #fff;
-        }
-
-        .nav-item.active {
-            color: var(--saffron-light);
-        }
-
-        .nav-item i {
-            font-size: 1rem;
-            width: 18px;
-        }
-
-        .nav-spacer {
-            flex: 1;
-        }
-
-        .user-chip {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 0.75rem;
-        }
-
-        .user-chip .name {
-            font-size: 0.88rem;
-            font-weight: 600;
-            color: #fff;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .user-chip .email {
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.35);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .main {
-            margin-left: 220px;
-            padding: 2rem 2.5rem;
-            min-height: 100vh;
-        }
-
-        .page-header {
-            margin-bottom: 2rem;
-        }
-
-        .page-title {
-            font-family: 'Sora', sans-serif;
-            font-size: 1.6rem;
-            font-weight: 800;
-        }
-
-        .page-sub {
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 0.88rem;
-            margin-top: 0.25rem;
-        }
-
-        /* KPI bar */
-        .kpi-bar {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .kpi-card {
-            background: var(--navy-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            flex: 1;
-            min-width: 140px;
-        }
-
-        .kpi-num {
-            font-family: 'Sora', sans-serif;
-            font-size: 1.75rem;
-            font-weight: 800;
-        }
-
-        .kpi-label {
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.35);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            margin-top: 0.15rem;
-        }
-
-        /* Table */
-        .table-wrap {
-            background: var(--navy-card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            overflow: hidden;
-        }
-
-        .app-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .app-table th {
-            font-family: 'Sora', sans-serif;
-            font-size: 0.72rem;
-            font-weight: 700;
-            color: rgba(255, 255, 255, 0.35);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            padding: 1rem 1.25rem;
-            border-bottom: 1px solid var(--border);
-            text-align: left;
-        }
-
-        .app-table td {
-            padding: 1rem 1.25rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            font-size: 0.88rem;
-            color: rgba(255, 255, 255, 0.75);
-            vertical-align: middle;
-        }
-
-        .app-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .app-table tr:hover td {
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        .ref-id {
-            font-family: monospace;
-            font-weight: 700;
-            color: var(--gold);
-            font-size: 0.9rem;
-        }
-
-        .scheme-link {
-            color: #fff;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .scheme-link:hover {
-            color: var(--saffron-light);
-        }
-
-        .cat-tag {
-            font-size: 0.72rem;
-            padding: 0.15rem 0.5rem;
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 0.22rem 0.7rem;
-            border-radius: 100px;
-            font-size: 0.72rem;
-            font-weight: 700;
-        }
-
-        .status-pending {
-            background: rgba(245, 166, 35, 0.15);
-            color: var(--gold);
-            border: 1px solid rgba(245, 166, 35, 0.25);
-        }
-
-        .status-approved {
-            background: rgba(19, 136, 8, 0.15);
-            color: #6ee75f;
-            border: 1px solid rgba(19, 136, 8, 0.25);
-        }
-
-        .status-rejected {
-            background: rgba(220, 53, 69, 0.15);
-            color: #f87171;
-            border: 1px solid rgba(220, 53, 69, 0.25);
-        }
-
-        .empty-state {
-            padding: 3rem 2rem;
-            text-align: center;
-            color: rgba(255, 255, 255, 0.3);
-        }
-
-        .empty-state a {
-            color: var(--saffron-light);
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .btn-back {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            color: rgba(255, 255, 255, 0.45);
-            text-decoration: none;
-            font-size: 0.88rem;
-            padding: 0.4rem 0.75rem;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.2s;
-            margin-bottom: 1.5rem;
-        }
-
-        .btn-back:hover {
-            color: #fff;
-            border-color: rgba(255, 255, 255, 0.3);
-        }
-
-        @media(max-width:768px) {
-            .sidebar {
-                display: none;
-            }
-
-            .main {
-                margin-left: 0;
-                padding: 1.5rem 1rem;
-            }
-        }
-    </style>
-</head>
-
-<body>
-    <nav class="sidebar">
-        <a href="{% url 'home' %}" class="sidebar-logo">
-            <div class="logo-dot">🇮🇳</div>BenefitBridge
+{% block content %}
+<div class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div>
+        <a href="{% url 'dashboard' %}" class="btn btn-link text-decoration-none p-0 mb-2 text-muted fw-semibold" style="font-size: 0.85rem;">
+            <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
         </a>
-        <a href="{% url 'dashboard' %}" class="nav-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
-        <a href="{% url 'categories' %}" class="nav-item"><i class="bi bi-search"></i> Search Schemes</a>
-        <a href="{% url 'my_applications' %}" class="nav-item active"><i class="bi bi-file-earmark-check"></i> My
-            Applications</a>
-        <a href="{% url 'my_grievances' %}" class="nav-item"><i class="bi bi-exclamation-circle"></i> My Grievances</a>
-        <a href="{% url 'edit_profile' %}" class="nav-item"><i class="bi bi-person-gear"></i> Edit Profile</a>
-        <div class="nav-spacer"></div>
-        <div class="user-chip">
-            <div class="name">{{ user.name }}</div>
-            <div class="email">{{ user.email }}</div>
-            <a href="{% url 'logout' %}" class="nav-item mt-2" style="padding:0.4rem 0;color:rgba(248,113,113,0.6);"><i
-                    class="bi bi-box-arrow-right"></i> Sign out</a>
+        <h1 class="h3 fw-bold mb-1 text-dark">
+            <i class="bi bi-file-earmark-check-fill text-success me-2"></i>My Applications
+        </h1>
+        <p class="text-muted mb-0">Track all your scheme applications and their current status</p>
+    </div>
+</div>
+
+{% if applications %}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="bb-card p-3 p-md-4">
+            <h3 class="fw-bold mb-1 text-dark">{{ applications.count }}</h3>
+            <p class="text-muted small fw-semibold text-uppercase mb-0">Total Applied</p>
         </div>
-    </nav>
-
-    <main class="main">
-        <a href="{% url 'dashboard' %}" class="btn-back"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
-
-        <div class="page-header">
-            <h1 class="page-title"><i class="bi bi-file-earmark-check me-2" style="color:var(--india-green);"></i>My
-                Applications</h1>
-            <p class="page-sub">Track all your scheme applications and their current status</p>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="bb-card p-3 p-md-4">
+            <h3 class="fw-bold mb-1 text-warning">{{ pending_count }}</h3>
+            <p class="text-muted small fw-semibold text-uppercase mb-0">Pending Review</p>
         </div>
-
-        <!-- KPI bar -->
-        {% if applications %}
-        <div class="kpi-bar">
-            <div class="kpi-card">
-                <div class="kpi-num">{{ applications.count }}</div>
-                <div class="kpi-label">Total Applied</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-num" style="color:var(--gold);">{{ pending_count }}</div>
-                <div class="kpi-label">Pending Review</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-num" style="color:#6ee75f;">{{ approved_count }}</div>
-                <div class="kpi-label">Approved</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-num" style="color:#f87171;">{{ rejected_count }}</div>
-                <div class="kpi-label">Rejected</div>
-            </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="bb-card p-3 p-md-4">
+            <h3 class="fw-bold mb-1 text-success">{{ approved_count }}</h3>
+            <p class="text-muted small fw-semibold text-uppercase mb-0">Approved</p>
         </div>
-        {% endif %}
-
-        <div class="table-wrap">
-            {% if applications %}
-            <table class="app-table">
-                <thead>
-                    <tr>
-                        <th>Reference ID</th>
-                        <th>Scheme Name</th>
-                        <th>Category</th>
-                        <th>Applied On</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for app in applications %}
-                    <tr>
-                        <td><span class="ref-id">BB-{{ app.app_id }}</span></td>
-                        <td>
-                            <a href="{% url 'scheme_apply_guide' app.scheme.scheme_id %}" class="scheme-link">
-                                {{ app.scheme.scheme_name|truncatechars:55 }}
-                            </a>
-                        </td>
-                        <td>
-                            <span class="cat-tag">{{ app.scheme.target_category.category_name|default:"—" }}</span>
-                        </td>
-                        <td>{{ app.applied_on|date:"d M Y, g:i A" }}</td>
-                        <td>
-                            {% if app.status == 'Approved' %}
-                            <span class="status-badge status-approved"><i class="bi bi-check-circle-fill me-1"></i>{{
-                                app.status }}</span>
-                            {% elif app.status == 'Rejected' %}
-                            <span class="status-badge status-rejected"><i class="bi bi-x-circle-fill me-1"></i>{{
-                                app.status }}</span>
-                            {% elif app.status == 'Withdrawn' %}
-                            <span class="status-badge"
-                                style="background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.4);border:1px solid rgba(255,255,255,0.1);"><i
-                                    class="bi bi-dash-circle me-1"></i>Withdrawn</span>
-                            {% else %}
-                            <span class="status-badge status-pending"><i class="bi bi-clock-fill me-1"></i>{{ app.status
-                                }}</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <a href="{% url 'scheme_apply_guide' app.scheme.scheme_id %}"
-                                style="font-size:0.8rem;color:var(--saffron-light);text-decoration:none;">
-                                View <i class="bi bi-arrow-up-right"></i>
-                            </a>
-                            {% if app.status == 'Pending' %}
-                            <form method="POST" action="{% url 'withdraw_application' app.app_id %}"
-                                style="display:inline;"
-                                onsubmit="return confirm('Withdraw application BB-{{ app.app_id }}?');">
-                                {% csrf_token %}
-                                <button type="submit"
-                                    style="background:none;border:none;color:rgba(248,113,113,0.7);font-size:0.78rem;cursor:pointer;margin-left:0.5rem;padding:0;"><i
-                                        class="bi bi-x-circle"></i> Withdraw</button>
-                            </form>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <div class="empty-state">
-                <i class="bi bi-file-earmark-x" style="font-size:2.5rem;display:block;margin-bottom:1rem;"></i>
-                <p>You haven't applied to any schemes yet.</p>
-                <a href="{% url 'dashboard' %}">Go to Dashboard to apply →</a>
-            </div>
-            {% endif %}
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="bb-card p-3 p-md-4">
+            <h3 class="fw-bold mb-1 text-danger">{{ rejected_count }}</h3>
+            <p class="text-muted small fw-semibold text-uppercase mb-0">Rejected</p>
         </div>
-    </main>
-</body>
+    </div>
+</div>
+{% endif %}
 
-</html>
+<div class="bb-card p-0 overflow-hidden mb-5">
+    {% if applications %}
+    <div class="table-responsive">
+        <table class="table bb-table table-hover align-middle m-0">
+            <thead class="bg-light border-bottom">
+                <tr>
+                    <th scope="col" class="py-3 px-4 text-muted small fw-bold text-uppercase">Reference ID</th>
+                    <th scope="col" class="py-3 px-4 text-muted small fw-bold text-uppercase">Scheme Name</th>
+                    <th scope="col" class="py-3 px-4 text-muted small fw-bold text-uppercase">Category</th>
+                    <th scope="col" class="py-3 px-4 text-muted small fw-bold text-uppercase text-nowrap">Applied On</th>
+                    <th scope="col" class="py-3 px-4 text-muted small fw-bold text-uppercase">Status</th>
+                    <th scope="col" class="py-3 px-4 text-muted small fw-bold text-uppercase text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in applications %}
+                <tr>
+                    <td class="px-4 py-3">
+                        <span class="font-monospace fw-bold text-primary">BB-{{ app.app_id }}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <a href="{% url 'scheme_apply_guide' app.scheme.scheme_id %}" class="fw-bold text-dark text-decoration-none">
+                            {{ app.scheme.scheme_name|truncatechars:55 }}
+                        </a>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="bb-tag">{{ app.scheme.target_category.category_name|default:"—" }}</span>
+                    </td>
+                    <td class="px-4 py-3 text-nowrap">
+                        <span class="text-muted small">{{ app.applied_on|date:"d M Y, g:i A" }}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        {% if app.status == 'Approved' %}
+                        <span class="bb-badge bb-badge-success"><i class="bi bi-check-circle-fill me-1"></i>{{ app.status }}</span>
+                        {% elif app.status == 'Rejected' %}
+                        <span class="bb-badge bb-badge-danger"><i class="bi bi-x-circle-fill me-1"></i>{{ app.status }}</span>
+                        {% elif app.status == 'Withdrawn' %}
+                        <span class="bb-badge bg-secondary text-white"><i class="bi bi-dash-circle me-1"></i>Withdrawn</span>
+                        {% else %}
+                        <span class="bb-badge bb-badge-warning"><i class="bi bi-clock-fill me-1"></i>{{ app.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-end text-nowrap">
+                        <a href="{% url 'scheme_apply_guide' app.scheme.scheme_id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                            Guide <i class="bi bi-chevron-right ms-1"></i>
+                        </a>
+                        {% if app.status == 'Pending' %}
+                        <form method="POST" action="{% url 'withdraw_application' app.app_id %}" style="display:inline;" onsubmit="return confirm('Withdraw application BB-{{ app.app_id }}?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-link text-danger text-decoration-none px-2 shadow-none" title="Withdraw Application">
+                                <i class="bi bi-x-circle fs-5"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center p-5">
+        <div class="display-3 text-muted mb-3"><i class="bi bi-file-earmark-x"></i></div>
+        <h5 class="fw-bold text-dark">No applications yet</h5>
+        <p class="text-muted mb-4">You haven't applied to any schemes so far.</p>
+        <a href="{% url 'dashboard' %}" class="bb-btn bb-btn-primary px-4">Find Eligible Schemes</a>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

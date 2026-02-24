@@ -3,195 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Beneficiary Mapping System</title>
+    <title>BenefitBridge | Smart Government Scheme Discovery</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Premium Global UI CSS -->
+    {% load static %}
+    <link href="{% static 'css/benefitbridge_premium.css' %}" rel="stylesheet">
+    
     <style>
-        :root {
-            --saffron: #FF6B00;
-            --saffron-light: #FF8C38;
-            --india-green: #138808;
-            --navy: #0A1628;
-            --navy-mid: #162035;
-            --cream: #FFF8F0;
-            --gold: #F5A623;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--navy);
-            color: #fff;
-            min-height: 100vh;
+            background-color: var(--canvas);
             overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* Animated background */
+        /* Abstract Premium Background Elements */
         .bg-grid {
-            position: fixed; inset: 0; z-index: 0;
+            position: fixed; inset: 0; z-index: -2;
             background-image:
-                linear-gradient(rgba(255,107,0,0.04) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,107,0,0.04) 1px, transparent 1px);
+                linear-gradient(rgba(30, 58, 138, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(30, 58, 138, 0.03) 1px, transparent 1px);
             background-size: 60px 60px;
-            animation: gridMove 20s linear infinite;
         }
-        @keyframes gridMove {
-            0% { background-position: 0 0; }
-            100% { background-position: 60px 60px; }
-        }
-
+        
         .glow-orb {
-            position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.25; z-index: 0;
+            position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.15; z-index: -1;
+            pointer-events: none;
         }
-        .orb1 { width: 500px; height: 500px; background: var(--saffron); top: -100px; right: -100px; animation: float 8s ease-in-out infinite; }
-        .orb2 { width: 400px; height: 400px; background: var(--india-green); bottom: -80px; left: -80px; animation: float 10s ease-in-out infinite reverse; }
+        .orb1 { width: 600px; height: 600px; background: var(--primary); top: -200px; right: -200px; animation: float 10s ease-in-out infinite; }
+        .orb2 { width: 500px; height: 500px; background: var(--accent); bottom: -100px; left: -100px; animation: float 12s ease-in-out infinite reverse; }
+        
         @keyframes float {
             0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(30px, 30px); }
+            50% { transform: translate(40px, 40px); }
         }
 
+        /* Nav */
         nav {
-            position: relative; z-index: 10;
-            padding: 1.5rem 2rem;
-            display: flex; align-items: center; justify-content: space-between;
-            border-bottom: 1px solid rgba(255,255,255,0.07);
+            padding: 1.5rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
         }
+        
         .nav-logo {
-            font-family: 'Sora', sans-serif;
-            font-weight: 800; font-size: 1.1rem;
-            display: flex; align-items: center; gap: 0.6rem;
+            font-weight: 800; font-size: 1.25rem;
+            display: flex; align-items: center; gap: 0.75rem;
+            color: var(--primary);
+            text-decoration: none;
         }
         .logo-icon {
-            width: 32px; height: 32px; border-radius: 8px;
-            background: linear-gradient(135deg, var(--saffron), var(--gold));
+            width: 36px; height: 36px; border-radius: 10px;
+            background: var(--primary);
+            color: white;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1rem;
+            font-size: 1.25rem;
+            box-shadow: 0 4px 6px -1px rgba(30,58,138,0.2);
         }
-        .nav-links { display: flex; gap: 0.75rem; }
-        .btn-nav {
-            padding: 0.5rem 1.25rem;
-            border-radius: 8px;
-            font-family: 'DM Sans', sans-serif;
-            font-weight: 500; font-size: 0.9rem;
-            text-decoration: none;
-            transition: all 0.2s;
-            border: 1.5px solid transparent;
-        }
-        .btn-nav-outline {
-            border-color: rgba(255,255,255,0.2);
-            color: rgba(255,255,255,0.8);
-            background: transparent;
-        }
-        .btn-nav-outline:hover { border-color: rgba(255,255,255,0.5); color: #fff; }
-        .btn-nav-solid {
-            background: var(--saffron);
-            color: #fff;
-            border-color: var(--saffron);
-        }
-        .btn-nav-solid:hover { background: var(--saffron-light); color: #fff; }
 
+        /* Hero */
         .hero {
-            position: relative; z-index: 5;
-            min-height: calc(100vh - 80px);
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            text-align: center;
-            padding: 4rem 2rem;
+            padding: 6rem 0 4rem;
+            flex: 1;
+            display: flex;
+            align-items: center;
         }
+        
         .hero-badge {
             display: inline-flex; align-items: center; gap: 0.5rem;
-            background: rgba(255,107,0,0.12);
-            border: 1px solid rgba(255,107,0,0.3);
+            background: rgba(13, 148, 136, 0.1);
+            border: 1px solid rgba(13, 148, 136, 0.2);
             border-radius: 100px;
-            padding: 0.4rem 1rem;
-            font-size: 0.82rem; color: var(--saffron-light);
-            letter-spacing: 0.05em; text-transform: uppercase;
+            padding: 0.5rem 1.25rem;
+            font-size: 0.85rem; color: var(--accent-dark);
+            font-weight: 600;
             margin-bottom: 2rem;
             animation: fadeUp 0.6s ease both;
         }
+        
         .hero-title {
-            font-family: 'Sora', sans-serif;
-            font-size: clamp(2.8rem, 7vw, 5rem);
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
             font-weight: 800;
-            line-height: 1.08;
+            line-height: 1.1;
             letter-spacing: -0.03em;
             margin-bottom: 1.5rem;
+            color: var(--text-main);
             animation: fadeUp 0.7s ease both 0.1s;
         }
+        
         .hero-title .highlight {
-            background: linear-gradient(135deg, var(--saffron), var(--gold));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--primary);
+            position: relative;
+            display: inline-block;
         }
+        
+        .hero-title .highlight::after {
+            content: '';
+            position: absolute;
+            bottom: 10%;
+            left: 0;
+            width: 100%;
+            height: 30%;
+            background: rgba(30, 58, 138, 0.15);
+            z-index: -1;
+            transform: skew(-15deg);
+        }
+        
         .hero-sub {
-            font-size: 1.15rem; color: rgba(255,255,255,0.6);
-            max-width: 540px;
-            line-height: 1.65;
+            font-size: 1.2rem; 
+            color: var(--text-light);
+            line-height: 1.6;
             margin-bottom: 3rem;
-            font-weight: 300;
+            font-weight: 400;
             animation: fadeUp 0.7s ease both 0.2s;
         }
+        
         .hero-cta {
-            display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
+            display: flex; gap: 1rem; flex-wrap: wrap; justify-content: flex-start;
             animation: fadeUp 0.7s ease both 0.3s;
         }
-        .btn-primary-cta {
-            padding: 0.9rem 2.2rem;
-            background: linear-gradient(135deg, var(--saffron), var(--saffron-light));
-            color: #fff; border: none;
-            border-radius: 12px;
-            font-family: 'Sora', sans-serif;
-            font-weight: 600; font-size: 1rem;
-            text-decoration: none;
-            transition: all 0.25s;
-            box-shadow: 0 8px 24px rgba(255,107,0,0.35);
-        }
-        .btn-primary-cta:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 32px rgba(255,107,0,0.45);
-            color: #fff;
-        }
-        .btn-secondary-cta {
-            padding: 0.9rem 2.2rem;
-            background: rgba(255,255,255,0.06);
-            color: rgba(255,255,255,0.85);
-            border: 1.5px solid rgba(255,255,255,0.15);
-            border-radius: 12px;
-            font-family: 'Sora', sans-serif;
-            font-weight: 500; font-size: 1rem;
-            text-decoration: none;
-            transition: all 0.25s;
-        }
-        .btn-secondary-cta:hover {
-            background: rgba(255,255,255,0.1);
-            border-color: rgba(255,255,255,0.3);
-            color: #fff;
-        }
-
-        .stats-row {
-            display: flex; gap: 3rem; justify-content: center; flex-wrap: wrap;
-            margin-top: 5rem;
+        
+        /* Stats Box */
+        .stats-box {
+            display: flex; gap: 3rem; flex-wrap: wrap;
+            margin-top: 4rem;
             padding-top: 3rem;
-            border-top: 1px solid rgba(255,255,255,0.07);
+            border-top: 1px solid var(--border);
             animation: fadeUp 0.7s ease both 0.4s;
         }
-        .stat-item { text-align: center; }
+        .stat-item { text-align: left; }
         .stat-num {
-            font-family: 'Sora', sans-serif;
-            font-size: 2rem; font-weight: 800;
-            color: var(--saffron);
+            font-size: 2.25rem; font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+            margin-bottom: 0.5rem;
         }
         .stat-label {
-            font-size: 0.82rem;
-            color: rgba(255,255,255,0.45);
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            margin-top: 0.25rem;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+        
+        /* Image presentation */
+        .hero-image-wrapper {
+            position: relative;
+            perspective: 1000px;
+            animation: fadeUp 0.8s ease both 0.3s;
+        }
+        .hero-image {
+            width: 100%;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(30, 58, 138, 0.25);
+            border: 1px solid var(--border);
+            transform: rotateY(-5deg) rotateX(5deg);
+            transition: transform 0.5s ease;
+        }
+        .hero-image-wrapper:hover .hero-image {
+            transform: rotateY(0deg) rotateX(0deg);
         }
 
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media (max-width: 991px) {
+            .hero { text-align: center; padding: 4rem 0; }
+            .hero-title .highlight::after { bottom: 5%; }
+            .hero-cta { justify-content: center; }
+            .stats-box { justify-content: center; text-align: center; }
+            .stat-item { text-align: center; }
+            .hero-image-wrapper { margin-top: 4rem; }
+            .hero-image { transform: none; }
         }
     </style>
 </head>
@@ -201,48 +200,127 @@
     <div class="glow-orb orb2"></div>
 
     <nav>
-        <div class="nav-logo">
-            <div class="logo-icon">🇮🇳</div>
-            <span>BenefitBridge</span>
-        </div>
-        <div class="nav-links">
-            <a href="{% url 'login' %}" class="btn-nav btn-nav-outline">Sign In</a>
-            <a href="{% url 'register' %}" class="btn-nav btn-nav-solid">Get Started</a>
+        <div class="container d-flex align-items-center justify-content-between">
+            <a href="{% url 'home' %}" class="nav-logo">
+                <div class="logo-icon"><i class="bi bi-bank2"></i></div>
+                <span>BenefitBridge</span>
+            </a>
+            <div class="d-flex gap-3 align-items-center">
+                <a href="{% url 'login' %}" class="text-decoration-none fw-semibold text-dark hover-primary d-none d-sm-block">Sign In</a>
+                <a href="{% url 'register' %}" class="bb-btn bb-btn-primary rounded-pill px-4">Get Started</a>
+            </div>
         </div>
     </nav>
 
-    <section class="hero">
-        <div class="hero-badge">
-            <span>🏛</span> Government Schemes Simplified
-        </div>
-        <h1 class="hero-title">
-            Find schemes<br>
-            <span class="highlight">built for you</span>
-        </h1>
-        <p class="hero-sub">
-            India's smart beneficiary matching system. Enter your profile once and instantly discover every government scheme you qualify for — no paperwork, no confusion.
-        </p>
-        <div class="hero-cta">
-            <a href="{% url 'register' %}" class="btn-primary-cta">Check My Eligibility →</a>
-            <a href="{% url 'login' %}" class="btn-secondary-cta">Already registered?</a>
-        </div>
-
-        <div class="stats-row">
-            <div class="stat-item">
-                <div class="stat-num">500+</div>
-                <div class="stat-label">Schemes Covered</div>
+    <section class="hero container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 pe-lg-5">
+                <div class="hero-badge">
+                    <i class="bi bi-magic"></i> Smart Scheme Matching
+                </div>
+                
+                <h1 class="hero-title">
+                    Discover schemes <br>
+                    <span class="highlight">built for you</span>
+                </h1>
+                
+                <p class="hero-sub">
+                    India's premier AI-enabled beneficiary matching system. Enter your profile once and instantly discover every government scheme you qualify for — securely and effortlessly.
+                </p>
+                
+                <div class="hero-cta">
+                    <a href="{% url 'register' %}" class="bb-btn bb-btn-primary px-4 py-3 rounded-pill fs-6 d-flex align-items-center">
+                        Check My Eligibility <i class="bi bi-arrow-right ms-2 fs-5"></i>
+                    </a>
+                    <a href="{% url 'login' %}" class="bb-btn bb-btn-secondary px-4 py-3 rounded-pill fs-6 bg-white">
+                        Access Dashboard
+                    </a>
+                </div>
+                
+                <div class="stats-box">
+                    <div class="stat-item">
+                        <div class="stat-num">500+</div>
+                        <div class="stat-label">Schemes Tracked</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-num">30+</div>
+                        <div class="stat-label">Categories matched</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-num">100%</div>
+                        <div class="stat-label">Secure & Private</div>
+                    </div>
+                </div>
             </div>
-            <div class="stat-item">
-                <div class="stat-num">30+</div>
-                <div class="stat-label">Categories</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-num">Free</div>
-                <div class="stat-label">Always</div>
+            
+            <div class="col-lg-6 mt-5 mt-lg-0">
+                <div class="hero-image-wrapper">
+                    <!-- Stylized App Representation -->
+                    <div class="bg-white rounded-4 p-4 p-xl-5 shadow-lg border">
+                        <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-primary rounded-circle text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;"><i class="bi bi-person"></i></div>
+                                <div>
+                                    <div class="fw-bold bg-light rounded px-5 py-2 mb-1"></div>
+                                    <div class="bg-light rounded px-4 py-1"></div>
+                                </div>
+                            </div>
+                            <div class="bg-success text-white px-3 py-1 rounded-pill small fw-bold d-flex align-items-center gap-1">
+                                <i class="bi bi-check-circle-fill"></i> Verified
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="bg-light rounded-3 p-3 h-100 d-flex flex-column justify-content-center">
+                                    <div class="fs-3 fw-bold text-primary mb-1">4</div>
+                                    <div class="small fw-semibold text-muted text-uppercase">Eligible Schemes</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="bg-light rounded-3 p-3 h-100 d-flex flex-column justify-content-center">
+                                    <div class="fs-3 fw-bold text-warning mb-1">2</div>
+                                    <div class="small fw-semibold text-muted text-uppercase">Pending Apps</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 pt-3 border-top">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div class="fw-bold small text-uppercase text-muted">Recommended For You</div>
+                            </div>
+                            <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-3 mb-2 border border-black border-opacity-10">
+                                <div class="bg-primary bg-opacity-10 text-primary rounded p-2"><i class="bi bi-mortarboard-fill"></i></div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold small mb-1">National Scholarship Portal</div>
+                                    <div class="progress" style="height: 4px;">
+                                      <div class="progress-bar bg-success" role="progressbar" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+                                <div class="ms-2">
+                                    <span class="badge bg-success">98% Match</span>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-3 border border-black border-opacity-10">
+                                <div class="bg-accent bg-opacity-10 text-accent rounded p-2"><i class="bi bi-house-door-fill"></i></div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold small mb-1">PM Awas Yojana (Urban)</div>
+                                    <div class="progress" style="height: 4px;">
+                                      <div class="progress-bar bg-warning" role="progressbar" style="width: 85%;"></div>
+                                    </div>
+                                </div>
+                                <div class="ms-2">
+                                    <span class="badge bg-warning text-dark">85% Match</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

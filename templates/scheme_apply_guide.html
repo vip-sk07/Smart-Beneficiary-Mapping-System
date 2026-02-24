@@ -1,263 +1,252 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apply — {{ scheme.scheme_name }} | BenefitBridge</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --saffron: #FF6B00; --saffron-light: #FF8C38; --navy: #0A1628;
-            --navy-mid: #162035; --navy-card: #1C2A40; --gold: #F5A623;
-            --india-green: #138808; --border: rgba(255,255,255,0.08);
-        }
-        * { box-sizing: border-box; }
-        body { font-family: 'DM Sans', sans-serif; background: var(--navy); color: #fff; min-height: 100vh; }
-        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 220px; background: var(--navy-mid); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1.5rem 1rem; z-index: 100; }
-        .sidebar-logo { display: flex; align-items: center; gap: 0.6rem; font-family: 'Sora', sans-serif; font-weight: 700; color: #fff; text-decoration: none; margin-bottom: 2.5rem; padding: 0 0.5rem; }
-        .logo-dot { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--saffron), var(--gold)); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
-        .nav-item { display: flex; align-items: center; gap: 0.7rem; padding: 0.65rem 0.75rem; border-radius: 10px; color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.9rem; transition: all 0.2s; margin-bottom: 0.25rem; }
-        .nav-item:hover { background: rgba(255,107,0,0.1); color: #fff; }
-        .nav-item i { font-size: 1rem; width: 18px; }
-        .nav-spacer { flex: 1; }
-        .user-chip { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem; }
-        .user-chip .name { font-size: 0.88rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .user-chip .email { font-size: 0.75rem; color: rgba(255,255,255,0.35); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .main { margin-left: 220px; padding: 2rem 2.5rem; min-height: 100vh; }
-        .btn-back { display: inline-flex; align-items: center; gap: 0.4rem; color: rgba(255,255,255,0.45); text-decoration: none; font-size: 0.88rem; padding: 0.4rem 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s; margin-bottom: 1.75rem; }
-        .btn-back:hover { color: #fff; border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.04); }
-        .scheme-header { background: var(--navy-mid); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; margin-bottom: 1.5rem; }
-        .scheme-badge { display: inline-flex; align-items: center; gap: 0.35rem; background: rgba(19,136,8,0.12); border: 1px solid rgba(19,136,8,0.25); border-radius: 100px; padding: 0.2rem 0.75rem; font-size: 0.72rem; color: #6ee75f; margin-bottom: 0.75rem; width: fit-content; }
-        .scheme-title { font-family: 'Sora', sans-serif; font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; }
-        .scheme-desc { color: rgba(255,255,255,0.5); font-size: 0.92rem; line-height: 1.6; max-width: 600px; }
-        .scheme-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
-        .tag { font-size: 0.75rem; padding: 0.3rem 0.7rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
-        .tag.green { color: #6ee75f; border-color: rgba(110,231,95,0.2); background: rgba(110,231,95,0.05); }
-        .tag.gold  { color: var(--gold); border-color: rgba(245,166,35,0.2); background: rgba(245,166,35,0.05); }
-        .benefits-box { background: linear-gradient(135deg,rgba(19,136,8,0.1),rgba(19,136,8,0.04)); border: 1px solid rgba(19,136,8,0.25); border-radius: 12px; padding: 1rem 1.25rem; margin-top: 1.25rem; }
-        .benefits-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #6ee75f; margin-bottom: 0.3rem; }
-        .benefits-value { font-family: 'Sora', sans-serif; font-size: 1rem; font-weight: 700; color: #fff; }
-        .guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-        @media (max-width: 900px) { .guide-grid { grid-template-columns: 1fr; } }
-        .guide-card { background: var(--navy-card); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; height: fit-content; }
-        .guide-card-title { font-family: 'Sora', sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
-        .step-list { list-style: none; padding: 0; margin: 0; }
-        .step-item { display: flex; gap: 1rem; padding: 0.85rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .step-item:last-child { border-bottom: none; padding-bottom: 0; }
-        .step-num { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; background: rgba(255,107,0,0.15); border: 1px solid rgba(255,107,0,0.3); display: flex; align-items: center; justify-content: center; font-family: 'Sora', sans-serif; font-size: 0.78rem; font-weight: 700; color: var(--saffron); }
-        .step-text { font-size: 0.88rem; color: rgba(255,255,255,0.7); line-height: 1.5; padding-top: 0.2rem; }
-        .step-text strong { color: #fff; }
-        .data-row { display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
-        .data-row:last-child { border-bottom: none; }
-        .data-label { color: rgba(255,255,255,0.35); font-size: 0.78rem; }
-        .data-value { color: #fff; font-weight: 500; text-align: right; }
-        .data-value.masked { font-family: monospace; letter-spacing: 0.05em; color: rgba(255,255,255,0.6); }
-        .btn-copy-all { display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; padding: 0.65rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 9px; color: rgba(255,255,255,0.6); font-size: 0.83rem; cursor: pointer; transition: all 0.2s; margin-top: 1rem; }
-        .btn-copy-all:hover { background: rgba(255,255,255,0.09); color: #fff; border-color: rgba(255,255,255,0.2); }
-        .btn-copy-all.copied { background: rgba(19,136,8,0.12); border-color: rgba(19,136,8,0.3); color: #6ee75f; }
-        .notice { background: rgba(245,166,35,0.07); border: 1px solid rgba(245,166,35,0.2); border-radius: 10px; padding: 0.85rem 1rem; font-size: 0.82rem; color: rgba(245,166,35,0.85); display: flex; gap: 0.6rem; align-items: flex-start; margin-top: 1rem; }
-        .notice i { font-size: 0.9rem; flex-shrink: 0; margin-top: 0.1rem; }
-        .flash-alert { border-radius: 10px; padding: 0.8rem 1.1rem; font-size: 0.88rem; margin-bottom: 1.5rem; display: flex; align-items: flex-start; gap: 0.6rem; }
-        .flash-alert.success { background: rgba(19,136,8,0.1); border: 1px solid rgba(19,136,8,0.25); color: #6ee75f; }
-        .flash-alert.info    { background: rgba(255,107,0,0.08); border: 1px solid rgba(255,107,0,0.2); color: var(--saffron-light); }
-        .flash-alert.error   { background: rgba(220,53,69,0.1); border: 1px solid rgba(220,53,69,0.25); color: #f87171; }
+{% extends "base.html" %}
+{% load static %}
 
-        /* ── 3-Step Apply Flow ── */
-        .apply-flow { background: var(--navy-mid); border: 1px solid var(--border); border-radius: 14px; padding: 1.75rem 2rem; margin-top: 1.5rem; }
-        .apply-flow-title { font-family: 'Sora', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 1.5rem; }
-        .flow-steps { display: flex; gap: 0; margin-bottom: 1.5rem; }
-        .flow-step { flex: 1; text-align: center; position: relative; }
-        .flow-step:not(:last-child)::after { content: ''; position: absolute; top: 18px; left: 60%; right: -40%; height: 2px; background: rgba(255,255,255,0.1); }
-        .flow-step.active:not(:last-child)::after { background: var(--india-green); }
-        .flow-dot { width: 36px; height: 36px; border-radius: 50%; margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; font-family: 'Sora', sans-serif; font-weight: 700; font-size: 0.85rem; border: 2px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.3); }
-        .flow-step.active .flow-dot { background: var(--india-green); border-color: var(--india-green); color: #fff; }
-        .flow-step.done .flow-dot { background: var(--india-green); border-color: var(--india-green); color: #fff; }
-        .flow-label { font-size: 0.72rem; color: rgba(255,255,255,0.35); font-family: 'Sora', sans-serif; font-weight: 600; }
-        .flow-step.active .flow-label { color: #fff; }
+{% block title %}Apply — {{ scheme.scheme_name }} | BenefitBridge{% endblock %}
 
-        /* checklist */
-        .checklist { list-style: none; padding: 0; margin: 0 0 1.5rem; }
-        .checklist li { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.75rem; border-radius: 9px; background: rgba(19,136,8,0.06); border: 1px solid rgba(19,136,8,0.15); margin-bottom: 0.5rem; font-size: 0.88rem; }
-        .checklist li i { color: #6ee75f; font-size: 1rem; }
-
-        /* already-applied banner */
-        .already-applied { background: rgba(245,166,35,0.08); border: 1px solid rgba(245,166,35,0.2); border-radius: 12px; padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1rem; }
-        .already-applied i { font-size: 1.5rem; color: var(--gold); flex-shrink: 0; }
-
-        .btn-submit-app { display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; padding: 0.85rem 2rem; background: var(--india-green); color: #fff; border: none; border-radius: 12px; font-family: 'Sora', sans-serif; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; width: 100%; }
-        .btn-submit-app:hover { background: #0fa806; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(19,136,8,0.3); }
-        .btn-go { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.75rem; background: transparent; color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; font-size: 0.88rem; text-decoration: none; transition: all 0.2s; white-space: nowrap; }
-        .btn-go:hover { border-color: rgba(255,255,255,0.35); color: #fff; }
-
-        @media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; padding: 1.5rem 1rem; } }
-    </style>
-</head>
-<body>
-<nav class="sidebar">
-    <a href="{% url 'home' %}" class="sidebar-logo">
-        <div class="logo-dot">🇮🇳</div>
-        BenefitBridge
-    </a>
-    <a href="{% url 'dashboard' %}" class="nav-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
-    <a href="{% url 'categories' %}" class="nav-item"><i class="bi bi-search"></i> Search Schemes</a>
-    <a href="{% url 'my_applications' %}" class="nav-item"><i class="bi bi-file-earmark-check"></i> My Applications</a>
-    <a href="{% url 'my_grievances' %}" class="nav-item"><i class="bi bi-exclamation-circle"></i> My Grievances</a>
-    <div class="nav-spacer"></div>
-    <div class="user-chip">
-        <div class="name">{{ user.name }}</div>
-        <div class="email">{{ user.email }}</div>
-        <a href="{% url 'logout' %}" class="nav-item mt-2" style="padding:0.4rem 0;color:rgba(248,113,113,0.6);">
-            <i class="bi bi-box-arrow-right"></i> Sign out
-        </a>
-    </div>
-</nav>
-
-<main class="main">
-    <a href="{% url 'dashboard' %}" class="btn-back"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
-
-    {% if messages %}
-        {% for message in messages %}
-            <div class="flash-alert {% if 'success' in message.tags %}success{% elif 'error' in message.tags %}error{% else %}info{% endif %}">
-                <i class="bi {% if 'success' in message.tags %}bi-check-circle-fill{% elif 'error' in message.tags %}bi-x-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
-                <span>{{ message }}</span>
-            </div>
-        {% endfor %}
-    {% endif %}
-
-    <!-- Scheme Header -->
-    <div class="scheme-header">
-        <div class="scheme-badge"><i class="bi bi-check-circle-fill"></i> You are Eligible</div>
-        <div class="scheme-title">{{ scheme.scheme_name }}</div>
-        <div class="scheme-desc">{{ scheme.description }}</div>
-        <div class="scheme-tags">
-            {% if scheme.state %}<span class="tag gold"><i class="bi bi-geo-alt-fill"></i> {{ scheme.state }}</span>{% endif %}
-            {% if scheme.benefit_type %}<span class="tag green">{{ scheme.benefit_type }}</span>{% endif %}
-            <span class="tag">Government Scheme</span>
-        </div>
-        {% if scheme.benefits %}
-        <div class="benefits-box">
-            <div class="benefits-label"><i class="bi bi-gift-fill"></i> What You Get</div>
-            <div class="benefits-value">{{ scheme.benefits }}</div>
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Two-column guide -->
-    <div class="guide-grid">
-        <!-- LEFT: How to Apply Steps -->
-        <div class="guide-card">
-            <div class="guide-card-title"><i class="bi bi-list-ol"></i> How to Apply — Step by Step</div>
-            <ol class="step-list">
-                <li class="step-item"><div class="step-num">1</div><div class="step-text"><strong>Copy your details</strong> from the panel on the right. Keep this tab open — you'll need them to fill the form.</div></li>
-                <li class="step-item"><div class="step-num">2</div><div class="step-text">Click <strong>"Submit Application"</strong> below to register your intent on BenefitBridge.</div></li>
-                <li class="step-item"><div class="step-num">3</div><div class="step-text">Click <strong>"Go to Official Portal"</strong> to open the government website in a new tab.</div></li>
-                <li class="step-item"><div class="step-num">4</div><div class="step-text"><strong>Register / Log in</strong> on the portal using your Aadhaar number or mobile linked to Aadhaar.</div></li>
-                <li class="step-item"><div class="step-num">5</div><div class="step-text">Fill in your <strong>personal details</strong> (name, DOB, Aadhaar, income, address) using the data from the right panel.</div></li>
-                <li class="step-item"><div class="step-num">6</div><div class="step-text"><strong>Upload documents</strong> — typically: Aadhaar, income certificate, bank passbook, and a passport photo.</div></li>
-                <li class="step-item"><div class="step-num">7</div><div class="step-text"><strong>Submit</strong> on the portal and note your government reference number.</div></li>
-            </ol>
-            <div class="notice"><i class="bi bi-info-circle-fill"></i> Government portals may ask you to verify via OTP sent to your Aadhaar-linked mobile number. Keep your phone nearby.</div>
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-xl-11">
+        
+        <div class="mb-4">
+            <a href="{% url 'dashboard' %}" class="btn btn-link text-decoration-none p-0 mb-3 text-muted fw-semibold" style="font-size: 0.85rem;">
+                <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+            </a>
+            
+            {% if messages %}
+                {% for message in messages %}
+                <div class="bb-card mb-4 pe-4 d-flex align-items-center gap-3 py-3 px-4 shadow-sm {% if 'success' in message.tags %}bg-success text-white border-0{% elif 'error' in message.tags %}bg-danger text-white border-0{% else %}bg-primary text-white border-0{% endif %}">
+                    <i class="bi fs-4 {% if 'success' in message.tags %}bi-check-circle-fill{% elif 'error' in message.tags %}bi-x-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                    <div class="fw-semibold">{{ message }}</div>
+                </div>
+                {% endfor %}
+            {% endif %}
         </div>
 
-        <!-- RIGHT: Your Pre-filled Details -->
-        <div>
-            <div class="guide-card">
-                <div class="guide-card-title"><i class="bi bi-person-vcard"></i> Your Details — Ready to Fill</div>
-                <div class="data-row"><span class="data-label">Full Name</span><span class="data-value" id="val-name">{{ user.name }}</span></div>
-                <div class="data-row"><span class="data-label">Date of Birth</span><span class="data-value">{{ user.dob|date:"d/m/Y" }}</span></div>
-                <div class="data-row"><span class="data-label">Gender</span><span class="data-value">{{ user.gender|default:"—" }}</span></div>
-                <div class="data-row"><span class="data-label">Email</span><span class="data-value">{{ user.email|default:"—" }}</span></div>
-                <div class="data-row"><span class="data-label">Phone</span><span class="data-value">{{ user.phone|default:"—" }}</span></div>
-                <div class="data-row"><span class="data-label">Aadhaar No.</span><span class="data-value masked" id="val-aadhaar">{{ user.aadhaar_no }}</span></div>
-                <div class="data-row"><span class="data-label">Address</span><span class="data-value" style="max-width:55%;text-align:right;">{{ user.address|default:"—" }}</span></div>
-                <div class="data-row"><span class="data-label">Annual Income</span><span class="data-value">{% if user.income %}₹{{ user.income|floatformat:0 }}{% else %}—{% endif %}</span></div>
-                <div class="data-row"><span class="data-label">Occupation</span><span class="data-value">{{ user.occupation|default:"—" }}</span></div>
-                <div class="data-row"><span class="data-label">Education</span><span class="data-value">{{ user.education|default:"—" }}</span></div>
-                <button class="btn-copy-all" id="copyAllBtn" onclick="copyAllDetails()">
-                    <i class="bi bi-clipboard"></i> Copy All Details
-                </button>
-                <div class="notice" style="margin-top:0.75rem;"><i class="bi bi-shield-check"></i> Your data is only shown here to help you fill the form. Nothing is sent automatically.</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ── 3-Step Application Flow ─────────────────────────────────────── -->
-    <div class="apply-flow">
-        <div class="apply-flow-title">
-            <i class="bi bi-send-check me-2" style="color:var(--india-green);"></i>
-            Submit Your Application on BenefitBridge
-        </div>
-
-        <!-- Step indicators -->
-        <div class="flow-steps">
-            <div class="flow-step {% if not existing_app %}active{% else %}done{% endif %}">
-                <div class="flow-dot">{% if existing_app %}<i class="bi bi-check-lg"></i>{% else %}1{% endif %}</div>
-                <div class="flow-label">Eligibility</div>
-            </div>
-            <div class="flow-step {% if existing_app %}active{% endif %}">
-                <div class="flow-dot">{% if existing_app %}<i class="bi bi-check-lg"></i>{% else %}2{% endif %}</div>
-                <div class="flow-label">Submit</div>
-            </div>
-            <div class="flow-step {% if existing_app %}done{% endif %}">
-                <div class="flow-dot">3</div>
-                <div class="flow-label">Track</div>
+        <!-- Scheme Header Hero -->
+        <div class="bb-card bg-primary text-white border-0 shadow-sm p-4 p-md-5 mb-5 position-relative overflow-hidden">
+            <div class="position-absolute top-0 end-0 h-100 w-50" style="background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05)); pointer-events: none;"></div>
+            
+            <div class="position-relative" style="z-index: 1;">
+                <span class="bb-badge bg-success text-white border-0 py-2 px-3 mb-4 shadow-sm fw-bold">
+                    <i class="bi bi-check-circle-fill me-1"></i> You are Eligible
+                </span>
+                
+                <h1 class="h2 fw-bold mb-3" style="font-family: 'Sora', sans-serif;">{{ scheme.scheme_name }}</h1>
+                <p class="text-white-50 mb-4 fs-6" style="max-width: 800px; line-height: 1.6;">{{ scheme.description }}</p>
+                
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    {% if scheme.state %}
+                    <span class="bb-badge bg-white text-dark shadow-sm border-0"><i class="bi bi-geo-alt-fill text-muted me-1"></i> {{ scheme.state }}</span>
+                    {% endif %}
+                    {% if scheme.benefit_type %}
+                    <span class="bb-badge bg-white text-primary shadow-sm border-0"><i class="bi bi-tag-fill me-1"></i> {{ scheme.benefit_type }}</span>
+                    {% endif %}
+                    <span class="bb-badge bg-white text-muted shadow-sm border-0"><i class="bi bi-bank2 me-1"></i> Government Scheme</span>
+                </div>
+                
+                {% if scheme.benefits %}
+                <div class="p-3 bg-white bg-opacity-10 rounded-3 border border-white border-opacity-25 mt-2" style="max-width: 600px;">
+                    <div class="small fw-bold text-uppercase text-white-50 mb-1" style="letter-spacing: 0.05em;"><i class="bi bi-gift-fill me-1"></i> What You Get</div>
+                    <div class="fw-bold fs-5">{{ scheme.benefits }}</div>
+                </div>
+                {% endif %}
             </div>
         </div>
 
-        {% if existing_app %}
-            <!-- Already applied -->
-            <div class="already-applied">
-                <i class="bi bi-check-circle-fill"></i>
-                <div>
-                    <div style="font-family:'Sora',sans-serif;font-weight:700;margin-bottom:0.3rem;">Application Already Submitted</div>
-                    <div style="font-size:0.85rem;color:rgba(255,255,255,0.55);">
-                        Reference ID: <strong style="color:var(--gold);font-family:monospace;">BB-{{ existing_app.app_id }}</strong> &nbsp;|&nbsp;
-                        Status: <strong>{{ existing_app.status }}</strong> &nbsp;|&nbsp;
-                        Applied: {{ existing_app.applied_on|date:"d M Y" }}
+        <div class="row g-4 mb-5">
+            <!-- Left Guide -->
+            <div class="col-lg-7">
+                <div class="bb-card h-100 p-0 overflow-hidden">
+                    <div class="bg-light p-3 px-4 border-bottom d-flex align-items-center">
+                        <i class="bi bi-list-ol text-primary me-2"></i>
+                        <h6 class="fw-bold text-uppercase text-muted m-0" style="font-size: 0.75rem; letter-spacing: 0.05em;">How to Apply — Step by Step</h6>
                     </div>
-                    <a href="{% url 'my_applications' %}" style="display:inline-block;margin-top:0.5rem;color:#6ee75f;font-size:0.85rem;font-weight:600;text-decoration:none;">
-                        Track in My Applications →
+                    
+                    <div class="p-4 px-md-5">
+                        <div class="d-flex mb-4">
+                            <div class="bg-primary bg-opacity-10 text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 32px; height: 32px;">1</div>
+                            <div class="text-muted"><strong class="text-dark">Copy your details</strong> from the panel on the right. Keep this tab open — you'll need them to fill the form.</div>
+                        </div>
+                        <div class="d-flex mb-4">
+                            <div class="bg-primary bg-opacity-10 text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 32px; height: 32px;">2</div>
+                            <div class="text-muted">Click <strong class="text-dark">"Confirm & Submit Application"</strong> below to register your intent on BenefitBridge.</div>
+                        </div>
+                        <div class="d-flex mb-4">
+                            <div class="bg-primary bg-opacity-10 text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 32px; height: 32px;">3</div>
+                            <div class="text-muted">Click <strong class="text-dark">"Go to Official Portal"</strong> to open the government website in a new tab.</div>
+                        </div>
+                        <div class="d-flex mb-4">
+                            <div class="bg-primary bg-opacity-10 text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 32px; height: 32px;">4</div>
+                            <div class="text-muted"><strong class="text-dark">Register / Log in</strong> on the portal using your Aadhaar number or mobile linked to Aadhaar.</div>
+                        </div>
+                        <div class="d-flex mb-4">
+                            <div class="bg-primary bg-opacity-10 text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 32px; height: 32px;">5</div>
+                            <div class="text-muted">Fill in your <strong class="text-dark">personal details</strong> (name, DOB, Aadhaar, income, address) using the data from the right panel.</div>
+                        </div>
+                        <div class="d-flex mb-4">
+                            <div class="bg-primary bg-opacity-10 text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 32px; height: 32px;">6</div>
+                            <div class="text-muted"><strong class="text-dark">Upload documents</strong> — typically: Aadhaar, income certificate, bank passbook, and a passport photo.</div>
+                        </div>
+                        <div class="d-flex mb-4">
+                            <div class="bg-primary bg-opacity-10 text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 32px; height: 32px;">7</div>
+                            <div class="text-muted"><strong class="text-dark">Submit</strong> on the portal and note your government reference number.</div>
+                        </div>
+                        
+                        <div class="bg-warning bg-opacity-10 border border-warning border-opacity-50 rounded-3 p-3 mt-4 d-flex gap-3 align-items-start">
+                            <i class="bi bi-info-circle-fill text-warning mt-1"></i>
+                            <div class="small fw-semibold text-dark text-opacity-75">
+                                Government portals may ask you to verify via OTP sent to your Aadhaar-linked mobile number. Keep your phone nearby.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Details -->
+            <div class="col-lg-5">
+                <div class="bb-card h-100 p-0 overflow-hidden d-flex flex-column">
+                    <div class="bg-primary text-white p-3 px-4 d-flex align-items-center">
+                        <i class="bi bi-person-vcard text-white-50 me-2"></i>
+                        <h6 class="fw-bold text-uppercase text-white m-0" style="font-size: 0.75rem; letter-spacing: 0.05em;">Your Details — Ready to Fill</h6>
+                    </div>
+                    
+                    <div class="p-4 flex-grow-1 d-flex flex-column bg-light bg-opacity-50">
+                        <ul class="list-group list-group-flush bg-transparent gap-1 mb-4">
+                            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center border-bottom border-black border-opacity-10 px-0 py-2">
+                                <span class="text-muted small fw-semibold">Full Name</span>
+                                <span class="fw-bold text-dark" id="val-name">{{ user.name }}</span>
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center border-bottom border-black border-opacity-10 px-0 py-2">
+                                <span class="text-muted small fw-semibold">Date of Birth</span>
+                                <span class="fw-bold text-dark">{{ user.dob|date:"d/m/Y" }}</span>
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center border-bottom border-black border-opacity-10 px-0 py-2">
+                                <span class="text-muted small fw-semibold">Gender</span>
+                                <span class="fw-bold text-dark">{{ user.gender|default:"—" }}</span>
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center border-bottom border-black border-opacity-10 px-0 py-2">
+                                <span class="text-muted small fw-semibold">Email</span>
+                                <span class="fw-bold text-dark">{{ user.email|default:"—" }}</span>
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center border-bottom border-black border-opacity-10 px-0 py-2">
+                                <span class="text-muted small fw-semibold">Phone</span>
+                                <span class="fw-bold text-dark">{{ user.phone|default:"—" }}</span>
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center border-bottom border-black border-opacity-10 px-0 py-2">
+                                <span class="text-muted small fw-semibold">Aadhaar No.</span>
+                                <span class="font-monospace fw-bold text-primary" id="val-aadhaar">{{ user.aadhaar_no }}</span>
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center border-bottom border-black border-opacity-10 px-0 py-2">
+                                <span class="text-muted small fw-semibold">Address</span>
+                                <span class="fw-bold text-dark text-end" style="max-width: 60%;">{{ user.address|default:"—" }}</span>
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center border-bottom border-black border-opacity-10 px-0 py-2">
+                                <span class="text-muted small fw-semibold">Annual Income</span>
+                                <span class="fw-bold text-dark">{% if user.income %}₹{{ user.income|floatformat:0 }}{% else %}—{% endif %}</span>
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center border-bottom border-black border-opacity-10 px-0 py-2">
+                                <span class="text-muted small fw-semibold">Occupation</span>
+                                <span class="fw-bold text-dark">{{ user.occupation|default:"—" }}</span>
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center border-bottom border-black border-opacity-10 px-0 py-2 border-0">
+                                <span class="text-muted small fw-semibold">Education</span>
+                                <span class="fw-bold text-dark">{{ user.education|default:"—" }}</span>
+                            </li>
+                        </ul>
+                        
+                        <div class="mt-auto">
+                            <button class="bb-btn bb-btn-secondary w-100 mb-3" id="copyAllBtn" onclick="copyAllDetails()">
+                                <i class="bi bi-clipboard mt-1"></i> Copy All Details
+                            </button>
+                            <div class="text-center small text-muted"><i class="bi bi-shield-check text-success me-1"></i> Your data is shown only here for manual copy-pasting.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submission Flow -->
+        <div class="bb-card p-0 overflow-hidden mb-5 border-2 border-primary border-opacity-25">
+            <div class="bg-primary bg-opacity-10 p-4 border-bottom border-primary border-opacity-25 d-flex align-items-center">
+                <i class="bi bi-send-check-fill text-primary fs-3 me-3"></i>
+                <h4 class="fw-bold text-dark m-0">Submit Application on BenefitBridge</h4>
+            </div>
+            
+            <div class="p-4 p-md-5">
+                {% if existing_app %}
+                    <!-- Already applied -->
+                    <div class="bg-success bg-opacity-10 border border-success p-4 rounded-4 d-flex align-items-center gap-3 mb-4">
+                        <i class="bi bi-check-circle-fill text-success fs-1"></i>
+                        <div>
+                            <h5 class="fw-bold text-dark mb-1">Application Already Submitted</h5>
+                            <div class="text-muted small">
+                                REF: <strong class="font-monospace text-dark">BB-{{ existing_app.app_id }}</strong> | 
+                                Status: <strong class="text-success">{{ existing_app.status }}</strong> | 
+                                Applied: {{ existing_app.applied_on|date:"d M Y" }}
+                            </div>
+                        </div>
+                        <div class="ms-auto">
+                            <a href="{% url 'my_applications' %}" class="bb-btn bb-btn-success px-4">
+                                Tracker <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <!-- Step 1: Pre-requisite checklist -->
+                    <h6 class="fw-bold text-muted text-uppercase mb-3" style="font-size: 0.75rem; letter-spacing: 0.05em;">Prerequisites Complete</h6>
+                    <div class="row g-3 mb-4 border-bottom pb-4">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center gap-2 p-3 bg-light rounded-3 border">
+                                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                                <span class="fw-semibold text-dark small">Identity Verified</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center gap-2 p-3 bg-light rounded-3 border">
+                                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                                <span class="fw-semibold text-dark small">Eligibility Confirmed</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center gap-2 p-3 bg-light rounded-3 border">
+                                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                                <span class="fw-semibold text-dark small">Data Ready</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Submit button -->
+                    <form method="POST" action="{% url 'apply_scheme' scheme.scheme_id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="bb-btn bb-btn-primary w-100 py-3 mb-2" style="font-size: 1.1rem;">
+                            <i class="bi bi-send-fill me-2 mt-1"></i> Confirm & Submit internal Application
+                        </button>
+                    </form>
+                    <p class="text-center text-muted small mx-auto" style="max-width: 500px;">
+                        This records your application on BenefitBridge for tracking. You still must manually apply on the official government portal below.
+                    </p>
+                {% endif %}
+
+                <!-- Official portal link always available -->
+                {% if apply_url %}
+                <div class="bg-light p-4 rounded-4 mt-4 d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 border">
+                    <div>
+                        <h6 class="fw-bold text-dark mb-1">Ready to apply on the government portal?</h6>
+                        <p class="text-muted small mb-0">Opens in a new tab. Keep this page open for your details.</p>
+                    </div>
+                    <a href="{{ apply_url }}" target="_blank" rel="noopener" class="btn btn-outline-dark fw-bold rounded-pill px-4 text-nowrap shadow-sm">
+                        Official Portal <i class="bi bi-box-arrow-up-right ms-1"></i>
                     </a>
                 </div>
+                {% endif %}
             </div>
-        {% else %}
-            <!-- Step 1: Pre-requisite checklist -->
-            <ul class="checklist">
-                <li><i class="bi bi-check-circle-fill"></i> Aadhaar Identity Verified — Profile Complete</li>
-                <li><i class="bi bi-check-circle-fill"></i> Eligibility Status Confirmed — You Qualify</li>
-                <li><i class="bi bi-check-circle-fill"></i> Auto-fill Data Ready — Your details will be shown for reference</li>
-            </ul>
+        </div>
 
-            <!-- Step 2: Submit button -->
-            <form method="POST" action="{% url 'apply_scheme' scheme.scheme_id %}">
-                {% csrf_token %}
-                <button type="submit" class="btn-submit-app">
-                    <i class="bi bi-send-fill"></i> Confirm & Submit Application
-                </button>
-            </form>
-            <p style="font-size:0.78rem;color:rgba(255,255,255,0.3);text-align:center;margin-top:0.75rem;">
-                This records your application on BenefitBridge. You still need to apply on the official portal below.
-            </p>
-        {% endif %}
-
-        <!-- Official portal link always available -->
-        {% if apply_url %}
-            <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
-                <div>
-                    <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:0.9rem;margin-bottom:0.2rem;">Ready to apply on the government portal?</div>
-                    <div style="font-size:0.82rem;color:rgba(255,255,255,0.4);">Opens in a new tab. Keep this page open for your details.</div>
-                </div>
-                <a href="{{ apply_url }}" target="_blank" rel="noopener" class="btn-go">
-                    Go to Official Portal <i class="bi bi-box-arrow-up-right"></i>
-                </a>
-            </div>
-        {% endif %}
     </div>
+</div>
+{% endblock %}
 
-</main>
-
+{% block extra_js %}
 <script>
 function copyAllDetails() {
     const details = `Name: {{ user.name }}
@@ -273,16 +262,18 @@ Education: {{ user.education|default:"—" }}`;
 
     navigator.clipboard.writeText(details).then(function() {
         var btn = document.getElementById('copyAllBtn');
-        btn.classList.add('copied');
-        btn.innerHTML = '<i class="bi bi-check2-circle"></i> Copied!';
+        btn.classList.remove('bb-btn-secondary');
+        btn.classList.add('bb-btn-success', 'text-white');
+        btn.innerHTML = '<i class="bi bi-check2-circle mt-1"></i> Copied to Clipboard!';
+        
         setTimeout(function() {
-            btn.classList.remove('copied');
-            btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy All Details';
-        }, 2500);
+            btn.classList.add('bb-btn-secondary');
+            btn.classList.remove('bb-btn-success', 'text-white');
+            btn.innerHTML = '<i class="bi bi-clipboard mt-1"></i> Copy All Details';
+        }, 3000);
     }).catch(function() {
-        alert('Copy failed. Please manually select and copy your details.');
+        alert('Copy failed. Please manually select and copy your details from the screen.');
     });
 }
 </script>
-</body>
-</html>
+{% endblock %}

@@ -3,164 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register — BenefitBridge</title>
+    <title>Create Profile — BenefitBridge</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Premium Global UI CSS -->
+    {% load static %}
+    <link href="{% static 'css/benefitbridge_premium.css' %}" rel="stylesheet">
+    
     <style>
-        :root {
-            --saffron: #FF6B00;
-            --saffron-light: #FF8C38;
-            --navy: #0A1628;
-            --navy-mid: #162035;
-            --gold: #F5A623;
-        }
         body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--navy);
+            background-color: var(--canvas);
             min-height: 100vh;
-            padding: 2rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1rem;
+            position: relative;
+            z-index: 1;
         }
+
+        /* Abstract Premium Background Elements */
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: -2;
+            background-image:
+                linear-gradient(rgba(30, 58, 138, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(30, 58, 138, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.15; z-index: -1;
+            pointer-events: none;
+            width: 800px; height: 800px; background: var(--primary); top: -200px; right: -200px;
+            animation: float 15s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(40px, 40px); }
+        }
+
         .page-wrap {
-            max-width: 680px; margin: 0 auto;
-            animation: slideUp 0.5s ease both;
+            width: 100%;
+            max-width: 720px;
+            animation: slideUp 0.6s ease both;
         }
+        
         @keyframes slideUp {
-            from { opacity:0; transform: translateY(20px); }
-            to { opacity:1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
+
         .top-nav {
             display: flex; align-items: center; justify-content: space-between;
             padding-bottom: 2rem;
         }
+        
         .auth-logo {
-            display: flex; align-items: center; gap: 0.6rem;
-            font-family: 'Sora', sans-serif;
-            font-weight: 700; color: #fff; text-decoration: none;
+            display: flex; align-items: center; gap: 0.75rem;
+            font-weight: 800; font-size: 1.25rem;
+            color: var(--primary); text-decoration: none;
         }
-        .logo-dot {
-            width: 28px; height: 28px; border-radius: 7px;
-            background: linear-gradient(135deg, var(--saffron), var(--gold));
+        
+        .logo-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: var(--primary); color: white;
             display: flex; align-items: center; justify-content: center;
-            font-size: 0.9rem;
+            font-size: 1.25rem; box-shadow: 0 4px 6px -1px rgba(30,58,138,0.2);
         }
+        
         .back-link {
-            color: rgba(255,255,255,0.4); font-size: 0.85rem;
-            text-decoration: none; transition: color 0.2s;
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            color: var(--text-light); text-decoration: none;
+            font-weight: 600; font-size: 0.9rem; transition: all 0.2s;
         }
-        .back-link:hover { color: rgba(255,255,255,0.7); }
+        
+        .back-link:hover {
+            color: var(--primary); transform: translateX(-4px);
+        }
 
         .auth-card {
-            background: var(--navy-mid);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 20px;
-            padding: 2.5rem;
-            box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+            background: white; border-radius: 24px; padding: 3rem;
+            box-shadow: 0 25px 50px -12px rgba(30, 58, 138, 0.15), 0 0 0 1px var(--border);
         }
+        
         .auth-title {
-            font-family: 'Sora', sans-serif;
-            font-size: 1.65rem; font-weight: 800;
-            color: #fff; margin-bottom: 0.4rem;
+            font-weight: 800; font-size: 1.75rem; color: var(--text-main);
+            margin-bottom: 0.5rem;
         }
+        
         .auth-sub {
-            color: rgba(255,255,255,0.45);
-            font-size: 0.9rem; margin-bottom: 2rem;
+            color: var(--text-light); font-size: 1rem; margin-bottom: 2.5rem;
         }
 
         .section-divider {
-            font-family: 'Sora', sans-serif;
-            font-size: 0.75rem; font-weight: 600;
-            color: var(--saffron);
+            font-size: 0.75rem; font-weight: 700; color: var(--primary);
             letter-spacing: 0.1em; text-transform: uppercase;
-            padding: 1.25rem 0 0.75rem;
-            border-top: 1px solid rgba(255,255,255,0.06);
-            margin-top: 0.75rem;
-        }
-        .section-divider:first-of-type { border-top: none; padding-top: 0; }
-
-        .form-label {
-            color: rgba(255,255,255,0.65);
-            font-size: 0.82rem; font-weight: 500;
-            margin-bottom: 0.4rem;
-        }
-        .form-control, .form-select {
-            background: rgba(255,255,255,0.05);
-            border: 1.5px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            color: #fff;
-            padding: 0.72rem 1rem;
-            font-family: 'DM Sans', sans-serif;
-            transition: border-color 0.2s, background 0.2s;
-        }
-        .form-control:focus, .form-select:focus {
-            background: rgba(255,255,255,0.08);
-            border-color: var(--saffron);
-            box-shadow: 0 0 0 3px rgba(255,107,0,0.15);
-            color: #fff;
-        }
-        .form-control::placeholder { color: rgba(255,255,255,0.2); }
-        .form-select option { background: var(--navy-mid); color: #fff; }
-        .text-danger { color: #f87171 !important; font-size: 0.82rem; margin-top: 0.3rem; }
-
-        .alert-success {
-            background: rgba(19,136,8,0.12);
-            border: 1px solid rgba(19,136,8,0.3);
-            color: #6ee75f; border-radius: 10px;
-            font-size: 0.88rem;
-        }
-
-        .btn-submit {
-            width: 100%;
-            padding: 0.9rem;
-            background: linear-gradient(135deg, var(--saffron), var(--saffron-light));
-            border: none; border-radius: 10px;
-            font-family: 'Sora', sans-serif;
-            font-weight: 600; font-size: 1rem;
-            color: #fff; cursor: pointer;
-            transition: all 0.25s;
-            box-shadow: 0 6px 20px rgba(255,107,0,0.3);
+            padding: 1.5rem 0 1rem; border-top: 1px solid var(--border);
             margin-top: 1.5rem;
         }
-        .btn-submit:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 10px 28px rgba(255,107,0,0.4);
+        .section-divider:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+
+        .form-label {
+            font-weight: 600; color: var(--text-main); font-size: 0.85rem; margin-bottom: 0.5rem;
         }
+        
+        .form-control, .form-select {
+            border: 2px solid var(--border); border-radius: 10px;
+            padding: 0.75rem 1rem; font-size: 0.95rem; transition: all 0.2s; box-shadow: none;
+            color: var(--text-main);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary); box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1);
+        }
+
+        .text-danger { color: #dc2626 !important; font-size: 0.8rem; margin-top: 0.3rem; font-weight: 500; }
+        .required-star { color: #dc2626; margin-left: 2px; }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #059669; border-radius: 12px; font-weight: 500; padding: 1rem;
+        }
+
         .auth-footer {
-            text-align: center; margin-top: 1.5rem;
-            color: rgba(255,255,255,0.4); font-size: 0.88rem;
+            text-align: center; margin-top: 2rem; color: var(--text-light); font-size: 0.9rem;
         }
-        .auth-footer a { color: var(--saffron-light); text-decoration: none; font-weight: 500; }
-        .auth-footer a:hover { color: var(--gold); }
-        .required-star { color: var(--saffron); margin-left: 2px; }
+        
+        .auth-footer a { color: var(--primary); text-decoration: none; font-weight: 600; transition: color 0.2s; }
+        .auth-footer a:hover { color: var(--primary-dark); }
+        
         .google-badge {
             display: flex; align-items: center; gap: 0.75rem;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 0.85rem 1rem;
-            color: rgba(255,255,255,0.6);
-            font-size: 0.88rem;
-            margin-top: 1rem;
+            background: #f8fafc; border: 1px solid var(--border);
+            border-radius: 12px; padding: 1rem;
+            color: var(--text-light); font-size: 0.9rem; margin-top: 1.5rem;
         }
-        .google-badge strong { color: #fff; }
+        .google-badge strong { color: var(--text-main); }
+
+        @media (max-width: 576px) {
+            .auth-card { padding: 2.5rem 1.5rem; }
+        }
     </style>
 </head>
 <body>
     <div class="page-wrap">
         <div class="top-nav">
             <a href="{% url 'home' %}" class="auth-logo">
-                <div class="logo-dot">🇮🇳</div>
+                <div class="logo-icon"><i class="bi bi-bank2"></i></div>
                 BenefitBridge
             </a>
-            <a href="{% url 'home' %}" class="back-link">← Back</a>
+            <a href="{% url 'home' %}" class="back-link"><i class="bi bi-arrow-left"></i> Home</a>
         </div>
 
         <div class="auth-card">
-            <h1 class="auth-title">Create your profile</h1>
-            <p class="auth-sub">Your information is used only to match you with the right government schemes.</p>
+            <h1 class="auth-title">Create your profile 📝</h1>
+            <p class="auth-sub">Your information is used only to securely match you with the right government schemes.</p>
 
             {% if messages %}
                 {% for message in messages %}
-                    <div class="alert alert-success py-2 mb-3">{{ message }}</div>
+                    <div class="alert alert-success d-flex gap-2 align-items-center mb-4"><i class="bi bi-check-circle-fill"></i> {{ message }}</div>
                 {% endfor %}
             {% endif %}
 
@@ -172,27 +186,27 @@
                     <div class="col-12">
                         <label class="form-label">{{ form.name.label }} <span class="required-star">*</span></label>
                         {{ form.name }}
-                        {% if form.name.errors %}<div class="text-danger">{{ form.name.errors }}</div>{% endif %}
+                        {% if form.name.errors %}<div class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.name.errors }}</div>{% endif %}
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">{{ form.dob.label }} <span class="required-star">*</span></label>
                         {{ form.dob }}
-                        {% if form.dob.errors %}<div class="text-danger">{{ form.dob.errors }}</div>{% endif %}
+                        {% if form.dob.errors %}<div class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.dob.errors }}</div>{% endif %}
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">{{ form.gender.label }}</label>
                         {{ form.gender }}
-                        {% if form.gender.errors %}<div class="text-danger">{{ form.gender.errors }}</div>{% endif %}
+                        {% if form.gender.errors %}<div class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.gender.errors }}</div>{% endif %}
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">{{ form.phone.label }}</label>
                         {{ form.phone }}
-                        {% if form.phone.errors %}<div class="text-danger">{{ form.phone.errors }}</div>{% endif %}
+                        {% if form.phone.errors %}<div class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.phone.errors }}</div>{% endif %}
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">{{ form.aadhaar_no.label }} <span class="required-star">*</span></label>
                         {{ form.aadhaar_no }}
-                        {% if form.aadhaar_no.errors %}<div class="text-danger">{{ form.aadhaar_no.errors }}</div>{% endif %}
+                        {% if form.aadhaar_no.errors %}<div class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.aadhaar_no.errors }}</div>{% endif %}
                     </div>
                     <div class="col-12">
                         <label class="form-label">{{ form.address.label }}</label>
@@ -220,8 +234,8 @@
                     {# Hidden fields needed for form submission #}
                     {{ form.email }}
                     {{ form.password }}
-                    <div class="google-badge">
-                        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                    <div class="google-badge shadow-sm">
+                        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
                         <span>Signed in as <strong>{{ request.user.email }}</strong> via Google — no password needed</span>
                     </div>
                 {% else %}
@@ -230,18 +244,19 @@
                         <div class="col-12">
                             <label class="form-label">{{ form.email.label }} <span class="required-star">*</span></label>
                             {{ form.email }}
-                            {% if form.email.errors %}<div class="text-danger">{{ form.email.errors }}</div>{% endif %}
+                            {% if form.email.errors %}<div class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.email.errors }}</div>{% endif %}
                         </div>
                         <div class="col-12">
                             <label class="form-label">{{ form.password.label }} <span class="required-star">*</span></label>
                             {{ form.password }}
-                            {% if form.password.errors %}<div class="text-danger">{{ form.password.errors }}</div>{% endif %}
+                            {% if form.password.errors %}<div class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.password.errors }}</div>{% endif %}
                         </div>
                     </div>
                 {% endif %}
 
-                <button type="submit" class="btn-submit">
-                    {% if is_google_user %}Complete Profile & Check Eligibility →{% else %}Create Account & Check Eligibility →{% endif %}
+                <button type="submit" class="bb-btn bb-btn-primary w-100 py-3 mt-4 mt-lg-5 fs-6 d-flex align-items-center justify-content-center gap-2">
+                    {% if is_google_user %}Complete Profile & Check Eligibility{% else %}Create Account & Check Eligibility{% endif %}
+                    <i class="bi bi-arrow-right"></i>
                 </button>
             </form>
 
@@ -254,5 +269,17 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Ensure form inputs have correct classes
+            document.querySelectorAll('input:not([type="hidden"]), select').forEach(input => {
+                if(input.tagName === 'SELECT') {
+                    if(!input.classList.contains('form-select')) input.classList.add('form-select');
+                } else {
+                    if(!input.classList.contains('form-control')) input.classList.add('form-control');
+                }
+            });
+        });
+    </script>
 </body>
 </html>
