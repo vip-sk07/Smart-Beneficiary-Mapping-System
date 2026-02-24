@@ -18,6 +18,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-^2w#)8o@q=$e-v$!kba7g3dh4fupg7l^z_ucsxrsdkuzilycy=')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
+# ── Proxy SSL & HTTPS Settings ─────────────────────────────────────────────
+# This fixes the 'Error 400: redirect_uri_mismatch' on Google Login 
+# by telling Django it's running behind an HTTPS proxy (Railway).
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
