@@ -176,7 +176,7 @@ EMAIL_PORT          = 587
 EMAIL_USE_TLS       = True
 EMAIL_HOST_USER     = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL  = f"BenefitBridge <{os.environ.get('EMAIL_HOST_USER', 'noreply@benefitbridge.in')}>"
+DEFAULT_FROM_EMAIL  = f"Smart Beneficiary Mapping System <{os.environ.get('EMAIL_HOST_USER', 'noreply@benefitbridge.in')}>"
 
 # ── django-allauth ─────────────────────────────────────────────────────────
 ACCOUNT_LOGIN_METHODS             = {'email'}

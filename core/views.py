@@ -92,7 +92,7 @@ class UserRegistrationView(CreateView):
         password = form.cleaned_data.get('password')
 
         if _is_via_google(self.request):
-            messages.success(self.request, 'Profile completed! Welcome to BenefitBridge.')
+            messages.success(self.request, 'Profile completed! Welcome to Smart Beneficiary Mapping System.')
             return redirect('dashboard')
 
         django_user, _ = User.objects.get_or_create(
@@ -105,7 +105,7 @@ class UserRegistrationView(CreateView):
 
         login(self.request, django_user,
               backend='django.contrib.auth.backends.ModelBackend')
-        messages.success(self.request, 'Account created! Welcome to BenefitBridge.')
+        messages.success(self.request, 'Account created! Welcome to Smart Beneficiary Mapping System.')
         return redirect('dashboard')
 
 
@@ -673,11 +673,11 @@ def forgot_password(request):
         request.session['otp_attempts'] = 0
 
         send_mail(
-            subject='BenefitBridge — Password Reset OTP',
+            subject='Smart Beneficiary Mapping System — Password Reset OTP',
             message=(
-                f"Hello,\n\nYour OTP to reset your BenefitBridge password is:\n\n"
+                f"Hello,\n\nYour OTP to reset your Smart Beneficiary Mapping System password is:\n\n"
                 f"    {otp}\n\nThis code expires in 10 minutes. Do not share it.\n\n"
-                f"If you didn't request this, ignore this email.\n\n— BenefitBridge Team"
+                f"If you didn't request this, ignore this email.\n\n— Smart Beneficiary Mapping System Team"
             ),
             from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@benefitbridge.in'),
             recipient_list=[email],
@@ -860,14 +860,14 @@ def resolve_grievance(request, grv_id):
             if user_email:
                 scheme_name = grv.scheme.scheme_name if grv.scheme else 'General'
                 send_mail(
-                    subject=f'BenefitBridge — Grievance GRV-{grv_id} Resolved',
+                    subject=f'Smart Beneficiary Mapping System — Grievance GRV-{grv_id} Resolved',
                     message=(
                         f"Dear {grv.user.name},\n\n"
                         f"Your grievance (GRV-{grv_id}) related to '{scheme_name}' "
                         f"has been resolved.\n\n"
                         f"Admin Remark: {grv.admin_remark or 'No additional remarks.'}\n\n"
-                        f"Thank you for reaching out to BenefitBridge.\n\n"
-                        f"\u2014 BenefitBridge Team"
+                        f"Thank you for reaching out to Smart Beneficiary Mapping System.\n\n"
+                        f"\u2014 Smart Beneficiary Mapping System Team"
                     ),
                     from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@benefitbridge.in'),
                     recipient_list=[user_email],
