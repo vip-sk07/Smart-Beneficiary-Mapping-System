@@ -672,19 +672,25 @@ def forgot_password(request):
         request.session['otp_email']    = email
         request.session['otp_attempts'] = 0
 
-        send_mail(
-            subject='Smart Beneficiary Mapping System — Password Reset OTP',
-            message=(
-                f"Hello,\n\nYour OTP to reset your Smart Beneficiary Mapping System password is:\n\n"
-                f"    {otp}\n\nThis code expires in 10 minutes. Do not share it.\n\n"
-                f"If you didn't request this, ignore this email.\n\n— Smart Beneficiary Mapping System Team"
-            ),
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@benefitbridge.in'),
-            recipient_list=[email],
-            fail_silently=False,
-        )
-        messages.success(request, f'OTP sent to {email}. Check your inbox.')
-        return redirect('verify_otp')
+        try:
+            send_mail(
+                subject='Smart Beneficiary Mapping System — Password Reset OTP',
+                message=(
+                    f"Hello,\n\nYour OTP to reset your Smart Beneficiary Mapping System password is:\n\n"
+                    f"    {otp}\n\nThis code expires in 10 minutes. Do not share it.\n\n"
+                    f"If you didn't request this, ignore this email.\n\n— Smart Beneficiary Mapping System Team"
+                ),
+                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@benefitbridge.in'),
+                recipient_list=[email],
+                fail_silently=False,
+            )
+            messages.success(request, f'OTP sent to {email}. Check your inbox.')
+            return redirect('verify_otp')
+        except Exception as e:
+            print(f"Email Error: {e}")
+            messages.error(request, 'Unable to send email right now due to a server configuration issue. Please try again later.')
+            return redirect('forgot_password')
+            
     return render(request, 'forgot_password.html', {'form': form})
 
 
