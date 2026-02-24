@@ -52,6 +52,6 @@ urlpatterns = [
     path('application/<int:app_id>/withdraw/', views.withdraw_application, name='withdraw_application'),
 
     # Admin Grievance Panel
-    path('admin/grievances/',                      views.admin_grievances, name='admin_grievances'),
-    path('admin/grievances/<int:grv_id>/resolve/', views.resolve_grievance, name='resolve_grievance'),
+    path('platform-admin/grievances/',                      views.admin_grievances, name='admin_grievances'),
+    path('platform-admin/grievances/<int:grv_id>/resolve/', views.resolve_grievance, name='resolve_grievance'),
 ]
