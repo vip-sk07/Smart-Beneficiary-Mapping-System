@@ -4,50 +4,247 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In — BenefitBridge</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Premium Global UI CSS -->
+    {% load static %}
+    <link href="{% static 'css/benefitbridge_premium.css' %}" rel="stylesheet">
+    
     <style>
-        :root{--saffron:#FF6B00;--saffron-light:#FF8C38;--navy:#0A1628;--navy-mid:#162035;--gold:#F5A623;}
-        body{font-family:'DM Sans',sans-serif;background:var(--navy);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem;}
-        .auth-card{background:var(--navy-mid);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:2.5rem;width:100%;max-width:420px;box-shadow:0 40px 80px rgba(0,0,0,.4);animation:slideUp .5s ease both;}
-        @keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-        .auth-logo{display:flex;align-items:center;gap:.6rem;margin-bottom:2rem;font-family:'Sora',sans-serif;font-weight:700;color:#fff;}
-        .logo-dot{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--saffron),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.9rem;}
-        .auth-title{font-family:'Sora',sans-serif;font-size:1.65rem;font-weight:800;color:#fff;margin-bottom:.4rem;}
-        .auth-sub{color:rgba(255,255,255,.45);font-size:.9rem;margin-bottom:2rem;}
-        .form-label{color:rgba(255,255,255,.7);font-size:.85rem;font-weight:500;margin-bottom:.4rem;}
-        .form-control{background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;padding:.75rem 1rem;font-family:'DM Sans',sans-serif;transition:border-color .2s,background .2s;}
-        .form-control:focus{background:rgba(255,255,255,.08);border-color:var(--saffron);box-shadow:0 0 0 3px rgba(255,107,0,.15);color:#fff;}
-        .form-control::placeholder{color:rgba(255,255,255,.25);}
-        .btn-submit{width:100%;padding:.85rem;background:linear-gradient(135deg,var(--saffron),var(--saffron-light));border:none;border-radius:10px;font-family:'Sora',sans-serif;font-weight:600;font-size:1rem;color:#fff;cursor:pointer;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,0,.3);margin-top:.5rem;}
-        .btn-submit:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(255,107,0,.4);}
-        .btn-google{width:100%;padding:.75rem;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.15);border-radius:10px;color:rgba(255,255,255,.85);font-family:'DM Sans',sans-serif;font-weight:500;font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.6rem;text-decoration:none;transition:all .2s;}
-        .btn-google:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);color:#fff;}
-        .btn-google svg{width:20px;height:20px;flex-shrink:0;}
-        .divider{display:flex;align-items:center;gap:1rem;margin:1.25rem 0;}
-        .divider span{color:rgba(255,255,255,.25);font-size:.8rem;white-space:nowrap;}
-        .divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.08);}
-        .auth-footer{text-align:center;margin-top:1.5rem;color:rgba(255,255,255,.4);font-size:.88rem;}
-        .auth-footer a{color:var(--saffron-light);text-decoration:none;font-weight:500;}
-        .auth-footer a:hover{color:var(--gold);}
-        .forgot-link{text-align:right;margin-top:.35rem;}
-        .forgot-link a{color:rgba(255,255,255,.35);font-size:.8rem;text-decoration:none;transition:color .2s;}
-        .forgot-link a:hover{color:var(--saffron-light);}
-        .alert-danger{background:rgba(220,53,69,.1);border:1px solid rgba(220,53,69,.3);color:#f87171;border-radius:10px;font-size:.88rem;}
-        .text-danger{color:#f87171!important;font-size:.82rem;margin-top:.35rem;}
-        .back-link{display:flex;align-items:center;gap:.4rem;color:rgba(255,255,255,.35);font-size:.82rem;text-decoration:none;margin-bottom:1.5rem;transition:color .2s;}
-        .back-link:hover{color:rgba(255,255,255,.7);}
+        body {
+            background-color: var(--canvas);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Abstract Premium Background Elements */
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: -2;
+            background-image:
+                linear-gradient(rgba(30, 58, 138, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(30, 58, 138, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.15; z-index: -1;
+            pointer-events: none;
+            width: 600px; height: 600px; background: var(--primary); top: -200px; right: -200px;
+            animation: float 10s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(40px, 40px); }
+        }
+
+        /* Nav link back */
+        .back-link {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        
+        .back-link:hover {
+            color: var(--primary);
+            transform: translateX(-4px);
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
+            width: 100%;
+            max-width: 460px;
+            box-shadow: 0 25px 50px -12px rgba(30, 58, 138, 0.15), 0 0 0 1px var(--border);
+            animation: slideUp 0.6s ease both;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .auth-logo {
+            display: flex; align-items: center; gap: 0.75rem;
+            font-weight: 800; font-size: 1.25rem;
+            color: var(--primary);
+            margin-bottom: 2.5rem;
+            justify-content: center;
+        }
+        
+        .logo-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: var(--primary);
+            color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.25rem;
+            box-shadow: 0 4px 6px -1px rgba(30,58,138,0.2);
+        }
+
+        .auth-title {
+            font-weight: 800;
+            font-size: 1.75rem;
+            color: var(--text-main);
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-sub {
+            color: var(--text-light);
+            text-align: center;
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn-google {
+            width: 100%;
+            padding: 0.85rem;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .btn-google:hover {
+            background: var(--surface);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+            border-color: rgba(0,0,0,0.15);
+        }
+        
+        .divider {
+            display: flex; align-items: center; gap: 1rem;
+            margin: 1.75rem 0;
+        }
+        
+        .divider span {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+        
+        .divider::before, .divider::after {
+            content: ''; flex: 1; height: 1px; background: var(--border);
+        }
+
+        /* Form styling adjustments to match premium */
+        .form-label {
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-control {
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            box-shadow: none;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1);
+        }
+        
+        .auth-footer {
+            text-align: center; margin-top: 2rem; color: var(--text-light); font-size: 0.9rem;
+        }
+        
+        .auth-footer a {
+            color: var(--primary); text-decoration: none; font-weight: 600;
+            transition: color 0.2s;
+        }
+        
+        .auth-footer a:hover { color: var(--primary-dark); }
+        
+        .forgot-link { text-align: right; margin-top: 0.5rem; margin-bottom: 1.5rem; }
+        
+        .forgot-link a {
+            color: var(--accent); font-size: 0.85rem; text-decoration: none; font-weight: 600; transition: color 0.2s;
+        }
+        
+        .forgot-link a:hover { color: var(--accent-dark); }
+        
+        .alert {
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 0.75rem 1rem;
+            border: none;
+            margin-bottom: 1.5rem;
+        }
+        
+        .alert-danger {
+            background-color: rgba(220, 38, 38, 0.1);
+            color: #dc2626;
+        }
+        
+        .text-danger {
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+            color: #dc2626 !important;
+            font-weight: 500;
+        }
+
+        @media (max-width: 576px) {
+            .back-link { top: 1rem; left: 1rem; }
+            .auth-card { padding: 2.5rem 1.5rem; }
+        }
     </style>
 </head>
 <body>
-<div class="auth-card">
-    <a href="{% url 'home' %}" class="back-link">← Back to home</a>
 
+<a href="{% url 'home' %}" class="back-link"><i class="bi bi-arrow-left"></i> Home</a>
+
+<div class="auth-card">
     <div class="auth-logo">
-        <div class="logo-dot">🇮🇳</div>
-        BenefitBridge
+        <div class="logo-icon"><i class="bi bi-bank2"></i></div>
+        <span>BenefitBridge</span>
     </div>
-    <h1 class="auth-title">Welcome back</h1>
+    
+    <h1 class="auth-title">Welcome back 👋</h1>
     <p class="auth-sub">Sign in to check your eligible schemes</p>
 
     <!-- ── Google OAuth Button ── -->
@@ -69,31 +266,55 @@
         <div class="mb-3">
             <label class="form-label">{{ form.username.label }}</label>
             {{ form.username }}
-            {% if form.username.errors %}<div class="text-danger">{{ form.username.errors }}</div>{% endif %}
+            {% if form.username.errors %}<div class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.username.errors }}</div>{% endif %}
         </div>
+        
         <div class="mb-1">
             <label class="form-label">{{ form.password.label }}</label>
             {{ form.password }}
-            {% if form.password.errors %}<div class="text-danger">{{ form.password.errors }}</div>{% endif %}
+            {% if form.password.errors %}<div class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.password.errors }}</div>{% endif %}
         </div>
+        
         <div class="forgot-link">
             <a href="{% url 'forgot_password' %}">Forgot password?</a>
         </div>
+        
         {% if form.non_field_errors %}
-            <div class="alert alert-danger py-2 mt-2">{{ form.non_field_errors }}</div>
+            <div class="alert alert-danger d-flex align-items-center gap-2">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <div>{{ form.non_field_errors }}</div>
+            </div>
         {% endif %}
+        
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-danger py-2 mt-2">{{ message }}</div>
+                <div class="alert alert-danger d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <div>{{ message }}</div>
+                </div>
             {% endfor %}
         {% endif %}
-        <button type="submit" class="btn-submit">Sign In →</button>
+        
+        <button type="submit" class="bb-btn bb-btn-primary w-100 py-3 mt-2 d-flex align-items-center justify-content-center gap-2">
+            Sign In <i class="bi bi-arrow-right"></i>
+        </button>
     </form>
 
     <div class="auth-footer">
-        Don't have an account? <a href="{% url 'register' %}">Register here</a>
+        Don't have an account? <a href="{% url 'register' %}">Create one today</a>
     </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Ensure form inputs have correct classes
+        document.querySelectorAll('input').forEach(input => {
+            if(!input.classList.contains('form-control')) {
+                input.classList.add('form-control');
+            }
+        });
+    });
+</script>
 </body>
 </html>

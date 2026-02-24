@@ -1,571 +1,264 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
+{% load static %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Stats — BenefitBridge</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
-        rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <style>
-        :root {
-            --saffron: #FF6B00;
-            --saffron-light: #FF8C38;
-            --navy: #0A1628;
-            --navy-mid: #162035;
-            --navy-card: #1C2A40;
-            --gold: #F5A623;
-            --india-green: #138808;
-            --border: rgba(255, 255, 255, 0.08);
-        }
+{% block title %}Admin Stats — BenefitBridge{% endblock %}
 
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--navy);
-            color: #fff;
-            min-height: 100vh;
-            padding: 2rem 2.5rem;
-        }
-
-        .page-title {
-            font-family: 'Sora', sans-serif;
-            font-size: 1.8rem;
-            font-weight: 800;
-            margin-bottom: 0.25rem;
-        }
-
-        .page-sub {
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 0.88rem;
-            margin-bottom: 2rem;
-        }
-
-        .btn-back {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            color: rgba(255, 255, 255, 0.45);
-            text-decoration: none;
-            font-size: 0.88rem;
-            padding: 0.4rem 0.75rem;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.2s;
-            margin-bottom: 2rem;
-        }
-
-        .btn-back:hover {
-            color: #fff;
-            border-color: rgba(255, 255, 255, 0.3);
-        }
-
-        /* Live dot */
-        .live-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #2ecc71;
-            animation: pulse-dot 1.5s ease-in-out infinite;
-            display: inline-block;
-            margin-right: 0.4rem;
-        }
-
-        @keyframes pulse-dot {
-
-            0%,
-            100% {
-                opacity: 1;
-                transform: scale(1)
-            }
-
-            50% {
-                opacity: 0.5;
-                transform: scale(1.3)
-            }
-        }
-
-        /* Eligibility rate hero */
-        .elig-hero {
-            background: linear-gradient(135deg, rgba(255, 107, 0, 0.1), rgba(245, 166, 35, 0.05));
-            border: 1px solid rgba(255, 107, 0, 0.2);
-            border-radius: 16px;
-            padding: 1.75rem 2rem;
-            display: flex;
-            align-items: center;
-            gap: 2rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .elig-num {
-            font-family: 'Sora', sans-serif;
-            font-size: 4rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--saffron), var(--gold));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            line-height: 1;
-        }
-
-        .elig-label {
-            font-size: 0.88rem;
-            color: rgba(255, 255, 255, 0.5);
-            margin-top: 0.25rem;
-        }
-
-        .elig-meta {
-            font-size: 0.82rem;
-            color: rgba(255, 255, 255, 0.35);
-        }
-
-        /* KPI cards */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .kpi-card {
-            background: var(--navy-card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 1.4rem 1.6rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .kpi-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, var(--accent-color, rgba(255, 107, 0, 0.06)), transparent);
-            pointer-events: none;
-        }
-
-        .kpi-icon {
-            font-size: 1.4rem;
-            margin-bottom: 0.65rem;
-        }
-
-        .kpi-num {
-            font-family: 'Sora', sans-serif;
-            font-size: 2rem;
-            font-weight: 800;
-            line-height: 1;
-            margin-bottom: 0.3rem;
-        }
-
-        .kpi-label {
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.4);
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-        }
-
-        /* AI alert */
-        .ai-alert {
-            background: rgba(255, 107, 0, 0.06);
-            border: 1px solid rgba(255, 107, 0, 0.2);
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
-            font-size: 0.88rem;
-        }
-
-        .ai-alert i {
-            color: var(--saffron);
-            font-size: 1.1rem;
-            flex-shrink: 0;
-            margin-top: 0.1rem;
-        }
-
-        /* Charts row */
-        .charts-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        @media(max-width:900px) {
-            .charts-row {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .chart-card {
-            background: var(--navy-card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 1.5rem;
-        }
-
-        .chart-title {
-            font-family: 'Sora', sans-serif;
-            font-weight: 700;
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.6);
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-            margin-bottom: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        /* Stats tables */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        @media(max-width:900px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .stats-card {
-            background: var(--navy-card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            overflow: hidden;
-        }
-
-        .stats-card-header {
-            padding: 1.1rem 1.4rem;
-            border-bottom: 1px solid var(--border);
-            font-family: 'Sora', sans-serif;
-            font-size: 0.78rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: rgba(255, 255, 255, 0.45);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .stats-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .stats-table td {
-            padding: 0.8rem 1.4rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            font-size: 0.87rem;
-            vertical-align: middle;
-        }
-
-        .stats-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .stats-table tr:hover td {
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 0.2rem 0.65rem;
-            border-radius: 100px;
-            font-size: 0.72rem;
-            font-weight: 700;
-        }
-
-        .status-pending {
-            background: rgba(245, 166, 35, 0.15);
-            color: var(--gold);
-            border: 1px solid rgba(245, 166, 35, 0.25);
-        }
-
-        .status-approved {
-            background: rgba(19, 136, 8, 0.15);
-            color: #6ee75f;
-            border: 1px solid rgba(19, 136, 8, 0.25);
-        }
-
-        .status-rejected {
-            background: rgba(220, 53, 69, 0.15);
-            color: #f87171;
-            border: 1px solid rgba(220, 53, 69, 0.25);
-        }
-
-        .count-pill {
-            font-family: 'Sora', sans-serif;
-            font-weight: 700;
-            font-size: 1rem;
-            color: #fff;
-        }
-
-        .scheme-rank {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid var(--border);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.72rem;
-            font-weight: 700;
-            margin-right: 0.5rem;
-        }
-
-        /* Recent users table */
-        .data-card {
-            background: var(--navy-card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            overflow: hidden;
-        }
-
-        .data-card-header {
-            padding: 1.1rem 1.4rem;
-            border-bottom: 1px solid var(--border);
-            font-family: 'Sora', sans-serif;
-            font-size: 0.78rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: rgba(255, 255, 255, 0.45);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .data-table th {
-            font-size: 0.72rem;
-            color: rgba(255, 255, 255, 0.3);
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-            padding: 0.6rem 1rem;
-            border-bottom: 1px solid var(--border);
-            text-align: left;
-        }
-
-        .data-table td {
-            padding: 0.75rem 1rem;
-            font-size: 0.86rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            vertical-align: middle;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        .data-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .data-table tr:hover td {
-            background: rgba(255, 255, 255, 0.02);
-        }
-    </style>
-</head>
-
-<body>
-
-    <a href="{% url 'dashboard' %}" class="btn-back"><i class="bi bi-arrow-left"></i> Dashboard</a>
-
-    <h1 class="page-title">
-        <i class="bi bi-bar-chart-fill me-2" style="color:var(--saffron);"></i>
-        Governance Intelligence Dashboard
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'dashboard' %}" class="btn btn-link text-decoration-none p-0 mb-3 text-muted fw-semibold" style="font-size: 0.85rem;">
+        <i class="bi bi-arrow-left me-1"></i> Dashboard
+    </a>
+    <h1 class="h3 fw-bold mb-1 text-dark">
+        <i class="bi bi-bar-chart-fill text-primary me-2"></i>Governance Intelligence
     </h1>
-    <p class="page-sub"><span class="live-dot"></span> Real-time monitoring — Admin Only</p>
+    <p class="text-muted d-flex align-items-center gap-2 mb-0">
+        <span class="d-flex" style="width: 8px; height: 8px; background-color: var(--bs-success); border-radius: 50%; box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.2); animation: pulse 2s infinite;"></span>
+        Real-time monitoring — Admin Only
+    </p>
+</div>
 
-    <!-- Grievance Alert -->
-    {% if open_grievances > 0 %}
-    <div class="ai-alert">
-        <i class="bi bi-exclamation-triangle-fill"></i>
+<!-- Grievance Alert -->
+{% if open_grievances > 0 %}
+<div class="bb-card bg-warning bg-opacity-10 border-warning border-opacity-50 d-flex gap-3 align-items-center mb-4 p-3 ps-4">
+    <i class="bi bi-exclamation-triangle-fill text-warning fs-4"></i>
+    <div class="flex-grow-1">
+        <strong class="text-dark">{{ open_grievances }} Open Grievance{{ open_grievances|pluralize }}</strong> pending resolution.
+    </div>
+    <a href="{% url 'admin_grievances' %}" class="btn btn-warning btn-sm fw-bold text-dark px-3 rounded-pill shadow-sm">
+        Manage <i class="bi bi-arrow-right ms-1"></i>
+    </a>
+</div>
+{% endif %}
+
+<!-- Eligibility Rate Hero -->
+<div class="bb-card bg-primary text-white border-0 shadow-sm mb-4 position-relative overflow-hidden p-0">
+    <!-- Background styling -->
+    <div class="position-absolute top-0 end-0 h-100 w-50" style="background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1)); pointer-events: none;"></div>
+    
+    <div class="p-4 p-md-5 d-flex flex-wrap align-items-center gap-4 gap-md-5 position-relative" style="z-index: 1;">
         <div>
-            <strong>{{ open_grievances }} Open Grievance{{ open_grievances|pluralize }}</strong> pending resolution.
-            <a href="{% url 'admin_grievances' %}" style="color:var(--saffron-light);font-weight:600;">Manage Grievances
-                →</a>
+            <div class="display-3 fw-bold mb-1" style="font-family: 'Inter', sans-serif;">{{ eligibility_rate }}<span class="fs-2 text-white-50">%</span></div>
+            <div class="fw-semibold text-white-50 text-uppercase mb-1" style="font-size: 0.85rem; letter-spacing: 0.05em;">Overall Eligibility Rate</div>
+            <div class="small text-white-50">{{ total_eligible }} eligible out of {{ total_checks }} checks run</div>
         </div>
-    </div>
-    {% endif %}
-
-    <!-- Eligibility Rate Hero -->
-    <div class="elig-hero">
-        <div>
-            <div class="elig-num">{{ eligibility_rate }}%</div>
-            <div class="elig-label">Overall Eligibility Rate</div>
-            <div class="elig-meta">{{ total_eligible }} eligible out of {{ total_checks }} checks run</div>
-        </div>
-        <div style="flex:1;min-width:200px;">
-            <div style="font-size:0.82rem;color:rgba(255,255,255,0.4);margin-bottom:0.5rem;">Eligible vs Not Eligible
+        
+        <div class="flex-grow-1 d-none d-md-block" style="min-width: 250px;">
+            <div class="d-flex justify-content-between mb-2 small fw-semibold text-white-50">
+                <span>Eligible</span>
+                <span>Not Eligible</span>
             </div>
-            <div style="height:8px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;">
-                <div
-                    style="height:100%;width:{{ eligibility_rate }}%;background:linear-gradient(90deg,var(--saffron),var(--gold));border-radius:4px;transition:width 1s ease;">
-                </div>
+            <div class="progress" style="height: 12px; background-color: rgba(255,255,255,0.2); border-radius: var(--radius-pill);">
+                <div class="progress-bar bg-white" role="progressbar" style="width: {{ eligibility_rate }}%; transition: width 1.5s ease-in-out;" aria-valuenow="{{ eligibility_rate }}" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- KPI Cards -->
-    <div class="kpi-grid">
-        <div class="kpi-card" style="--accent-color:rgba(19,136,8,0.08);">
-            <div class="kpi-icon">👥</div>
-            <div class="kpi-num" style="color:#6ee75f;">{{ total_users }}</div>
-            <div class="kpi-label">Registered Citizens</div>
-        </div>
-        <div class="kpi-card" style="--accent-color:rgba(255,107,0,0.06);">
-            <div class="kpi-icon">📋</div>
-            <div class="kpi-num" style="color:var(--saffron-light);">{{ total_apps }}</div>
-            <div class="kpi-label">Total Applications</div>
-        </div>
-        <div class="kpi-card" style="--accent-color:rgba(245,166,35,0.06);">
-            <div class="kpi-icon">⚠️</div>
-            <div class="kpi-num" style="color:var(--gold);">{{ open_grievances }}</div>
-            <div class="kpi-label">Open Grievances</div>
-        </div>
-        <div class="kpi-card" style="--accent-color:rgba(19,136,8,0.06);">
-            <div class="kpi-icon">✅</div>
-            <div class="kpi-num" style="color:#6ee75f;">{{ total_grievances }}</div>
-            <div class="kpi-label">Total Grievances</div>
-        </div>
-        <div class="kpi-card" style="--accent-color:rgba(52,152,219,0.06);">
-            <div class="kpi-icon">📊</div>
-            <div class="kpi-num" style="color:#3498db;">{{ total_schemes }}</div>
-            <div class="kpi-label">Total Schemes</div>
-        </div>
-        <div class="kpi-card" style="--accent-color:rgba(155,89,182,0.06);">
-            <div class="kpi-icon">🗂</div>
-            <div class="kpi-num" style="color:#9b59b6;">{{ total_categories }}</div>
-            <div class="kpi-label">Categories</div>
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="bb-card p-3 p-xl-4 h-100 border-top border-4 border-success">
+            <h3 class="fw-bold mb-1 text-dark">{{ total_users }}</h3>
+            <p class="text-muted small fw-semibold text-uppercase mb-2">Registered Citizens</p>
+            <i class="bi bi-people text-success fs-4 opacity-50 position-absolute bottom-0 end-0 me-3 mb-2"></i>
         </div>
     </div>
-
-    <!-- Charts -->
-    <div class="charts-row">
-        <div class="chart-card">
-            <div class="chart-title"><i class="bi bi-bar-chart"></i> Schemes by Category</div>
-            <canvas id="categoryChart" height="230"></canvas>
-        </div>
-        <div class="chart-card">
-            <div class="chart-title"><i class="bi bi-pie-chart"></i> Eligible vs Not Eligible</div>
-            <canvas id="eligChart" height="230"></canvas>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="bb-card p-3 p-xl-4 h-100 border-top border-4 border-primary">
+            <h3 class="fw-bold mb-1 text-dark">{{ total_apps }}</h3>
+            <p class="text-muted small fw-semibold text-uppercase mb-2">Total Applications</p>
+            <i class="bi bi-file-earmark-text text-primary fs-4 opacity-50 position-absolute bottom-0 end-0 me-3 mb-2"></i>
         </div>
     </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="bb-card p-3 p-xl-4 h-100 border-top border-4 border-warning">
+            <h3 class="fw-bold mb-1 text-dark">{{ open_grievances }}</h3>
+            <p class="text-muted small fw-semibold text-uppercase mb-2">Open Grievances</p>
+            <i class="bi bi-exclamation-triangle text-warning fs-4 opacity-50 position-absolute bottom-0 end-0 me-3 mb-2"></i>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="bb-card p-3 p-xl-4 h-100 border-top border-4 border-info">
+            <h3 class="fw-bold mb-1 text-dark">{{ total_grievances }}</h3>
+            <p class="text-muted small fw-semibold text-uppercase mb-2">Total Grievances</p>
+            <i class="bi bi-chat-left-dots text-info fs-4 opacity-50 position-absolute bottom-0 end-0 me-3 mb-2"></i>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="bb-card p-3 p-xl-4 h-100 border-top border-4 border-secondary">
+            <h3 class="fw-bold mb-1 text-dark">{{ total_schemes }}</h3>
+            <p class="text-muted small fw-semibold text-uppercase mb-2">Total Schemes</p>
+            <i class="bi bi-ui-checks text-secondary fs-4 opacity-50 position-absolute bottom-0 end-0 me-3 mb-2"></i>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="bb-card p-3 p-xl-4 h-100 border-top border-4 border-primary">
+            <h3 class="fw-bold mb-1 text-dark">{{ total_categories }}</h3>
+            <p class="text-muted small fw-semibold text-uppercase mb-2">Categories</p>
+            <i class="bi bi-tags text-primary fs-4 opacity-50 position-absolute bottom-0 end-0 me-3 mb-2"></i>
+        </div>
+    </div>
+</div>
 
-    <!-- Stats Tables: Applications + Top Schemes -->
-    <div class="stats-grid">
-        <div class="stats-card">
-            <div class="stats-card-header"><i class="bi bi-pie-chart-fill"></i> Applications by Status</div>
-            <table class="stats-table">
-                {% for row in apps_by_status %}
-                <tr>
-                    <td>
-                        {% if row.status == 'Approved' %}<span class="status-badge status-approved">{{ row.status
-                            }}</span>
-                        {% elif row.status == 'Rejected' %}<span class="status-badge status-rejected">{{ row.status
-                            }}</span>
-                        {% else %}<span class="status-badge status-pending">{{ row.status }}</span>{% endif %}
-                    </td>
-                    <td class="count-pill" style="text-align:right;">{{ row.count }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="2" style="color:rgba(255,255,255,0.3);text-align:center;padding:2rem;">No applications
-                        yet</td>
-                </tr>
-                {% endfor %}
+<!-- Charts -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="bb-card h-100 p-4 border-0 shadow-sm d-flex flex-col">
+            <h6 class="fw-bold text-uppercase text-muted mb-4" style="font-size: 0.75rem; letter-spacing: 0.05em;"><i class="bi bi-bar-chart-fill text-primary me-2"></i>Schemes by Category</h6>
+            <div class="flex-grow-1 position-relative" style="min-height: 250px;">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="bb-card h-100 p-4 border-0 shadow-sm d-flex flex-column">
+            <h6 class="fw-bold text-uppercase text-muted mb-4" style="font-size: 0.75rem; letter-spacing: 0.05em;"><i class="bi bi-pie-chart-fill text-accent me-2"></i>Eligible vs Not Eligible</h6>
+            <div class="flex-grow-1 position-relative d-flex align-items-center justify-content-center" style="min-height: 250px;">
+                <canvas id="eligChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Tables -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="bb-card p-0 shadow-sm h-100 overflow-hidden">
+            <div class="bg-light p-3 border-bottom d-flex align-items-center">
+                <i class="bi bi-file-earmark-check-fill text-muted me-2"></i>
+                <h6 class="fw-bold text-uppercase text-muted m-0" style="font-size: 0.75rem; letter-spacing: 0.05em;">Applications by Status</h6>
+            </div>
+            <table class="table bb-table table-hover align-middle m-0">
+                <tbody>
+                    {% for row in apps_by_status %}
+                    <tr>
+                        <td class="px-3 py-3">
+                            {% if row.status == 'Approved' %}<span class="bb-badge bb-badge-success">{{ row.status }}</span>
+                            {% elif row.status == 'Rejected' %}<span class="bb-badge bb-badge-danger">{{ row.status }}</span>
+                            {% else %}<span class="bb-badge bb-badge-warning">{{ row.status }}</span>{% endif %}
+                        </td>
+                        <td class="px-3 py-3 text-end fw-bold text-dark">{{ row.count }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="text-center p-4 text-muted small">No applications yet</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
             </table>
         </div>
-        <div class="stats-card">
-            <div class="stats-card-header"><i class="bi bi-trophy-fill"></i> Top Applied Schemes</div>
-            <table class="stats-table">
-                {% for s in top_schemes %}
-                <tr>
-                    <td>
-                        <span class="scheme-rank">{{ forloop.counter }}</span>
-                        <span style="font-size:0.85rem;">{{ s.scheme__scheme_name|truncatechars:40 }}</span>
-                    </td>
-                    <td class="count-pill" style="text-align:right;color:var(--gold);">{{ s.count }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="2" style="color:rgba(255,255,255,0.3);text-align:center;padding:2rem;">No applications
-                        yet</td>
-                </tr>
-                {% endfor %}
+    </div>
+    <div class="col-lg-6">
+        <div class="bb-card p-0 shadow-sm h-100 overflow-hidden">
+            <div class="bg-light p-3 border-bottom d-flex align-items-center">
+                <i class="bi bi-trophy-fill text-warning me-2"></i>
+                <h6 class="fw-bold text-uppercase text-muted m-0" style="font-size: 0.75rem; letter-spacing: 0.05em;">Top Applied Schemes</h6>
+            </div>
+            <table class="table bb-table table-hover align-middle m-0">
+                <tbody>
+                    {% for s in top_schemes %}
+                    <tr>
+                        <td class="px-3 py-3">
+                            <span class="d-inline-flex align-items-center justify-content-center bg-light text-muted fw-bold rounded-circle me-3" style="width: 28px; height: 28px; font-size: 0.75rem;">{{ forloop.counter }}</span>
+                            <span class="fw-semibold text-dark">{{ s.scheme__scheme_name|truncatechars:40 }}</span>
+                        </td>
+                        <td class="px-3 py-3 text-end fw-bold text-primary">{{ s.count }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="text-center p-4 text-muted small">No applications yet</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
             </table>
         </div>
     </div>
+</div>
 
-    <!-- Recent Users -->
-    <div class="data-card">
-        <div class="data-card-header"><i class="bi bi-people"></i> Recent Registrations</div>
-        <table class="data-table">
-            <thead>
+<!-- Recent Users -->
+<div class="bb-card p-0 overflow-hidden shadow-sm mb-5">
+    <div class="bg-light p-3 border-bottom d-flex align-items-center">
+        <i class="bi bi-people-fill text-muted me-2"></i>
+        <h6 class="fw-bold text-uppercase text-muted m-0" style="font-size: 0.75rem; letter-spacing: 0.05em;">Recent Registrations</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table bb-table table-hover align-middle m-0">
+            <thead class="bg-transparent border-bottom">
                 <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Gender</th>
-                    <th>Occupation</th>
-                    <th>Registered</th>
+                    <th scope="col" class="py-3 px-4 text-muted small fw-bold text-uppercase border-0">Name</th>
+                    <th scope="col" class="py-3 px-4 text-muted small fw-bold text-uppercase border-0">Email</th>
+                    <th scope="col" class="py-3 px-4 text-muted small fw-bold text-uppercase border-0">Gender</th>
+                    <th scope="col" class="py-3 px-4 text-muted small fw-bold text-uppercase border-0">Occupation</th>
+                    <th scope="col" class="py-3 px-4 text-muted small fw-bold text-uppercase border-0 text-end">Registered</th>
                 </tr>
             </thead>
             <tbody>
                 {% for u in recent_users %}
                 <tr>
-                    <td style="font-weight:600;color:#fff;">{{ u.name }}</td>
-                    <td style="font-size:0.82rem;">{{ u.email }}</td>
-                    <td>{{ u.gender|default:"—" }}</td>
-                    <td style="color:rgba(255,255,255,0.5);">{{ u.occupation|default:"—" }}</td>
-                    <td style="font-size:0.78rem;color:rgba(255,255,255,0.35);">{{ u.created_at|date:"d M Y" }}</td>
+                    <td class="px-4 py-3 fw-bold text-dark">{{ u.name }}</td>
+                    <td class="px-4 py-3 text-muted small">{{ u.email }}</td>
+                    <td class="px-4 py-3">
+                        <span class="bb-tag">{{ u.gender|default:"—" }}</span>
+                    </td>
+                    <td class="px-4 py-3 text-muted small">{{ u.occupation|default:"—" }}</td>
+                    <td class="px-4 py-3 text-muted small text-end text-nowrap">{{ u.created_at|date:"d M Y" }}</td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" style="text-align:center;color:rgba(255,255,255,0.3);padding:2rem;">No users yet.
-                    </td>
+                    <td colspan="5" class="text-center p-5 text-muted">No users registered yet.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+</div>
 
-    <script>
+<style>
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(25, 135, 84, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
+}
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Shared chart config
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#64748b'; // slate-500
+        
+        // Category Chart
         const catCtx = document.getElementById('categoryChart').getContext('2d');
         new Chart(catCtx, {
             type: 'bar',
             data: {
                 labels: [{% for c in schemes_by_category %}"{{ c.target_category__category_name|truncatechars:18 }}"{% if not forloop.last %}, {% endif %}{% endfor %}],
-            datasets: [{
-                label: 'Schemes',
-                data: [{% for c in schemes_by_category %}{{ c.count }}{% if not forloop.last %}, {% endif %} {% endfor %}],
-        backgroundColor: 'rgba(255,107,0,0.55)',
-            borderColor: '#FF6B00',
-                borderWidth: 1,
-                    borderRadius: 5,
-        }]
-    },
-        options: {
-            responsive: true,
+                datasets: [{
+                    label: 'Schemes',
+                    data: [{% for c in schemes_by_category %}{{ c.count }}{% if not forloop.last %}, {% endif %} {% endfor %}],
+                    backgroundColor: 'rgba(30, 58, 138, 0.8)', // Primary
+                    borderColor: '#1E3A8A',
+                    borderWidth: 0,
+                    borderRadius: 6,
+                    barPercentage: 0.6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-            scales: {
-                x: { ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                y: { ticks: { color: 'rgba(255,255,255,0.4)' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { grid: { borderDash: [4, 4], color: 'rgba(0,0,0,0.05)' }, beginAtZero: true }
+                }
             }
-        }
-});
+        });
 
+        // Eligibility Chart
         const eligCtx = document.getElementById('eligChart').getContext('2d');
         new Chart(eligCtx, {
             type: 'doughnut',
@@ -573,18 +266,19 @@
                 labels: ['Eligible', 'Not Eligible'],
                 datasets: [{
                     data: [{{ total_eligible }}, {{ total_checks }} - {{ total_eligible }}],
-            backgroundColor: ['rgba(46,204,113,0.7)', 'rgba(255,255,255,0.08)'],
-            borderColor: ['#2ecc71', 'rgba(255,255,255,0.1)'],
-            borderWidth: 2,
-        }]
-    },
+                    backgroundColor: ['#0D9488', '#E2E8F0'], // Accent (Teal) and Slate-200
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
             options: {
-            responsive: true,
-            plugins: { legend: { labels: { color: 'rgba(255,255,255,0.5)', font: { size: 12 } } } },
-            cutout: '65%'
-        }
-});
-    </script>
-</body>
-
-</html>
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } } },
+                cutout: '70%',
+                layout: { padding: 10 }
+            }
+        });
+    });
+</script>
+{% endblock %}

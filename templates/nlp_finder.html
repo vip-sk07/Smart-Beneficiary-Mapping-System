@@ -1,187 +1,126 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Scheme Finder — BenefitBridge</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --saffron: #FF6B00; --saffron-light: #FF8C38;
-            --navy: #0A1628; --navy-mid: #162035; --navy-card: #1C2A40;
-            --gold: #F5A623; --india-green: #138808; --border: rgba(255,255,255,0.08);
-        }
-        body { font-family: 'DM Sans', sans-serif; background: var(--navy); color: #fff; min-height: 100vh; }
-        .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 220px; background: var(--navy-mid); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1.5rem 1rem; z-index: 100; }
-        .sidebar-logo { display: flex; align-items: center; gap: 0.6rem; font-family: 'Sora', sans-serif; font-weight: 700; color: #fff; text-decoration: none; margin-bottom: 2.5rem; padding: 0 0.5rem; }
-        .logo-dot { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--saffron), var(--gold)); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
-        .nav-item { display: flex; align-items: center; gap: 0.7rem; padding: 0.65rem 0.75rem; border-radius: 10px; color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.9rem; transition: all 0.2s; margin-bottom: 0.25rem; }
-        .nav-item:hover, .nav-item.active { background: rgba(255,107,0,0.1); color: #fff; }
-        .nav-item.active { color: var(--saffron-light); }
-        .nav-item i { font-size: 1rem; width: 18px; }
-        .nav-spacer { flex: 1; }
-        .user-chip { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem; }
-        .user-chip .name { font-size: 0.88rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .user-chip .email { font-size: 0.75rem; color: rgba(255,255,255,0.35); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .main { margin-left: 220px; padding: 2rem 2.5rem; min-height: 100vh; }
+{% extends "base.html" %}
+{% load static %}
 
-        /* Hero search box */
-        .finder-hero {
-            background: linear-gradient(135deg, rgba(255,107,0,0.08), rgba(245,166,35,0.04));
-            border: 1px solid rgba(255,107,0,0.2); border-radius: 20px;
-            padding: 2.5rem; margin-bottom: 2.5rem; text-align: center;
-        }
-        .finder-hero h1 { font-family: 'Sora', sans-serif; font-size: 1.8rem; font-weight: 800; margin-bottom: 0.5rem; }
-        .finder-hero p { color: rgba(255,255,255,0.5); font-size: 0.95rem; margin-bottom: 2rem; }
-        .search-area { display: flex; gap: 0.75rem; max-width: 700px; margin: 0 auto; }
-        .search-area textarea {
-            flex: 1; background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,107,0,0.3);
-            border-radius: 12px; padding: 1rem 1.25rem; color: #fff; font-size: 0.95rem;
-            resize: none; outline: none; font-family: 'DM Sans', sans-serif; line-height: 1.5;
-            transition: border-color 0.2s;
-        }
-        .search-area textarea:focus { border-color: var(--saffron); }
-        .search-area textarea::placeholder { color: rgba(255,255,255,0.25); }
-        .btn-find { padding: 0 1.75rem; background: linear-gradient(135deg, var(--saffron), var(--gold)); color: #fff; border: none; border-radius: 12px; font-family: 'Sora', sans-serif; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: opacity 0.2s; white-space: nowrap; }
-        .btn-find:hover { opacity: 0.9; }
+{% block title %}AI Scheme Finder — BenefitBridge{% endblock %}
 
-        /* Sample queries */
-        .sample-queries { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-top: 1.25rem; }
-        .sample-chip {
-            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-            border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.8rem;
-            color: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.2s;
-        }
-        .sample-chip:hover { background: rgba(255,107,0,0.1); border-color: rgba(255,107,0,0.3); color: var(--saffron-light); }
-
-        /* Results */
-        .results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
-        .results-title { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1rem; }
-        .result-count { font-size: 0.82rem; color: rgba(255,255,255,0.4); }
-        .scheme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; }
-        .scheme-card { background: var(--navy-card); border: 1px solid var(--border); border-radius: 16px; padding: 1.4rem; display: flex; flex-direction: column; gap: 0.75rem; transition: border-color 0.2s, transform 0.2s; position: relative; }
-        .scheme-card:hover { border-color: rgba(255,107,0,0.3); transform: translateY(-2px); }
-        .match-badge { position: absolute; top: 1rem; right: 1rem; }
-        .match-pill { font-family: 'Sora', sans-serif; font-size: 0.72rem; font-weight: 800; padding: 0.3rem 0.65rem; border-radius: 20px; }
-        .match-high { background: rgba(46,204,113,0.12); color: #2ecc71; border: 1px solid rgba(46,204,113,0.25); }
-        .match-mid { background: rgba(245,166,35,0.12); color: var(--gold); border: 1px solid rgba(245,166,35,0.25); }
-        .match-low { background: rgba(255,107,0,0.12); color: var(--saffron-light); border: 1px solid rgba(255,107,0,0.25); }
-        .scheme-name { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 0.95rem; line-height: 1.35; padding-right: 4rem; }
-        .scheme-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-        .scheme-tag { font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 5px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: rgba(255,255,255,0.5); }
-        .scheme-tag.state { background: rgba(255,107,0,0.08); border-color: rgba(255,107,0,0.2); color: var(--saffron-light); }
-        .scheme-desc { font-size: 0.83rem; color: rgba(255,255,255,0.45); line-height: 1.55; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        .btn-apply { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1.1rem; background: rgba(255,107,0,0.12); color: var(--saffron-light); border: 1px solid rgba(255,107,0,0.25); border-radius: 9px; font-size: 0.83rem; font-weight: 600; text-decoration: none; transition: all 0.2s; margin-top: auto; width: fit-content; }
-        .btn-apply:hover { background: var(--saffron); color: #fff; border-color: var(--saffron); }
-        .empty-state { padding: 4rem; text-align: center; color: rgba(255,255,255,0.25); }
-        .empty-state i { font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.4; }
-
-        /* Keyword tags shown after search */
-        .keywords-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.5rem; align-items: center; }
-        .kw-label { font-size: 0.78rem; color: rgba(255,255,255,0.3); }
-        .kw-tag { background: rgba(255,107,0,0.1); border: 1px solid rgba(255,107,0,0.2); color: var(--saffron-light); border-radius: 20px; padding: 0.2rem 0.65rem; font-size: 0.78rem; }
-    </style>
-</head>
-<body>
-
-<!-- Sidebar -->
-<aside class="sidebar">
-    <a href="{% url 'home' %}" class="sidebar-logo">
-        <div class="logo-dot">🏛</div>
-        BenefitBridge
-    </a>
-    <a href="{% url 'dashboard' %}" class="nav-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
-    <a href="{% url 'categories' %}" class="nav-item"><i class="bi bi-search"></i> Search</a>
-    <a href="{% url 'nlp_scheme_finder' %}" class="nav-item active"><i class="bi bi-chat-dots"></i> AI Finder</a>
-    <div class="nav-spacer"></div>
-    <a href="{% url 'change_password' %}" class="nav-item"><i class="bi bi-key"></i> Change Password</a>
-    <a href="{% url 'logout' %}" class="nav-item"><i class="bi bi-box-arrow-right"></i> Logout</a>
-    <div style="margin-top:1rem;">
-        <div class="user-chip">
-            <div class="name">{{ user.name }}</div>
-            <div class="email">{{ user.email }}</div>
-        </div>
-    </div>
-</aside>
-
-<main class="main">
+{% block content %}
+<div class="row justify-content-center">
     <!-- Hero Search -->
-    <div class="finder-hero">
-        <h1>🤖 AI Scheme Finder</h1>
-        <p>Describe your situation in plain language. We'll match you with relevant government schemes.</p>
+    <div class="col-12 col-xl-10">
+        <div class="bb-card bg-primary bg-opacity-10 border-primary border-opacity-25 p-4 p-md-5 mb-5 text-center position-relative overflow-hidden" style="border-radius: var(--radius-lg);">
+            <!-- Decorative background blob -->
+            <div class="position-absolute top-0 start-0 w-100 h-100" style="background: radial-gradient(circle at top right, rgba(30,58,138,0.1), transparent 50%); z-index: 0; pointer-events: none;"></div>
+            
+            <div class="position-relative" style="z-index: 1;">
+                <div class="d-inline-flex align-items-center justify-content-center bg-white text-primary rounded-circle mb-3 shadow-sm" style="width: 60px; height: 60px;">
+                    <i class="bi bi-robot fs-2"></i>
+                </div>
+                <h1 class="h2 fw-bold text-dark mb-2">AI Scheme Finder</h1>
+                <p class="text-muted mb-4 mx-auto" style="max-width: 600px;">Describe your situation in plain language. We'll leverage Natural Language Processing to instantly match you with relevant government schemes.</p>
+                
+                <form method="POST" action="{% url 'nlp_scheme_finder' %}" class="mx-auto position-relative" style="max-width: 700px;" id="aiSearchForm">
+                    {% csrf_token %}
+                    <div class="bg-white p-2 rounded-pill shadow-sm d-flex align-items-center border border-primary border-opacity-25 transition-smooth">
+                        <i class="bi bi-search text-muted ms-3 me-2"></i>
+                        <input type="text" name="query" class="form-control border-0 shadow-none bg-transparent" placeholder="e.g. I am a farmer with 2 acres of land looking for crop insurance..." value="{{ query }}" required style="font-size: 1rem; height: 48px;" aria-label="AI Search input">
+                        <button type="submit" class="bb-btn bb-btn-primary ms-2 rounded-pill px-4" style="min-width: 120px;">
+                            <i class="bi bi-magic me-1"></i> Find
+                        </button>
+                    </div>
+                </form>
 
-        <form method="POST" action="{% url 'nlp_scheme_finder' %}">
-            {% csrf_token %}
-            <div class="search-area">
-                <textarea name="query" rows="2" placeholder="e.g. I am a farmer with 2 acres of land looking for crop insurance... or I am a widow seeking pension support...">{{ query }}</textarea>
-                <button type="submit" class="btn-find">
-                    <i class="bi bi-search me-1"></i> Find
-                </button>
+                <div class="d-flex flex-wrap gap-2 justify-content-center mt-4 mx-auto" style="max-width: 800px;">
+                    <span class="bb-tag border-primary border-opacity-25 bg-white text-primary fw-semibold cursor-pointer toggle-query" style="cursor: pointer; transition: all 0.2s;">🌾 Farmer crop support</span>
+                    <span class="bb-tag border-primary border-opacity-25 bg-white text-primary fw-semibold cursor-pointer toggle-query" style="cursor: pointer; transition: all 0.2s;">👩‍💼 Woman business loan</span>
+                    <span class="bb-tag border-primary border-opacity-25 bg-white text-primary fw-semibold cursor-pointer toggle-query" style="cursor: pointer; transition: all 0.2s;">🎓 Student scholarship</span>
+                    <span class="bb-tag border-primary border-opacity-25 bg-white text-primary fw-semibold cursor-pointer toggle-query" style="cursor: pointer; transition: all 0.2s;">👴 Senior citizen pension</span>
+                    <span class="bb-tag border-primary border-opacity-25 bg-white text-primary fw-semibold cursor-pointer toggle-query" style="cursor: pointer; transition: all 0.2s;">🏠 Housing for low income</span>
+                </div>
             </div>
-        </form>
-
-        <div class="sample-queries">
-            <span class="sample-chip" onclick="setQuery(this)">👨‍🌾 Farmer looking for crop support</span>
-            <span class="sample-chip" onclick="setQuery(this)">👩 Woman entrepreneur needing business loan</span>
-            <span class="sample-chip" onclick="setQuery(this)">🎓 Student needing scholarship</span>
-            <span class="sample-chip" onclick="setQuery(this)">👴 Senior citizen seeking pension</span>
-            <span class="sample-chip" onclick="setQuery(this)">♿ Disabled person needing financial help</span>
-            <span class="sample-chip" onclick="setQuery(this)">🏠 Housing assistance for low income family</span>
         </div>
     </div>
+</div>
 
-    <!-- Results -->
-    {% if query %}
-        <div class="results-header">
-            <div class="results-title">Results for "{{ query|truncatechars:60 }}"</div>
-            <div class="result-count">{{ results|length }} scheme{{ results|length|pluralize }} found</div>
-        </div>
+<div class="row justify-content-center">
+    <div class="col-12 col-xl-10">
+        <!-- Results Section -->
+        {% if query %}
+            <div class="d-flex align-items-center justify-content-between mb-4 border-bottom pb-2">
+                <h5 class="fw-bold m-0 text-dark">Results for "<span class="text-primary">{{ query|truncatechars:40 }}</span>"</h5>
+                <span class="bb-badge bb-badge-primary">{{ results|length }} scheme{{ results|length|pluralize }} found</span>
+            </div>
 
-        {% if results %}
-            <div class="scheme-grid">
-                {% for item in results %}
-                    <div class="scheme-card">
-                        <div class="match-badge">
-                            <span class="match-pill {% if item.score >= 80 %}match-high{% elif item.score >= 60 %}match-mid{% else %}match-low{% endif %}">
+            {% if results %}
+                <div class="row g-4">
+                    {% for item in results %}
+                    <div class="col-md-6 col-lg-4 d-flex">
+                        <div class="bb-card bb-scheme-card bb-hover-lift position-relative p-4 w-100 border-2" style="border-color: rgba(30, 58, 138, 0.1);">
+                            <!-- Match Badge inside card -->
+                            <span class="bb-match-badge {% if item.score >= 80 %}bg-success text-white border-success{% elif item.score >= 60 %}bg-warning text-dark border-warning{% else %}bg-secondary text-white border-secondary{% endif %}" style="box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
                                 {{ item.score }}% match
                             </span>
+
+                            <div class="scheme-title mt-4 text-truncate-2" title="{{ item.scheme.scheme_name }}" style="min-height: 48px;">
+                                {{ item.scheme.scheme_name }}
+                            </div>
+                            
+                            <div class="d-flex gap-2 flex-wrap mb-3 mt-1">
+                                {% if item.scheme.state %}<span class="bb-tag small py-1"><i class="bi bi-geo-alt-fill text-muted me-1"></i>{{ item.scheme.state }}</span>{% endif %}
+                                {% if item.scheme.benefit_type %}<span class="bb-tag small py-1 text-primary bg-primary bg-opacity-10 border-primary border-opacity-25"><i class="bi bi-tag-fill me-1"></i>{{ item.scheme.benefit_type }}</span>{% endif %}
+                            </div>
+                            
+                            <p class="scheme-desc text-muted small" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; min-height: 60px;">
+                                {{ item.scheme.description }}
+                            </p>
+                            
+                            <div class="mt-auto pt-3 border-top">
+                                <a href="{% url 'scheme_apply_guide' item.scheme.scheme_id %}" class="btn btn-outline-primary w-100 fw-bold rounded-pill text-uppercase" style="font-size: 0.8rem; letter-spacing: 0.05em;">
+                                    View Details <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
                         </div>
-                        <div class="scheme-name">{{ item.scheme.scheme_name }}</div>
-                        <div class="scheme-meta">
-                            {% if item.scheme.state %}<span class="scheme-tag state">{{ item.scheme.state }}</span>{% endif %}
-                            {% if item.scheme.benefit_type %}<span class="scheme-tag">{{ item.scheme.benefit_type }}</span>{% endif %}
-                        </div>
-                        <p class="scheme-desc">{{ item.scheme.description }}</p>
-                        <a href="{% url 'scheme_apply_guide' item.scheme.scheme_id %}" class="btn-apply">
-                            View & Apply <i class="bi bi-arrow-up-right"></i>
-                        </a>
                     </div>
-                {% endfor %}
-            </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center p-5 bg-white border rounded-4 border-dashed mt-4">
+                    <div class="display-3 text-muted mb-3"><i class="bi bi-search"></i></div>
+                    <h5 class="fw-bold text-dark">No matching schemes found</h5>
+                    <p class="text-muted mb-0">Try using different keywords or simpler descriptions.</p>
+                </div>
+            {% endif %}
         {% else %}
-            <div class="empty-state">
-                <i class="bi bi-search"></i>
-                No schemes matched your description.<br>
-                Try different keywords like <em>farmer, student, pension, disability, housing</em>...
+            <div class="text-center p-5 bg-white border rounded-4 border-dashed mt-4">
+                <div class="display-3 text-primary opacity-50 mb-3"><i class="bi bi-chat-dots-fill"></i></div>
+                <h5 class="fw-bold text-dark">AI is ready to assist you</h5>
+                <p class="text-muted mb-0">Type your situation above to let our NLP engine find your matches instantly.</p>
             </div>
         {% endif %}
-    {% else %}
-        <div class="empty-state">
-            <i class="bi bi-chat-dots"></i>
-            Type your situation above to find matching government schemes.
-        </div>
-    {% endif %}
-</main>
+    </div>
+</div>
 
+<style>
+    .toggle-query:hover { background-color: var(--primary) !important; color: white !important; }
+    .border-dashed { border-style: dashed !important; border-width: 2px !important; border-color: var(--border) !important; }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
 <script>
-function setQuery(el) {
-    // Remove emoji prefix and set in textarea
-    var text = el.textContent.replace(/^[\p{Emoji}\s]+/u, '').trim();
-    document.querySelector('textarea[name="query"]').value = text;
-    document.querySelector('textarea[name="query"]').focus();
-}
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.toggle-query').forEach(tag => {
+        tag.addEventListener('click', function() {
+            // Remove emoji prefix and set in input
+            const text = this.textContent.replace(/^[\p{Emoji}\s]+/u, '').trim();
+            const input = document.querySelector('input[name="query"]');
+            input.value = text;
+            input.focus();
+            
+            // Optional: Auto-submit form on click for magical feel
+            // document.getElementById('aiSearchForm').submit();
+        });
+    });
+});
 </script>
-</body>
-</html>
+{% endblock %}
