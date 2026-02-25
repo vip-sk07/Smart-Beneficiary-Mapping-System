@@ -278,18 +278,19 @@ def dashboard(request):
         errors.append('grievances: ' + _tb.format_exc())
         grievances = []
 
+    # Announcement banner — skip silently if table doesn't exist yet
+    active_announcement = None
     try:
         active_announcement = Announcement.objects.filter(is_active=True).first()
     except Exception:
-        errors.append('announcement: ' + _tb.format_exc())
-        active_announcement = None
+        pass  # Announcements table doesn't exist yet on Railway — it's cosmetic, ignore
 
-    # ── If ANY query failed, show a clear diagnostic page (not a blank 500) ──
+    # ── If any CRITICAL query failed, show diagnostic (not a blank 500) ──
     if errors:
         error_html = '<h2 style="font-family:monospace">Dashboard DB Errors - share with developer</h2>'
         for err in errors:
             error_html += f'<pre style="background:#fee;padding:12px;margin:8px 0;border-radius:6px;white-space:pre-wrap">{err}</pre>'
-        return HttpResponse(error_html, status=200)  # 200 so Railway shows it
+        return HttpResponse(error_html, status=200)
 
     return render(request, 'dashboard.html', {
         'past_categories':  past_categories,
