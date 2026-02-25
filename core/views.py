@@ -1072,7 +1072,22 @@ def admin_export_csv(request):
 def admin_announcements(request):
     if not request.user.is_authenticated or not request.user.is_staff:
         return redirect('home')
-        
+
+    # ── Ensure the Announcements table exists (create on-the-fly if missing) ──
+    from django.db import connection as _conn
+    try:
+        with _conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS Announcements (
+                    id         INT AUTO_INCREMENT PRIMARY KEY,
+                    message    TEXT NOT NULL,
+                    is_active  BOOLEAN DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+    except Exception as _e:
+        print(f"Announcements table create warning: {_e}")
+
     try:
         if request.method == 'POST':
             action = request.POST.get('action')
@@ -1080,7 +1095,6 @@ def admin_announcements(request):
                 msg = request.POST.get('message', '').strip()
                 is_active = request.POST.get('is_active') == 'on'
                 if msg:
-                    # If marking as active, optionally set all others to inactive
                     if is_active:
                         Announcement.objects.all().update(is_active=False)
                     Announcement.objects.create(message=msg, is_active=is_active)
@@ -1097,14 +1111,17 @@ def admin_announcements(request):
                         Announcement.objects.all().update(is_active=False)
                     ann.is_active = not ann.is_active
                     ann.save()
-                
             return redirect('admin_announcements')
-            
+
         announcements = Announcement.objects.all().order_by('-created_at')
         return render(request, 'admin_announcements.html', {'announcements': announcements})
     except Exception as e:
         import traceback
-        return HttpResponse(f"<pre>{traceback.format_exc()}</pre>", status=500)
+        return HttpResponse(
+            f'<h3 style="font-family:monospace;color:red">Announcements Error</h3>'
+            f'<pre>{traceback.format_exc()}</pre>',
+            status=500
+        )
 
 
 def admin_schemes(request):

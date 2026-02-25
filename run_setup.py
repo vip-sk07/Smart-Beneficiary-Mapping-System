@@ -24,15 +24,32 @@ def _create_table(cursor, sql, desc):
 
 def setup_db():
     print("=" * 50)
-    print("Running Django Migrations...")
+
+    # ── Create critical tables FIRST (before migrate, so they always exist) ──
+    print("\n[Pre-migrate: Creating missing tables]")
+    with connection.cursor() as cursor:
+        _create_table(cursor, """
+            CREATE TABLE IF NOT EXISTS Announcements (
+                id         INT AUTO_INCREMENT PRIMARY KEY,
+                message    TEXT NOT NULL,
+                is_active  BOOLEAN DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """, "Announcements")
+
+    print("\nRunning Django Migrations...")
     from django.core.management import call_command
-    call_command("migrate", interactive=False)
+    try:
+        call_command("migrate", interactive=False)
+    except Exception as e:
+        print(f"  ⚠️  migrate warning (non-fatal): {e}")
 
     print("\nApplying custom schema patches...")
     with connection.cursor() as cursor:
 
         # ── Create tables that Django migrations might have missed ──────────
         print("\n[Tables]")
+        # Announcements already created above, but ensure again
         _create_table(cursor, """
             CREATE TABLE IF NOT EXISTS Announcements (
                 id         INT AUTO_INCREMENT PRIMARY KEY,
