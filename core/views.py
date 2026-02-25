@@ -183,8 +183,9 @@ def _calculate_match_score(custom_user, scheme):
 
 # ── Dashboard ──────────────────────────────────────────────────────────────
 def dashboard(request):
-    if not request.user.is_authenticated:
-        return redirect('login')
+    try:
+        if not request.user.is_authenticated:
+            return redirect('login')
         
     if request.user.is_staff or request.user.is_superuser:
         return redirect('admin_stats')
@@ -265,6 +266,9 @@ def dashboard(request):
         'applications':     applications,
         'grievances':       grievances,
     })
+    except Exception as e:
+        import traceback
+        return HttpResponse(f"<h1>Error Details Below</h1><pre style='white-space:pre-wrap'>{traceback.format_exc()}</pre>", status=500)
 
 
 # ── Category selection ─────────────────────────────────────────────────────

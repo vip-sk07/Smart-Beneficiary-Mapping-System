@@ -46,5 +46,32 @@ def setup_db():
         except Exception as e:
             pass
 
+        # Missing columns for RuleEngine in Rule_Engine table
+        try:
+            cursor.execute("ALTER TABLE Rule_Engine ADD COLUMN pension_status BOOLEAN DEFAULT 0;")
+            print("Added pension_status to Rule_Engine.")
+        except Exception as e:
+            pass
+        try:
+            cursor.execute("ALTER TABLE Rule_Engine ADD COLUMN disability_cert BOOLEAN DEFAULT 0;")
+            print("Added disability_cert to Rule_Engine.")
+        except Exception as e:
+            pass
+        try:
+            cursor.execute("ALTER TABLE Rule_Engine ADD COLUMN unemployment_status BOOLEAN DEFAULT 0;")
+            print("Added unemployment_status to Rule_Engine.")
+        except Exception as e:
+            pass
+        try:
+            cursor.execute("ALTER TABLE Rule_Engine ADD COLUMN education_required VARCHAR(100) NULL;")
+            print("Added education_required to Rule_Engine.")
+        except Exception as e:
+            pass
+        try:
+            cursor.execute("ALTER TABLE Rule_Engine ADD COLUMN business_turnover_limit DECIMAL(15,2) NULL;")
+            print("Added business_turnover_limit to Rule_Engine.")
+        except Exception as e:
+            pass
+
 if __name__ == "__main__":
     setup_db()

@@ -85,6 +85,48 @@ queries = [
         FOREIGN KEY (scheme_id) REFERENCES Schemes(scheme_id)
     )
     """
+    ,
+    """
+    CREATE TABLE IF NOT EXISTS Announcements (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        message     TEXT NOT NULL,
+        is_active   BOOLEAN DEFAULT 0,
+        created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS Rule_Engine (
+        rule_id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+        scheme_id               INT NOT NULL,
+        category_id             INT NOT NULL,
+        age_min                 INT,
+        age_max                 INT,
+        gender                  VARCHAR(10),
+        location                VARCHAR(100),
+        min_income              DECIMAL(15,2),
+        max_income              DECIMAL(15,2),
+        education_required      VARCHAR(100),
+        pension_status          BOOLEAN,
+        disability_cert         BOOLEAN,
+        unemployment_status     BOOLEAN,
+        business_turnover_limit DECIMAL(15,2),
+        FOREIGN KEY (scheme_id)   REFERENCES Schemes(scheme_id),
+        FOREIGN KEY (category_id) REFERENCES Categories(category_id)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS User_Eligibility (
+        eligibility_id     INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id            INT NOT NULL,
+        scheme_id          INT NOT NULL,
+        eligibility_status VARCHAR(50) NOT NULL DEFAULT 'Pending',
+        reason             TEXT,
+        applied_on         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (user_id, scheme_id),
+        FOREIGN KEY (user_id)   REFERENCES Users(user_id),
+        FOREIGN KEY (scheme_id) REFERENCES Schemes(scheme_id)
+    )
+    """
 ]
 print("Fixing SQLite DB...")
 with connection.cursor() as cursor:
