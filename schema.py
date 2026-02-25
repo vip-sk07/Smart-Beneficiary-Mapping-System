@@ -36,6 +36,10 @@ tables = [
         income     DECIMAL(15,2),
         occupation VARCHAR(100),
         education  VARCHAR(100),
+        pension_status BOOLEAN DEFAULT 0,
+        disability_cert BOOLEAN DEFAULT 0,
+        unemployment_status BOOLEAN DEFAULT 0,
+        business_turnover DECIMAL(15,2),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         last_login TIMESTAMP NULL
     )
