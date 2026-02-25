@@ -25,8 +25,6 @@ from .forms import (
 )
 
 
-def get_custom_user(django_user):
-    return CustomUser.objects.filter(email=django_user.email).first()
 
 
 def _is_via_google(request):
@@ -40,6 +38,15 @@ def _is_via_google(request):
 
 
 # ── Home ───────────────────────────────────────────────────────────────────
+def get_custom_user(django_user):
+    if not django_user.is_authenticated:
+        return None
+    email = django_user.email
+    if not email:
+        return None
+    return CustomUser.objects.filter(email__iexact=email).first()
+
+
 def home(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
