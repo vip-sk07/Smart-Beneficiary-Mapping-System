@@ -17,7 +17,7 @@ import random
 import string
 from typing import Any
 
-from .models import CustomUser, UserCategories, UserEligibility, Scheme, Application, Grievance, Category, RuleEngine
+from .models import CustomUser, UserCategories, UserEligibility, Scheme, Application, Grievance, Category, RuleEngine, Announcement
 from .forms import (
     UserRegistrationForm, CategorySelectionForm, LoginForm,
     ForgotPasswordForm, OTPVerifyForm, ResetPasswordForm, ChangePasswordForm,
@@ -183,9 +183,8 @@ def _calculate_match_score(custom_user, scheme):
 
 # ── Dashboard ──────────────────────────────────────────────────────────────
 def dashboard(request):
-    try:
-        if not request.user.is_authenticated:
-            return redirect('login')
+    if not request.user.is_authenticated:
+        return redirect('login')
         
     if request.user.is_staff or request.user.is_superuser:
         return redirect('admin_stats')
@@ -266,9 +265,6 @@ def dashboard(request):
         'applications':     applications,
         'grievances':       grievances,
     })
-    except Exception as e:
-        import traceback
-        return HttpResponse(f"<h1>Error Details Below</h1><pre style='white-space:pre-wrap'>{traceback.format_exc()}</pre>", status=500)
 
 
 # ── Category selection ─────────────────────────────────────────────────────
