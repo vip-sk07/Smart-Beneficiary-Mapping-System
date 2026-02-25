@@ -178,6 +178,10 @@ def _calculate_match_score(custom_user, scheme):
 def dashboard(request):
     if not request.user.is_authenticated:
         return redirect('login')
+        
+    if request.user.is_staff or request.user.is_superuser:
+        return redirect('admin_stats')
+        
     custom_user = get_custom_user(request.user)
     if not custom_user:
         if _is_via_google(request):

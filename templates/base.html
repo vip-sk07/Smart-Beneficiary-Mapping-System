@@ -49,6 +49,7 @@
 
             <!-- Navigation Links -->
             <nav class="d-flex flex-column" style="gap: 0.25rem;">
+                {% if not request.user.is_superuser %}
                 <a href="{% url 'dashboard' %}" class="bb-nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                     <i class="bi bi-grid-1x2"></i> Dashboard
                 </a>
@@ -64,6 +65,7 @@
                 <a href="{% url 'edit_profile' %}" class="bb-nav-item {% if request.resolver_match.url_name == 'edit_profile' %}active{% endif %}">
                     <i class="bi bi-person-badge"></i> Edit Profile
                 </a>
+                {% endif %}
                 {% if request.user.is_superuser %}
                 <div class="mt-3 mb-2 px-3 text-uppercase" style="font-size: 0.7rem; font-weight: 700; color: var(--text-light); letter-spacing: 0.05em;">Admin</div>
                 <a href="{% url 'admin_stats' %}" class="bb-nav-item {% if request.resolver_match.url_name == 'admin_stats' %}active{% endif %}">
