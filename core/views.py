@@ -183,12 +183,14 @@ def _calculate_match_score(custom_user, scheme):
 
 # ── Dashboard ──────────────────────────────────────────────────────────────
 def dashboard(request):
+    import traceback as _tb
+
     if not request.user.is_authenticated:
         return redirect('login')
-        
+
     if request.user.is_staff or request.user.is_superuser:
         return redirect('admin_stats')
-        
+
     custom_user = get_custom_user(request.user)
     if not custom_user:
         if _is_via_google(request):
@@ -199,56 +201,95 @@ def dashboard(request):
             messages.error(request, 'Profile not found. Please register again.')
             return redirect('register')
 
-    past_categories = UserCategories.objects.filter(
-        user_id=custom_user.user_id
-    ).select_related('category').order_by('-user_cat_id')[:5]
+    # ── collect every piece of data individually so we can isolate failures ──
+    errors = []
 
-    # Search & filter
-    search_q    = request.GET.get('q', '').strip()
+    try:
+        past_categories = list(UserCategories.objects.filter(
+            user_id=custom_user.user_id
+        ).select_related('category').order_by('-user_cat_id')[:5])
+    except Exception:
+        errors.append('past_categories: ' + _tb.format_exc())
+        past_categories = []
+
+    search_q     = request.GET.get('q', '').strip()
     filter_state = request.GET.get('state', '').strip()
     filter_type  = request.GET.get('type', '').strip()
 
-    eligible_qs = UserEligibility.objects.filter(
-        user_id=custom_user.user_id, eligibility_status='Eligible'
-    ).select_related('scheme').order_by('-applied_on')
+    try:
+        eligible_qs = UserEligibility.objects.filter(
+            user_id=custom_user.user_id, eligibility_status='Eligible'
+        ).select_related('scheme').order_by('-applied_on')
+        if search_q:
+            eligible_qs = eligible_qs.filter(
+                Q(scheme__scheme_name__icontains=search_q) |
+                Q(scheme__description__icontains=search_q) |
+                Q(scheme__benefits__icontains=search_q)
+            )
+        if filter_state:
+            eligible_qs = eligible_qs.filter(scheme__state__iexact=filter_state)
+        if filter_type:
+            eligible_qs = eligible_qs.filter(scheme__benefit_type__iexact=filter_type)
+        eligible_schemes = []
+        for el in eligible_qs:
+            score = _calculate_match_score(custom_user, el.scheme)
+            eligible_schemes.append({'eligibility': el, 'score': score})
+    except Exception:
+        errors.append('eligible_schemes: ' + _tb.format_exc())
+        eligible_schemes = []
 
-    if search_q:
-        eligible_qs = eligible_qs.filter(
-            Q(scheme__scheme_name__icontains=search_q) |
-            Q(scheme__description__icontains=search_q) |
-            Q(scheme__benefits__icontains=search_q)
-        )
-    if filter_state:
-        eligible_qs = eligible_qs.filter(scheme__state__iexact=filter_state)
-    if filter_type:
-        eligible_qs = eligible_qs.filter(scheme__benefit_type__iexact=filter_type)
+    try:
+        all_eligible = UserEligibility.objects.filter(
+            user_id=custom_user.user_id, eligibility_status='Eligible'
+        ).select_related('scheme')
+        states        = sorted(set(e.scheme.state for e in all_eligible if e.scheme.state))
+        benefit_types = sorted(set(e.scheme.benefit_type for e in all_eligible if e.scheme.benefit_type))
+    except Exception:
+        errors.append('states/benefit_types: ' + _tb.format_exc())
+        states = []
+        benefit_types = []
 
-    # Add match score
-    eligible_schemes = []
-    for el in eligible_qs:
-        score = _calculate_match_score(custom_user, el.scheme)
-        eligible_schemes.append({'eligibility': el, 'score': score})
+    try:
+        total_eligible = UserEligibility.objects.filter(
+            user_id=custom_user.user_id, eligibility_status='Eligible').count()
+    except Exception:
+        errors.append('total_eligible: ' + _tb.format_exc())
+        total_eligible = 0
 
-    # Dropdown options
-    all_eligible = UserEligibility.objects.filter(
-        user_id=custom_user.user_id, eligibility_status='Eligible'
-    ).select_related('scheme')
-    states = sorted(set(e.scheme.state for e in all_eligible if e.scheme.state))
-    benefit_types = sorted(set(e.scheme.benefit_type for e in all_eligible if e.scheme.benefit_type))
+    try:
+        total_categories = UserCategories.objects.filter(user_id=custom_user.user_id).count()
+    except Exception:
+        errors.append('total_categories: ' + _tb.format_exc())
+        total_categories = 0
 
-    total_eligible   = UserEligibility.objects.filter(
-        user_id=custom_user.user_id, eligibility_status='Eligible').count()
-    total_categories = UserCategories.objects.filter(user_id=custom_user.user_id).count()
+    try:
+        applications = list(Application.objects.filter(
+            user_id=custom_user.user_id
+        ).select_related('scheme').order_by('-applied_on')[:5])
+    except Exception:
+        errors.append('applications: ' + _tb.format_exc())
+        applications = []
 
-    applications = Application.objects.filter(
-        user_id=custom_user.user_id
-    ).select_related('scheme').order_by('-applied_on')[:5]
+    try:
+        grievances = list(Grievance.objects.filter(
+            user_id=custom_user.user_id
+        ).select_related('scheme').order_by('-raised_on')[:3])
+    except Exception:
+        errors.append('grievances: ' + _tb.format_exc())
+        grievances = []
 
-    grievances = Grievance.objects.filter(
-        user_id=custom_user.user_id
-    ).select_related('scheme').order_by('-raised_on')[:3]
+    try:
+        active_announcement = Announcement.objects.filter(is_active=True).first()
+    except Exception:
+        errors.append('announcement: ' + _tb.format_exc())
+        active_announcement = None
 
-    active_announcement = Announcement.objects.filter(is_active=True).first()
+    # ── If ANY query failed, show a clear diagnostic page (not a blank 500) ──
+    if errors:
+        error_html = '<h2 style="font-family:monospace">Dashboard DB Errors - share with developer</h2>'
+        for err in errors:
+            error_html += f'<pre style="background:#fee;padding:12px;margin:8px 0;border-radius:6px;white-space:pre-wrap">{err}</pre>'
+        return HttpResponse(error_html, status=200)  # 200 so Railway shows it
 
     return render(request, 'dashboard.html', {
         'past_categories':  past_categories,
