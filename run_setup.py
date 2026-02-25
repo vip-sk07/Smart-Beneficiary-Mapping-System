@@ -23,6 +23,28 @@ def setup_db():
             print("Successfully added admin_remark to Grievances.")
         except Exception as e:
             print(f"Schema update for Grievances skipped: {e}")
+            
+        # Missing columns for CustomUser in Users table
+        try:
+            cursor.execute("ALTER TABLE Users ADD COLUMN pension_status BOOLEAN DEFAULT 0;")
+            print("Added pension_status to Users.")
+        except Exception as e:
+            pass
+        try:
+            cursor.execute("ALTER TABLE Users ADD COLUMN disability_cert BOOLEAN DEFAULT 0;")
+            print("Added disability_cert to Users.")
+        except Exception as e:
+            pass
+        try:
+            cursor.execute("ALTER TABLE Users ADD COLUMN unemployment_status BOOLEAN DEFAULT 0;")
+            print("Added unemployment_status to Users.")
+        except Exception as e:
+            pass
+        try:
+            cursor.execute("ALTER TABLE Users ADD COLUMN business_turnover DECIMAL(15,2) NULL;")
+            print("Added business_turnover to Users.")
+        except Exception as e:
+            pass
 
 if __name__ == "__main__":
     setup_db()

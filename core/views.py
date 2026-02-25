@@ -183,88 +183,92 @@ def _calculate_match_score(custom_user, scheme):
 
 # ── Dashboard ──────────────────────────────────────────────────────────────
 def dashboard(request):
-    if not request.user.is_authenticated:
-        return redirect('login')
-        
-    if request.user.is_staff or request.user.is_superuser:
-        return redirect('admin_stats')
-        
-    custom_user = get_custom_user(request.user)
-    if not custom_user:
-        if _is_via_google(request):
-            messages.info(request, 'Please complete your profile to continue.')
-            return redirect('register')
-        else:
-            logout(request)
-            messages.error(request, 'Profile not found. Please register again.')
-            return redirect('register')
+    try:
+        if not request.user.is_authenticated:
+            return redirect('login')
+            
+        if request.user.is_staff or request.user.is_superuser:
+            return redirect('admin_stats')
+            
+        custom_user = get_custom_user(request.user)
+        if not custom_user:
+            if _is_via_google(request):
+                messages.info(request, 'Please complete your profile to continue.')
+                return redirect('register')
+            else:
+                logout(request)
+                messages.error(request, 'Profile not found. Please register again.')
+                return redirect('register')
 
-    past_categories = UserCategories.objects.filter(
-        user_id=custom_user.user_id
-    ).select_related('category').order_by('-user_cat_id')[:5]
+        past_categories = UserCategories.objects.filter(
+            user_id=custom_user.user_id
+        ).select_related('category').order_by('-user_cat_id')[:5]
 
-    # Search & filter
-    search_q    = request.GET.get('q', '').strip()
-    filter_state = request.GET.get('state', '').strip()
-    filter_type  = request.GET.get('type', '').strip()
+        # Search & filter
+        search_q    = request.GET.get('q', '').strip()
+        filter_state = request.GET.get('state', '').strip()
+        filter_type  = request.GET.get('type', '').strip()
 
-    eligible_qs = UserEligibility.objects.filter(
-        user_id=custom_user.user_id, eligibility_status='Eligible'
-    ).select_related('scheme').order_by('-applied_on')
+        eligible_qs = UserEligibility.objects.filter(
+            user_id=custom_user.user_id, eligibility_status='Eligible'
+        ).select_related('scheme').order_by('-applied_on')
 
-    if search_q:
-        eligible_qs = eligible_qs.filter(
-            Q(scheme__scheme_name__icontains=search_q) |
-            Q(scheme__description__icontains=search_q) |
-            Q(scheme__benefits__icontains=search_q)
-        )
-    if filter_state:
-        eligible_qs = eligible_qs.filter(scheme__state__iexact=filter_state)
-    if filter_type:
-        eligible_qs = eligible_qs.filter(scheme__benefit_type__iexact=filter_type)
+        if search_q:
+            eligible_qs = eligible_qs.filter(
+                Q(scheme__scheme_name__icontains=search_q) |
+                Q(scheme__description__icontains=search_q) |
+                Q(scheme__benefits__icontains=search_q)
+            )
+        if filter_state:
+            eligible_qs = eligible_qs.filter(scheme__state__iexact=filter_state)
+        if filter_type:
+            eligible_qs = eligible_qs.filter(scheme__benefit_type__iexact=filter_type)
 
-    # Add match score
-    eligible_schemes = []
-    for el in eligible_qs:
-        score = _calculate_match_score(custom_user, el.scheme)
-        eligible_schemes.append({'eligibility': el, 'score': score})
+        # Add match score
+        eligible_schemes = []
+        for el in eligible_qs:
+            score = _calculate_match_score(custom_user, el.scheme)
+            eligible_schemes.append({'eligibility': el, 'score': score})
 
-    # Dropdown options
-    all_eligible = UserEligibility.objects.filter(
-        user_id=custom_user.user_id, eligibility_status='Eligible'
-    ).select_related('scheme')
-    states = sorted(set(e.scheme.state for e in all_eligible if e.scheme.state))
-    benefit_types = sorted(set(e.scheme.benefit_type for e in all_eligible if e.scheme.benefit_type))
+        # Dropdown options
+        all_eligible = UserEligibility.objects.filter(
+            user_id=custom_user.user_id, eligibility_status='Eligible'
+        ).select_related('scheme')
+        states = sorted(set(e.scheme.state for e in all_eligible if e.scheme.state))
+        benefit_types = sorted(set(e.scheme.benefit_type for e in all_eligible if e.scheme.benefit_type))
 
-    total_eligible   = UserEligibility.objects.filter(
-        user_id=custom_user.user_id, eligibility_status='Eligible').count()
-    total_categories = UserCategories.objects.filter(user_id=custom_user.user_id).count()
+        total_eligible   = UserEligibility.objects.filter(
+            user_id=custom_user.user_id, eligibility_status='Eligible').count()
+        total_categories = UserCategories.objects.filter(user_id=custom_user.user_id).count()
 
-    applications = Application.objects.filter(
-        user_id=custom_user.user_id
-    ).select_related('scheme').order_by('-applied_on')[:5]
+        applications = Application.objects.filter(
+            user_id=custom_user.user_id
+        ).select_related('scheme').order_by('-applied_on')[:5]
 
-    grievances = Grievance.objects.filter(
-        user_id=custom_user.user_id
-    ).select_related('scheme').order_by('-raised_on')[:3]
+        grievances = Grievance.objects.filter(
+            user_id=custom_user.user_id
+        ).select_related('scheme').order_by('-raised_on')[:3]
 
-    active_announcement = Announcement.objects.filter(is_active=True).first()
+        active_announcement = Announcement.objects.filter(is_active=True).first()
 
-    return render(request, 'dashboard.html', {
-        'past_categories':  past_categories,
-        'eligible_schemes': eligible_schemes,
-        'user':             custom_user,
-        'search_q':         search_q,
-        'filter_state':     filter_state,
-        'filter_type':      filter_type,
-        'announcement':     active_announcement,
-        'states':           states,
-        'benefit_types':    benefit_types,
-        'total_eligible':   total_eligible,
-        'total_categories': total_categories,
-        'applications':     applications,
-        'grievances':       grievances,
-    })
+        return render(request, 'dashboard.html', {
+            'past_categories':  past_categories,
+            'eligible_schemes': eligible_schemes,
+            'user':             custom_user,
+            'search_q':         search_q,
+            'filter_state':     filter_state,
+            'filter_type':      filter_type,
+            'announcement':     active_announcement,
+            'states':           states,
+            'benefit_types':    benefit_types,
+            'total_eligible':   total_eligible,
+            'total_categories': total_categories,
+            'applications':     applications,
+            'grievances':       grievances,
+        })
+    except Exception as e:
+        import traceback
+        return HttpResponse(f"<pre>{traceback.format_exc()}</pre>", status=500)
 
 
 # ── Category selection ─────────────────────────────────────────────────────
