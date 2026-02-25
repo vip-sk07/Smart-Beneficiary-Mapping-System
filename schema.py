@@ -134,6 +134,7 @@ tables = [
         scheme_id    INT,
         complaint    TEXT,
         status       VARCHAR(20) DEFAULT 'Open',
+        admin_remark TEXT NULL,
         raised_on    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         resolved_on  TIMESTAMP NULL,
         FOREIGN KEY (user_id)   REFERENCES Users(user_id),

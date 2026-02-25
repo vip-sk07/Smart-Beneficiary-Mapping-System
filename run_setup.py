@@ -10,14 +10,19 @@ def setup_db():
     from django.core.management import call_command
     call_command("migrate", interactive=False)
     
-    print("Applying custom scheme flags if not present...")
+    print("Applying custom schema updates if not present...")
     with connection.cursor() as cursor:
         try:
-            cursor.execute("ALTER TABLE Schemes ADD COLUMN is_active BOOLEAN DEFAULT 1")
-            print("Successfully added is_active to Schemes")
+            cursor.execute("ALTER TABLE Schemes ADD COLUMN is_active BOOLEAN DEFAULT 1;")
+            print("Successfully added is_active to Schemes.")
         except Exception as e:
-            # If column exists, it will throw Duplicate Column error which we ignore
-            print(f"Schema update skipped/failed (Expected if already exists): {e}")
+            print(f"Schema update for Schemes skipped: {e}")
+
+        try:
+            cursor.execute("ALTER TABLE Grievances ADD COLUMN admin_remark TEXT NULL;")
+            print("Successfully added admin_remark to Grievances.")
+        except Exception as e:
+            print(f"Schema update for Grievances skipped: {e}")
 
 if __name__ == "__main__":
     setup_db()
