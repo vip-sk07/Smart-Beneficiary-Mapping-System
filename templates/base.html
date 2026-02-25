@@ -71,8 +71,17 @@
                 <a href="{% url 'admin_stats' %}" class="bb-nav-item {% if request.resolver_match.url_name == 'admin_stats' %}active{% endif %}">
                     <i class="bi bi-pie-chart"></i> Platform Stats
                 </a>
+                <a href="{% url 'admin_users' %}" class="bb-nav-item {% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}">
+                    <i class="bi bi-people"></i> Manage Users
+                </a>
+                <a href="{% url 'admin_schemes' %}" class="bb-nav-item {% if 'scheme' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-card-list"></i> Manage Schemes
+                </a>
                 <a href="{% url 'admin_grievances' %}" class="bb-nav-item {% if request.resolver_match.url_name == 'admin_grievances' %}active{% endif %}">
                     <i class="bi bi-inbox"></i> Manage Grievances
+                </a>
+                <a href="{% url 'admin_announcements' %}" class="bb-nav-item {% if request.resolver_match.url_name == 'admin_announcements' %}active{% endif %}">
+                    <i class="bi bi-megaphone"></i> Announcements
                 </a>
                 <a href="/admin/" class="bb-nav-item">
                     <i class="bi bi-gear"></i> Django Admin
@@ -100,26 +109,139 @@
     <!-- Main Content -->
     <main class="bb-main-content">
         <!-- Flash Messages -->
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% else %}primary{% endif %} alert-dismissible fade show border-0 shadow-sm rounded-3 d-flex align-items-center gap-2" role="alert" style="font-size: 0.875rem;">
-                    {% if message.tags == 'success' %}<i class="bi bi-check-circle-fill"></i>
-                    {% elif message.tags == 'error' %}<i class="bi bi-exclamation-triangle-fill"></i>
-                    {% else %}<i class="bi bi-info-circle-fill"></i>{% endif %}
+        <div class="container-fluid mb-3">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert" style="border-radius: var(--radius); border: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                    <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% elif message.tags == 'error' %}bi-exclamation-triangle-fill{% else %}bi-info-circle-fill{% endif %} me-2"></i>
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
-            {% endfor %}
-        {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
 
-        {% block content %}{% endblock %}
+        {% block content %}
+        {% endblock %}
     </main>
+</div>
 
-    <!-- Scripts -->
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Custom UI JS -->
-    <script src="{% static 'js/benefitbridge_ui.js' %}"></script>
+<!-- Gemini Chatbot Widget -->
+<div id="gemini-chat-widget" style="position: fixed; bottom: 30px; right: 30px; z-index: 9999; display: flex; flex-direction: column; align-items: flex-end; gap: 15px;">
+    <!-- Chat Window -->
+    <div id="gemini-chat-window" style="display: none; width: 350px; height: 500px; background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); border: 1px solid var(--border); overflow: hidden; flex-direction: column;">
+        <!-- Header -->
+        <div style="background: var(--primary); color: white; padding: 15px; font-weight: 600; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <i class="bi bi-robot fs-5"></i>
+                BB AI Assistant
+            </div>
+            <button onclick="toggleChat()" style="background: none; border: none; color: white; cursor: pointer;"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <!-- Messages -->
+        <div id="gemini-messages" style="flex: 1; padding: 15px; overflow-y: auto; background: var(--canvas); display: flex; flex-direction: column; gap: 10px; font-size: 0.9rem;">
+            <div style="background: white; padding: 10px 15px; border-radius: 15px; border-bottom-left-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); max-width: 85%; align-self: flex-start; border: 1px solid var(--border);">
+                Hi! Ask me anything about government schemes, eligibility, or how to use the platform.
+            </div>
+        </div>
+        <!-- Input -->
+        <div style="padding: 15px; background: white; border-top: 1px solid var(--border); display: flex; gap: 10px;">
+            <input type="text" id="gemini-input" placeholder="Type your message..." style="flex: 1; border: 1px solid var(--border); border-radius: 20px; padding: 8px 15px; outline: none; font-size: 0.9rem;" onkeypress="if(event.key === 'Enter') sendGeminiMessage()">
+            <button onclick="sendGeminiMessage()" class="bb-btn bb-btn-primary" style="border-radius: 50%; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center;"><i class="bi bi-send-fill"></i></button>
+        </div>
+    </div>
+    
+    <!-- Floating Button -->
+    <button onclick="toggleChat()" class="bb-btn bb-btn-primary" style="border-radius: 50%; width: 60px; height: 60px; padding: 0; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4); z-index: 10;">
+        <i class="bi bi-robot fs-3"></i>
+    </button>
+</div>
+
+<script>
+    function toggleChat() {
+        const win = document.getElementById('gemini-chat-window');
+        win.style.display = win.style.display === 'none' ? 'flex' : 'none';
+        if (win.style.display === 'flex') {
+            document.getElementById('gemini-input').focus();
+        }
+    }
+
+    async function sendGeminiMessage() {
+        const input = document.getElementById('gemini-input');
+        const msg = input.value.trim();
+        if (!msg) return;
+        
+        input.value = '';
+        const messagesDiv = document.getElementById('gemini-messages');
+        
+        // User Message
+        messagesDiv.innerHTML += `
+            <div style="background: var(--primary); color: white; padding: 10px 15px; border-radius: 15px; border-bottom-right-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); max-width: 85%; align-self: flex-end;">
+                ${msg}
+            </div>
+        `;
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        
+        // Loader
+        const loaderId = 'loader-' + Date.now();
+        messagesDiv.innerHTML += `
+            <div id="${loaderId}" style="background: white; padding: 10px 15px; border-radius: 15px; border-bottom-left-radius: 5px; max-width: 85%; align-self: flex-start; border: 1px solid var(--border); color: var(--text-light);">
+                <i class="bi bi-three-dots"></i>
+            </div>
+        `;
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        
+        try {
+            const fd = new FormData();
+            fd.append('message', msg);
+            fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            
+            const res = await fetch("{% url 'gemini_chat' %}", {
+                method: 'POST',
+                body: fd
+            });
+            const data = await res.json();
+            
+            document.getElementById(loaderId).remove();
+            
+            if (res.ok) {
+                // Formatting markdown slightly
+                let reply = data.reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+                messagesDiv.innerHTML += `
+                    <div style="background: white; padding: 10px 15px; border-radius: 15px; border-bottom-left-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); max-width: 85%; align-self: flex-start; border: 1px solid var(--border);">
+                        ${reply}
+                    </div>
+                `;
+            } else {
+                messagesDiv.innerHTML += `
+                    <div style="background: var(--danger-bg); color: #dc2626; padding: 10px 15px; border-radius: 15px; border-bottom-left-radius: 5px; max-width: 85%; align-self: flex-start;">
+                        ${data.error || 'Server error.'}
+                    </div>
+                `;
+            }
+        } catch (e) {
+            document.getElementById(loaderId).remove();
+            messagesDiv.innerHTML += `
+                <div style="background: var(--danger-bg); color: #dc2626; padding: 10px 15px; border-radius: 15px; border-bottom-left-radius: 5px; max-width: 85%; align-self: flex-start;">
+                    Failed to connect.
+                </div>
+            `;
+        }
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById('bb-sidebar-toggle').addEventListener('click', function() {
+        document.querySelector('.bb-sidebar').classList.toggle('active');
+        document.querySelector('.bb-sidebar-overlay').classList.toggle('active');
+    });
+    document.querySelector('.bb-sidebar-overlay').addEventListener('click', function() {
+        document.querySelector('.bb-sidebar').classList.remove('active');
+        this.classList.remove('active');
+    });
+</script>
     
     {% block extra_js %}{% endblock %}
 </body>

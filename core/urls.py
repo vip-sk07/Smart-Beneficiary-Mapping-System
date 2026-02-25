@@ -54,4 +54,18 @@ urlpatterns = [
     # Admin Grievance Panel
     path('platform-admin/grievances/',                      views.admin_grievances, name='admin_grievances'),
     path('platform-admin/grievances/<int:grv_id>/resolve/', views.resolve_grievance, name='resolve_grievance'),
+
+    # Gemini Chatbot API
+    path('api/gemini-chat/', views.gemini_chat, name='gemini_chat'),
+
+    # Admin Panel Improvements
+    path('platform-admin/users/', views.admin_users, name='admin_users'),
+    path('platform-admin/export-csv/', views.admin_export_csv, name='admin_export_csv'),
+    path('platform-admin/announcements/', views.admin_announcements, name='admin_announcements'),
+
+    # Scheme Manager
+    path('platform-admin/schemes/', views.admin_schemes, name='admin_schemes'),
+    path('platform-admin/schemes/create/', views.scheme_create, name='scheme_create'),
+    path('platform-admin/schemes/<int:scheme_id>/edit/', views.scheme_edit, name='scheme_edit'),
+    path('platform-admin/schemes/<int:scheme_id>/delete/', views.scheme_delete, name='scheme_delete'),
 ]

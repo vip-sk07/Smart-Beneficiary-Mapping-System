@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h4 fw-bold mb-0">Platform Announcements</h2>
+</div>
+
+<div class="bb-card mb-4">
+    <form method="POST" action="{% url 'admin_announcements' %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create">
+        <label for="message" class="form-label fw-bold">New Announcement Message</label>
+        <textarea name="message" id="message" rows="3" class="form-control mb-3" placeholder="Enter message to broadcast to all users..." required></textarea>
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+            <label class="form-check-label" for="is_active">Make Active (Disables existing active ones)</label>
+        </div>
+        <button type="submit" class="bb-btn bb-btn-primary"><i class="bi bi-box-arrow-up"></i> Publish Announcement</button>
+    </form>
+</div>
+
+<div class="bb-card">
+    <h3 class="h5 fw-bold mb-3 border-bottom pb-2">Announcement History</h3>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Message</th>
+                    <th>Status</th>
+                    <th>Created On</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ann in announcements %}
+                <tr>
+                    <td>{{ ann.message|truncatechars:100 }}</td>
+                    <td>
+                        {% if ann.is_active %}
+                            <span class="badge bg-success">Active</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted" style="font-size: 0.85rem;">{{ ann.created_at|date:"d M Y, H:i" }}</td>
+                    <td>
+                        <div class="d-flex gap-2">
+                            <form method="POST" action="{% url 'admin_announcements' %}" class="m-0">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle">
+                                <input type="hidden" name="ann_id" value="{{ ann.id }}">
+                                <button type="submit" class="btn btn-sm {% if ann.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
+                                    {% if ann.is_active %}Disable{% else %}Activate{% endif %}
+                                </button>
+                            </form>
+                            <form method="POST" action="{% url 'admin_announcements' %}" class="m-0" onsubmit="return confirm('Delete this announcement?');">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="ann_id" value="{{ ann.id }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center py-4 text-muted">No announcements posted yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

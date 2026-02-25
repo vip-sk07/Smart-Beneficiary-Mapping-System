@@ -153,3 +153,22 @@ class EditProfileForm(forms.ModelForm):
             'occupation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Farmer, Teacher'}),
             'education':  forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 10th Pass, Graduate'}),
         }
+
+
+# ── Admin Scheme Form ──────────────────────────────────────────────────────
+class SchemeForm(forms.ModelForm):
+    class Meta:
+        model = Scheme
+        fields = ['scheme_name', 'description', 'target_category', 'eligibility_rules', 'benefits', 'official_link', 'registration_link', 'benefit_type', 'state', 'is_active']
+        widgets = {
+            'scheme_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'target_category': forms.Select(attrs={'class': 'form-control'}),
+            'eligibility_rules': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'benefits': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'official_link': forms.URLInput(attrs={'class': 'form-control'}),
+            'registration_link': forms.URLInput(attrs={'class': 'form-control'}),
+            'benefit_type': forms.TextInput(attrs={'class': 'form-control'}),
+            'state': forms.TextInput(attrs={'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'})
+        }
