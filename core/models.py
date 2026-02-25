@@ -62,6 +62,7 @@ class Scheme(models.Model):
     registration_link = models.URLField(max_length=500, blank=True, null=True)
     benefit_type = models.CharField(max_length=100, blank=True, null=True)
     state = models.CharField(max_length=100, blank=True, null=True)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         managed = False
@@ -69,6 +70,18 @@ class Scheme(models.Model):
 
     def __str__(self):
         return self.scheme_name
+
+
+class Announcement(models.Model):
+    message = models.TextField()
+    is_active = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'Announcements'
+
+    def __str__(self):
+        return f"Announcement (Active: {self.is_active})"
 
 
 class UserEligibility(models.Model):

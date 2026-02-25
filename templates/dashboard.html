@@ -2,6 +2,14 @@
 {% load static %}
 
 {% block content %}
+{% if announcement %}
+<div class="alert alert-info border-0 shadow-sm rounded-3 mb-4 d-flex align-items-center gap-2" style="background-color: var(--primary); color: white;">
+    <i class="bi bi-megaphone-fill fs-5"></i>
+    <div style="font-weight: 500;">
+        {{ announcement.message }}
+    </div>
+</div>
+{% endif %}
 <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
     <div>
         <h1 class="h3 fw-bold mb-1" style="color: #0F172A;">Hello, {{ user.full_name|default:request.user.username|truncatechars:18 }} 👋</h1>

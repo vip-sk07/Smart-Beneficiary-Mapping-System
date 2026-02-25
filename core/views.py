@@ -241,6 +241,8 @@ def dashboard(request):
         user_id=custom_user.user_id
     ).select_related('scheme').order_by('-raised_on')[:3]
 
+    active_announcement = Announcement.objects.filter(is_active=True).first()
+
     return render(request, 'dashboard.html', {
         'past_categories':  past_categories,
         'eligible_schemes': eligible_schemes,
@@ -248,6 +250,7 @@ def dashboard(request):
         'search_q':         search_q,
         'filter_state':     filter_state,
         'filter_type':      filter_type,
+        'announcement':     active_announcement,
         'states':           states,
         'benefit_types':    benefit_types,
         'total_eligible':   total_eligible,
@@ -887,3 +890,168 @@ def resolve_grievance(request, grv_id):
         except Grievance.DoesNotExist:
             messages.error(request, 'Grievance not found.')
     return redirect('admin_grievances')
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NEW FEATURES: GEMINI CHAT, ADMIN TOOLS, SCHEME MANAGER
+# ─────────────────────────────────────────────────────────────────────────────
+
+import csv
+import google.generativeai as genai
+from .models import Announcement
+from .forms import SchemeForm
+
+@require_POST
+def gemini_chat(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+        
+    user_msg = request.POST.get('message', '').strip()
+    if not user_msg:
+        return JsonResponse({'error': 'Empty message'}, status=400)
+        
+    api_key = getattr(settings, 'GEMINI_API_KEY', None)
+    if not api_key:
+        return JsonResponse({'error': 'AI Chat is currently unavailable (Missing API Key)'}, status=503)
+        
+    try:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        
+        # Build prompt context
+        custom_user = get_custom_user(request.user)
+        context = "You are a helpful assistant for the Smart Beneficiary Mapping System in India.\n"
+        if custom_user:
+            context += f"The user asking is {custom_user.name}, Age: {custom_user.dob}, Gender: {custom_user.gender}, Income: {custom_user.income}, Occupation: {custom_user.occupation}.\n"
+            
+            eligible = UserEligibility.objects.filter(user_id=custom_user.user_id, eligibility_status='Eligible').select_related('scheme')
+            if eligible.exists():
+                schemes = ", ".join([e.scheme.scheme_name for e in eligible])
+                context += f"They are currently eligible for: {schemes}.\n"
+                
+        context += "Answer their query clearly, concisely, and exclusively regarding government schemes, benefits or platform navigation.\n"
+        context += f"User Query: {user_msg}"
+        
+        response = model.generate_content(context)
+        return JsonResponse({'reply': response.text})
+    except Exception as e:
+        print(f"Gemini API Error: {e}")
+        return JsonResponse({'error': 'Failed to connect to AI server. Please try again later.'}, status=500)
+
+
+def admin_users(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('home')
+        
+    search_query = request.GET.get('q', '').strip()
+    users = CustomUser.objects.all().order_by('-created_at')
+    
+    if search_query:
+        users = users.filter(Q(name__icontains=search_query) | Q(email__icontains=search_query) | Q(aadhaar_no__icontains=search_query))
+        
+    return render(request, 'admin_users.html', {'users': users, 'search_query': search_query})
+
+
+def admin_export_csv(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('home')
+        
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="smart_beneficiary_system_export.csv"'
+    writer = csv.writer(response)
+    
+    # Export Data Choice
+    export_type = request.GET.get('type', 'users')
+    
+    if export_type == 'users':
+        writer.writerow(['User ID', 'Name', 'Email', 'Phone', 'DOB', 'Gender', 'Aadhaar', 'Income', 'Occupation'])
+        for u in CustomUser.objects.all():
+            writer.writerow([u.user_id, u.name, u.email, u.phone, u.dob, u.gender, u.aadhaar_no, u.income, u.occupation])
+            
+    elif export_type == 'applications':
+        writer.writerow(['App ID', 'User Name', 'Scheme Name', 'Status', 'Applied On'])
+        for a in Application.objects.select_related('user', 'scheme').all():
+            writer.writerow([a.app_id, a.user.name if a.user else '', a.scheme.scheme_name if a.scheme else '', a.status, a.applied_on])
+            
+    return response
+
+
+def admin_announcements(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('home')
+        
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'create':
+            msg = request.POST.get('message', '').strip()
+            is_active = request.POST.get('is_active') == 'on'
+            if msg:
+                # If marking as active, optionally set all others to inactive
+                if is_active:
+                    Announcement.objects.all().update(is_active=False)
+                Announcement.objects.create(message=msg, is_active=is_active)
+                messages.success(request, 'Announcement created successfully.')
+        elif action == 'delete':
+            ann_id = request.POST.get('ann_id')
+            Announcement.objects.filter(id=ann_id).delete()
+            messages.success(request, 'Announcement deleted.')
+        elif action == 'toggle':
+            ann_id = request.POST.get('ann_id')
+            ann = Announcement.objects.filter(id=ann_id).first()
+            if ann:
+                if not ann.is_active:
+                    Announcement.objects.all().update(is_active=False)
+                ann.is_active = not ann.is_active
+                ann.save()
+            
+        return redirect('admin_announcements')
+        
+    announcements = Announcement.objects.all().order_by('-created_at')
+    return render(request, 'admin_announcements.html', {'announcements': announcements})
+
+
+def admin_schemes(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('home')
+    schemes = Scheme.objects.all().order_by('scheme_name')
+    return render(request, 'scheme_manager.html', {'schemes': schemes})
+
+
+def scheme_create(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('home')
+    if request.method == 'POST':
+        form = SchemeForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Scheme created successfully!')
+            return redirect('admin_schemes')
+    else:
+        form = SchemeForm()
+    return render(request, 'scheme_form.html', {'form': form, 'title': 'Create New Scheme'})
+
+
+def scheme_edit(request, scheme_id):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('home')
+    scheme = get_object_or_404(Scheme, pk=scheme_id)
+    if request.method == 'POST':
+        form = SchemeForm(request.POST, instance=scheme)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Scheme updated successfully!')
+            return redirect('admin_schemes')
+    else:
+        form = SchemeForm(instance=scheme)
+    return render(request, 'scheme_form.html', {'form': form, 'title': 'Edit Scheme'})
+
+
+def scheme_delete(request, scheme_id):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('home')
+    scheme = get_object_or_404(Scheme, pk=scheme_id)
+    if request.method == 'POST':
+        scheme.delete()
+        messages.success(request, 'Scheme deleted successfully!')
+        return redirect('admin_schemes')
+    return render(request, 'scheme_confirm_delete.html', {'scheme': scheme})

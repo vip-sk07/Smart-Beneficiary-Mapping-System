@@ -70,7 +70,16 @@ tables = [
         registration_link VARCHAR(500),
         benefit_type      VARCHAR(100),
         state             VARCHAR(100),
+        is_active         BOOLEAN DEFAULT 1,
         FOREIGN KEY (target_category) REFERENCES Categories(category_id)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS Announcements (
+        id          INT AUTO_INCREMENT PRIMARY KEY,
+        message     TEXT NOT NULL,
+        is_active   BOOLEAN DEFAULT 0,
+        created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """,
     """

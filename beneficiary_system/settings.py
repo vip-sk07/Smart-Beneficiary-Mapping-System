@@ -179,6 +179,10 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL  = os.environ.get('EMAIL_HOST_USER', 'noreply@benefitbridge.in')
 
 # ── django-allauth ─────────────────────────────────────────────────────────
+
+# ── API Keys ───────────────────────────────────────────────────────────────
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+
 ACCOUNT_LOGIN_METHODS             = {'email'}
 ACCOUNT_SIGNUP_FIELDS             = ['email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION        = 'none'

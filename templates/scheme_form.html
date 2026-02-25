@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h4 fw-bold mb-0">{{ title }}</h2>
+    <a href="{% url 'admin_schemes' %}" class="bb-btn bb-btn-outline">
+        <i class="bi bi-arrow-left"></i> Back to Manage Schemes
+    </a>
+</div>
+
+<div class="bb-card shadow-sm p-4">
+    <form method="POST">
+        {% csrf_token %}
+        <div class="row g-4">
+            <div class="col-12 col-md-6 border-end">
+                <h5 class="fw-bold mb-3 text-primary border-bottom pb-2">Basic Information</h5>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Scheme Name</label>
+                    {{ form.scheme_name }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Target Data Category</label>
+                    <small class="text-muted d-block mb-1">Users browsing this category will see this scheme first.</small>
+                    {{ form.target_category }}
+                </div>
+                <div class="row g-2">
+                    <div class="col-6 mb-3">
+                        <label class="form-label fw-bold">Benefit Type</label>
+                        {{ form.benefit_type }}
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label fw-bold">Target State/Region</label>
+                        {{ form.state }}
+                    </div>
+                </div>
+                <div class="form-check form-switch mb-4 bg-light p-3 rounded d-flex align-items-center gap-3">
+                    <div style="flex-grow: 1;">
+                        <span class="fw-bold d-block">Status</span>
+                        <small class="text-muted">Uncheck to disable scheme and hide from public view without deleting.</small>
+                    </div>
+                    {{ form.is_active }}
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 ps-md-4">
+                <h5 class="fw-bold mb-3 text-primary border-bottom pb-2">Details & References</h5>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">General Description</label>
+                    {{ form.description }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Benefits & Entitlements</label>
+                    {{ form.benefits }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Eligibility Details & Rules (Text)</label>
+                    {{ form.eligibility_rules }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Official Web Portal</label>
+                    {{ form.official_link }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Registration / Apply Link</label>
+                    {{ form.registration_link }}
+                </div>
+            </div>
+            
+        </div>
+        
+        <div class="mt-4 pt-3 border-top d-flex gap-2 justify-content-end">
+            <a href="{% url 'admin_schemes' %}" class="bb-btn bb-btn-secondary">Cancel</a>
+            <button type="submit" class="bb-btn bb-btn-primary">
+                <i class="bi bi-save"></i> Save Scheme Data
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .form-check-input {
+        width: 3em !important;
+        height: 1.5em !important;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
