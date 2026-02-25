@@ -62,7 +62,8 @@ class Scheme(models.Model):
     registration_link = models.URLField(max_length=500, blank=True, null=True)
     benefit_type = models.CharField(max_length=100, blank=True, null=True)
     state = models.CharField(max_length=100, blank=True, null=True)
-    is_active = models.BooleanField(default=True)
+    # is_active removed: column does not exist in Railway MySQL
+    # Will be re-added after DB migration is fixed
 
     class Meta:
         managed = False
@@ -78,6 +79,7 @@ class Announcement(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        managed = False   # Table created by run_setup.py, not by Django migrations
         db_table = 'Announcements'
 
     def __str__(self):

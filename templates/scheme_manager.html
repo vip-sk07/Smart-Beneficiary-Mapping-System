@@ -26,13 +26,6 @@
                     <td>#{{ scheme.scheme_id }}</td>
                     <td class="fw-bold">{{ scheme.scheme_name }}</td>
                     <td>{{ scheme.target_category.category_name|default:"General" }}</td>
-                    <td>
-                        {% if scheme.is_active %}
-                            <span class="badge bg-success">Active</span>
-                        {% else %}
-                            <span class="badge bg-danger">Disabled</span>
-                        {% endif %}
-                    </td>
                     <td class="text-end">
                         <div class="d-flex gap-2 justify-content-end">
                             <a href="{% url 'scheme_edit' scheme.scheme_id %}" class="btn btn-sm btn-outline-primary" title="Edit Scheme">
