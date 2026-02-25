@@ -139,27 +139,6 @@
             animation: fadeUp 0.7s ease both 0.3s;
         }
         
-        /* Stats Box */
-        .stats-box {
-            display: flex; gap: 3rem; flex-wrap: wrap;
-            margin-top: 4rem;
-            padding-top: 3rem;
-            border-top: 1px solid var(--border);
-            animation: fadeUp 0.7s ease both 0.4s;
-        }
-        .stat-item { text-align: left; }
-        .stat-num {
-            font-size: 2.25rem; font-weight: 800;
-            color: var(--primary);
-            line-height: 1;
-            margin-bottom: 0.5rem;
-        }
-        .stat-label {
-            font-size: 0.85rem;
-            color: var(--text-light);
-            font-weight: 500;
-        }
-        
         /* Image presentation */
         .hero-image-wrapper {
             position: relative;
@@ -236,12 +215,7 @@
                         Go to Dashboard
                     </a>
                 </div>
-                
-                <div class="stats-box">
-                    <div class="stat-item">
-                        <div class="stat-num">{{ total_schemes }}</div>
-                        <div class="stat-label">Government Schemes</div>
-                    </div>
+            </div>
                     <div class="stat-item">
                         <div class="stat-num">{{ total_categories }}</div>
                         <div class="stat-label">Beneficiary Categories</div>
