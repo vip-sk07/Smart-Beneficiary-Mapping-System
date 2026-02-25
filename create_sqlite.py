@@ -48,7 +48,7 @@ queries = [
         scheme_name     VARCHAR(255) NOT NULL,
         description     TEXT,
         benefits        TEXT,
-        target_category_id INT,
+        target_category INT,
         eligibility_criteria TEXT,
         state           VARCHAR(100),
         benefit_type    VARCHAR(100),
@@ -56,7 +56,7 @@ queries = [
         registration_link VARCHAR(255),
         is_active       BOOLEAN DEFAULT 1,
         created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (target_category_id) REFERENCES Categories(category_id)
+        FOREIGN KEY (target_category) REFERENCES Categories(category_id)
     )
     """,
     """
