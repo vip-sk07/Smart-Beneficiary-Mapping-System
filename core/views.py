@@ -956,38 +956,80 @@ from .forms import SchemeForm
 def gemini_chat(request):
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-        
+
     user_msg = request.POST.get('message', '').strip()
     if not user_msg:
         return JsonResponse({'error': 'Empty message'}, status=400)
-        
+
     api_key = getattr(settings, 'GEMINI_API_KEY', None)
     if not api_key:
-        return JsonResponse({'error': 'AI Chat is currently unavailable (Missing API Key)'}, status=503)
-        
+        return JsonResponse({'reply': 'AI Chat is currently unavailable (no API key configured).'})
+
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-2.5-flash')
-        
-        # Build prompt context
+
+        # ── System / role prompt (matches GeminiBotService) ─────────────────
+        system_prompt = (
+            "You are the AI Assistant for the 'Smart Beneficiary Mapping System' (SBMS), "
+            "a government platform that helps everyday citizens in India discover benefit schemes "
+            "they are personally eligible for, apply for them, track applications, and raise grievances.\n\n"
+            "Your Role:\n"
+            "- Help citizens find schemes they qualify for.\n"
+            "- Explain how to apply, what documents are needed, and what benefits they get.\n"
+            "- Guide users through the SBMS platform (dashboard, categories, applications, grievances).\n"
+            "- Be extremely polite, empathetic, simple, and concise.\n"
+            "- Format replies using markdown (bold for key info, bullet points for steps).\n"
+            "- Respond in English. If user writes in Hindi or regional language, respond in the same language.\n\n"
+        )
+
+        # ── User profile context ─────────────────────────────────────────────
         custom_user = get_custom_user(request.user)
-        context = "You are a helpful assistant for the Smart Beneficiary Mapping System in India.\n"
         if custom_user:
-            context += f"The user asking is {custom_user.name}, Age: {custom_user.dob}, Gender: {custom_user.gender}, Income: {custom_user.income}, Occupation: {custom_user.occupation}.\n"
-            
-            eligible = UserEligibility.objects.filter(user_id=custom_user.user_id, eligibility_status='Eligible').select_related('scheme')
+            from datetime import date
+            today = date.today()
+            dob = custom_user.dob
+            age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+            system_prompt += (
+                f"Current User Profile:\n"
+                f"- Name: {custom_user.name}\n"
+                f"- Age: {age} years\n"
+                f"- Gender: {custom_user.gender or 'Not specified'}\n"
+                f"- Income: ₹{custom_user.income or 'Not specified'}/year\n"
+                f"- Occupation: {custom_user.occupation or 'Not specified'}\n"
+                f"- Education: {custom_user.education or 'Not specified'}\n\n"
+            )
+            # Eligible schemes
+            eligible = UserEligibility.objects.filter(
+                user_id=custom_user.user_id, eligibility_status='Eligible'
+            ).select_related('scheme')[:20]
             if eligible.exists():
-                schemes = ", ".join([e.scheme.scheme_name for e in eligible])
-                context += f"They are currently eligible for: {schemes}.\n"
-                
-        context += "Answer their query clearly, concisely, and exclusively regarding government schemes, benefits or platform navigation.\n"
-        context += f"User Query: {user_msg}"
-        
-        response = model.generate_content(context)
-        return JsonResponse({'reply': response.text})
+                scheme_list = "\n".join(
+                    f"  • {e.scheme.scheme_name} ({e.scheme.benefit_type or 'General'}, {e.scheme.state or 'All India'})"
+                    for e in eligible
+                )
+                system_prompt += f"Schemes This User is Eligible For:\n{scheme_list}\n\n"
+
+        # ── Available schemes context (top 40) ───────────────────────────────
+        schemes_qs = Scheme.objects.all()[:40]
+        if schemes_qs.exists():
+            scheme_context = "\n".join(
+                f"• {s.scheme_name} | Type: {s.benefit_type or '-'} | State: {s.state or 'All India'} | {(s.description or '')[:120]}"
+                for s in schemes_qs
+            )
+            system_prompt += f"Available Government Schemes in Database:\n{scheme_context}\n\n"
+
+        system_prompt += f"Citizen's Question: {user_msg}"
+
+        response = model.generate_content(system_prompt)
+        reply_text = response.text
+
+        # Simple markdown → HTML for the widget
+        return JsonResponse({'reply': reply_text})
+
     except Exception as e:
         print(f"Gemini API Error: {e}")
-        return JsonResponse({'error': 'Failed to connect to AI server. Please try again later.'}, status=500)
+        return JsonResponse({'reply': 'I am having trouble connecting right now. Please try again in a moment.'})
 
 
 def admin_users(request):
