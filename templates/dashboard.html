@@ -12,7 +12,7 @@
 {% endif %}
 <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
     <div>
-        <h1 class="h3 fw-bold mb-1" style="color: #0F172A;">Hello, {{ user.full_name|default:request.user.username|truncatechars:18 }} 👋</h1>
+        <h1 class="h3 fw-bold mb-1" style="color: #0F172A;">Hello, {{ user.name|default:request.user.get_full_name|default:request.user.username|truncatechars:20 }} 👋</h1>
         <p class="text-muted mb-0">Here's your benefit eligibility overview</p>
     </div>
     <div class="d-flex gap-2">
