@@ -833,24 +833,26 @@ def admin_grievances(request):
     if not request.user.is_staff:
         messages.error(request, 'Admin access only.')
         return redirect('dashboard')
+        
+    try:
+        status_filter = request.GET.get('status', 'Open')
+        grievances_qs = Grievance.objects.select_related('user', 'scheme').order_by('-raised_on')
 
-    status_filter = request.GET.get('status', 'Open')
-    if status_filter not in ('Open', 'Resolved', 'All'):
-        status_filter = 'Open'
+        if status_filter in ['Open', 'Resolved']:
+            grievances_qs = grievances_qs.filter(status=status_filter)
 
-    grievances_qs = Grievance.objects.select_related('user', 'scheme').order_by('-raised_on')
-    if status_filter != 'All':
-        grievances_qs = grievances_qs.filter(status=status_filter)
+        open_count     = Grievance.objects.filter(status='Open').count()
+        resolved_count = Grievance.objects.filter(status='Resolved').count()
 
-    open_count     = Grievance.objects.filter(status='Open').count()
-    resolved_count = Grievance.objects.filter(status='Resolved').count()
-
-    return render(request, 'admin_grievances.html', {
-        'grievances':    grievances_qs,
-        'status_filter': status_filter,
-        'open_count':    open_count,
-        'resolved_count': resolved_count,
-    })
+        return render(request, 'admin_grievances.html', {
+            'grievances':    grievances_qs,
+            'status_filter': status_filter,
+            'open_count':    open_count,
+            'resolved_count': resolved_count,
+        })
+    except Exception as e:
+        import traceback
+        return HttpResponse(f"<pre>{traceback.format_exc()}</pre>", status=500)
 
 
 # ── Admin: Resolve a Grievance ─────────────────────────────────────────────
@@ -980,41 +982,49 @@ def admin_announcements(request):
     if not request.user.is_authenticated or not request.user.is_staff:
         return redirect('home')
         
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        if action == 'create':
-            msg = request.POST.get('message', '').strip()
-            is_active = request.POST.get('is_active') == 'on'
-            if msg:
-                # If marking as active, optionally set all others to inactive
-                if is_active:
-                    Announcement.objects.all().update(is_active=False)
-                Announcement.objects.create(message=msg, is_active=is_active)
-                messages.success(request, 'Announcement created successfully.')
-        elif action == 'delete':
-            ann_id = request.POST.get('ann_id')
-            Announcement.objects.filter(id=ann_id).delete()
-            messages.success(request, 'Announcement deleted.')
-        elif action == 'toggle':
-            ann_id = request.POST.get('ann_id')
-            ann = Announcement.objects.filter(id=ann_id).first()
-            if ann:
-                if not ann.is_active:
-                    Announcement.objects.all().update(is_active=False)
-                ann.is_active = not ann.is_active
-                ann.save()
+    try:
+        if request.method == 'POST':
+            action = request.POST.get('action')
+            if action == 'create':
+                msg = request.POST.get('message', '').strip()
+                is_active = request.POST.get('is_active') == 'on'
+                if msg:
+                    # If marking as active, optionally set all others to inactive
+                    if is_active:
+                        Announcement.objects.all().update(is_active=False)
+                    Announcement.objects.create(message=msg, is_active=is_active)
+                    messages.success(request, 'Announcement created successfully.')
+            elif action == 'delete':
+                ann_id = request.POST.get('ann_id')
+                Announcement.objects.filter(id=ann_id).delete()
+                messages.success(request, 'Announcement deleted.')
+            elif action == 'toggle':
+                ann_id = request.POST.get('ann_id')
+                ann = Announcement.objects.filter(id=ann_id).first()
+                if ann:
+                    if not ann.is_active:
+                        Announcement.objects.all().update(is_active=False)
+                    ann.is_active = not ann.is_active
+                    ann.save()
+                
+            return redirect('admin_announcements')
             
-        return redirect('admin_announcements')
-        
-    announcements = Announcement.objects.all().order_by('-created_at')
-    return render(request, 'admin_announcements.html', {'announcements': announcements})
+        announcements = Announcement.objects.all().order_by('-created_at')
+        return render(request, 'admin_announcements.html', {'announcements': announcements})
+    except Exception as e:
+        import traceback
+        return HttpResponse(f"<pre>{traceback.format_exc()}</pre>", status=500)
 
 
 def admin_schemes(request):
     if not request.user.is_authenticated or not request.user.is_staff:
         return redirect('home')
-    schemes = Scheme.objects.all().order_by('scheme_name')
-    return render(request, 'scheme_manager.html', {'schemes': schemes})
+    try:
+        schemes = Scheme.objects.all().order_by('scheme_name')
+        return render(request, 'scheme_manager.html', {'schemes': schemes})
+    except Exception as e:
+        import traceback
+        return HttpResponse(f"<pre>{traceback.format_exc()}</pre>", status=500)
 
 
 def scheme_create(request):
