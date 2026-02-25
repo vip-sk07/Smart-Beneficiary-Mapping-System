@@ -1,13 +1,46 @@
+import re
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from .models import CustomUser, Category, Scheme
 
+
+# ── Verhoeff Checksum Algorithm for Aadhaar validation ────────────────────
+_V_D  = [[0,1,2,3,4,5,6,7,8,9],[1,2,3,4,0,6,7,8,9,5],[2,3,4,0,1,7,8,9,5,6],
+          [3,4,0,1,2,8,9,5,6,7],[4,0,1,2,3,9,5,6,7,8],[5,9,8,7,6,0,4,3,2,1],
+          [6,5,9,8,7,1,0,4,3,2],[7,6,5,9,8,2,1,0,4,3],[8,7,6,5,9,3,2,1,0,4],
+          [9,8,7,6,5,4,3,2,1,0]]
+_V_P  = [[0,1,2,3,4,5,6,7,8,9],[1,5,7,6,2,8,3,0,9,4],[5,8,0,3,7,9,6,1,4,2],
+          [8,9,1,6,0,4,3,5,2,7],[9,4,5,3,1,2,6,8,7,0],[4,2,8,6,5,7,3,9,0,1],
+          [2,7,9,3,8,0,6,4,1,5],[7,0,4,6,9,1,3,2,5,8]]
+_V_INV = [0,4,3,2,1,5,6,7,8,9]
+
+def _verhoeff_check(number: str) -> bool:
+    c = 0
+    for i, digit in enumerate(reversed(number)):
+        c = _V_D[c][_V_P[i % 8][int(digit)]]
+    return c == 0
+
+def _clean_aadhaar(value: str) -> str:
+    """Strip spaces/hyphens, validate format + Verhoeff, return 12-digit string."""
+    aadhaar = value.replace(' ', '').replace('-', '')
+    if not re.match(r'^\d{12}$', aadhaar):
+        raise forms.ValidationError('Aadhaar number must be exactly 12 digits.')
+    if aadhaar[0] in '01':
+        raise forms.ValidationError('Aadhaar number cannot start with 0 or 1.')
+    if not _verhoeff_check(aadhaar):
+        raise forms.ValidationError('Invalid Aadhaar number. Please check and re-enter.')
+    return aadhaar
 
 
 class UserRegistrationForm(forms.ModelForm):
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Min. 8 characters'}),
         label="Password", min_length=8
+    )
+    aadhaar_consent = forms.BooleanField(
+        required=True,
+        label="I confirm this is my real Aadhaar number and I consent to its secure use for eligibility matching.",
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input', 'id': 'id_aadhaar_consent'})
     )
     class Meta:
         model = CustomUser
@@ -20,12 +53,17 @@ class UserRegistrationForm(forms.ModelForm):
                           choices=[('', 'Select gender'), ('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')]),
             'email':      forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'you@example.com'}),
             'phone':      forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+91 XXXXX XXXXX'}),
-            'aadhaar_no': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'XXXX XXXX XXXX'}),
+            'aadhaar_no': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'XXXX XXXX XXXX',
+                                                 'id': 'id_aadhaar_no', 'maxlength': '14', 'inputmode': 'numeric'}),
             'address':    forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Your address'}),
             'income':     forms.NumberInput(attrs={'class': 'form-control', 'step': '1', 'min': '0', 'placeholder': 'Annual income (Rs.)'}),
             'occupation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Farmer, Teacher'}),
             'education':  forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 10th Pass, Graduate'}),
         }
+
+    def clean_aadhaar_no(self):
+        return _clean_aadhaar(self.cleaned_data.get('aadhaar_no', ''))
+
 
 
 class CategorySelectionForm(forms.Form):
