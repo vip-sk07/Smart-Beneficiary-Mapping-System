@@ -46,7 +46,7 @@
         .orb2 { width: 500px; height: 500px; background: var(--accent); bottom: -100px; left: -100px; animation: float 12s ease-in-out infinite reverse; }
         
         @keyframes float {
-            0%, 100% { transform: translate(0, 0); }
+            0%, {{ total_users }} { transform: translate(0, 0); }
             50% { transform: translate(40px, 40px); }
         }
 
@@ -118,7 +118,7 @@
             position: absolute;
             bottom: 10%;
             left: 0;
-            width: 100%;
+            width: {{ total_users }};
             height: 30%;
             background: rgba(30, 58, 138, 0.15);
             z-index: -1;
@@ -167,7 +167,7 @@
             animation: fadeUp 0.8s ease both 0.3s;
         }
         .hero-image {
-            width: 100%;
+            width: {{ total_users }};
             border-radius: 24px;
             box-shadow: 0 25px 50px -12px rgba(30, 58, 138, 0.25);
             border: 1px solid var(--border);
@@ -239,15 +239,15 @@
                 
                 <div class="stats-box">
                     <div class="stat-item">
-                        <div class="stat-num">500+</div>
-                        <div class="stat-label">Schemes Tracked</div>
+                        <div class="stat-num">{{ total_schemes }}</div>
+                        <div class="stat-label">Government Schemes</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-num">30+</div>
-                        <div class="stat-label">Categories matched</div>
+                        <div class="stat-num">{{ total_categories }}</div>
+                        <div class="stat-label">Beneficiary Categories</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-num">100%</div>
+                        <div class="stat-num">{{ total_users }}</div>
                         <div class="stat-label">Secure & Private</div>
                     </div>
                 </div>
@@ -294,7 +294,7 @@
                                 <div class="flex-grow-1">
                                     <div class="fw-bold small mb-1">National Scholarship Portal</div>
                                     <div class="progress" style="height: 4px;">
-                                      <div class="progress-bar bg-success" role="progressbar" style="width: 100%;"></div>
+                                      <div class="progress-bar bg-success" role="progressbar" style="width: {{ total_users }};"></div>
                                     </div>
                                 </div>
                                 <div class="ms-2">
