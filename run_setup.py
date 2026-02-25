@@ -5,73 +5,85 @@ from django.db import connection
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'beneficiary_system.settings')
 django.setup()
 
+def _add_column(cursor, sql, desc):
+    try:
+        cursor.execute(sql)
+        print(f"  ✅ Added: {desc}")
+    except Exception as e:
+        if 'duplicate column' in str(e).lower() or '1060' in str(e):
+            print(f"  ⏭  Already exists: {desc}")
+        else:
+            print(f"  ❌ FAILED {desc}: {e}")
+
+def _create_table(cursor, sql, desc):
+    try:
+        cursor.execute(sql)
+        print(f"  ✅ Created table: {desc}")
+    except Exception as e:
+        print(f"  ⏭  Table {desc}: {e}")
+
 def setup_db():
+    print("=" * 50)
     print("Running Django Migrations...")
     from django.core.management import call_command
     call_command("migrate", interactive=False)
-    
-    print("Applying custom schema updates if not present...")
+
+    print("\nApplying custom schema patches...")
     with connection.cursor() as cursor:
-        try:
-            cursor.execute("ALTER TABLE Schemes ADD COLUMN is_active BOOLEAN DEFAULT 1;")
-            print("Successfully added is_active to Schemes.")
-        except Exception as e:
-            print(f"Schema update for Schemes skipped: {e}")
 
-        try:
-            cursor.execute("ALTER TABLE Grievances ADD COLUMN admin_remark TEXT NULL;")
-            print("Successfully added admin_remark to Grievances.")
-        except Exception as e:
-            print(f"Schema update for Grievances skipped: {e}")
-            
-        # Missing columns for CustomUser in Users table
-        try:
-            cursor.execute("ALTER TABLE Users ADD COLUMN pension_status BOOLEAN DEFAULT 0;")
-            print("Added pension_status to Users.")
-        except Exception as e:
-            pass
-        try:
-            cursor.execute("ALTER TABLE Users ADD COLUMN disability_cert BOOLEAN DEFAULT 0;")
-            print("Added disability_cert to Users.")
-        except Exception as e:
-            pass
-        try:
-            cursor.execute("ALTER TABLE Users ADD COLUMN unemployment_status BOOLEAN DEFAULT 0;")
-            print("Added unemployment_status to Users.")
-        except Exception as e:
-            pass
-        try:
-            cursor.execute("ALTER TABLE Users ADD COLUMN business_turnover DECIMAL(15,2) NULL;")
-            print("Added business_turnover to Users.")
-        except Exception as e:
-            pass
+        # ── Create tables that Django migrations might have missed ──────────
+        print("\n[Tables]")
+        _create_table(cursor, """
+            CREATE TABLE IF NOT EXISTS Announcements (
+                id         INT AUTO_INCREMENT PRIMARY KEY,
+                message    TEXT NOT NULL,
+                is_active  BOOLEAN DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """, "Announcements")
 
-        # Missing columns for RuleEngine in Rule_Engine table
-        try:
-            cursor.execute("ALTER TABLE Rule_Engine ADD COLUMN pension_status BOOLEAN DEFAULT 0;")
-            print("Added pension_status to Rule_Engine.")
-        except Exception as e:
-            pass
-        try:
-            cursor.execute("ALTER TABLE Rule_Engine ADD COLUMN disability_cert BOOLEAN DEFAULT 0;")
-            print("Added disability_cert to Rule_Engine.")
-        except Exception as e:
-            pass
-        try:
-            cursor.execute("ALTER TABLE Rule_Engine ADD COLUMN unemployment_status BOOLEAN DEFAULT 0;")
-            print("Added unemployment_status to Rule_Engine.")
-        except Exception as e:
-            pass
-        try:
-            cursor.execute("ALTER TABLE Rule_Engine ADD COLUMN education_required VARCHAR(100) NULL;")
-            print("Added education_required to Rule_Engine.")
-        except Exception as e:
-            pass
-        try:
-            cursor.execute("ALTER TABLE Rule_Engine ADD COLUMN business_turnover_limit DECIMAL(15,2) NULL;")
-            print("Added business_turnover_limit to Rule_Engine.")
-        except Exception as e:
-            pass
+        # ── Schemes columns ─────────────────────────────────────────────────
+        print("\n[Schemes columns]")
+        _add_column(cursor,
+            "ALTER TABLE Schemes ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1",
+            "Schemes.is_active")
+        _add_column(cursor,
+            "ALTER TABLE Schemes ADD COLUMN eligibility_rules JSON",
+            "Schemes.eligibility_rules")
+
+        # ── Grievances columns ──────────────────────────────────────────────
+        print("\n[Grievances columns]")
+        _add_column(cursor,
+            "ALTER TABLE Grievances ADD COLUMN admin_remark TEXT NULL",
+            "Grievances.admin_remark")
+
+        # ── Users columns ───────────────────────────────────────────────────
+        print("\n[Users columns]")
+        for col, typedef in [
+            ("pension_status",      "BOOLEAN DEFAULT 0"),
+            ("disability_cert",     "BOOLEAN DEFAULT 0"),
+            ("unemployment_status", "BOOLEAN DEFAULT 0"),
+            ("business_turnover",   "DECIMAL(15,2) NULL"),
+        ]:
+            _add_column(cursor,
+                f"ALTER TABLE Users ADD COLUMN {col} {typedef}",
+                f"Users.{col}")
+
+        # ── Rule_Engine columns ─────────────────────────────────────────────
+        print("\n[Rule_Engine columns]")
+        for col, typedef in [
+            ("pension_status",          "BOOLEAN DEFAULT 0"),
+            ("disability_cert",         "BOOLEAN DEFAULT 0"),
+            ("unemployment_status",     "BOOLEAN DEFAULT 0"),
+            ("education_required",      "VARCHAR(100) NULL"),
+            ("business_turnover_limit", "DECIMAL(15,2) NULL"),
+        ]:
+            _add_column(cursor,
+                f"ALTER TABLE Rule_Engine ADD COLUMN {col} {typedef}",
+                f"Rule_Engine.{col}")
+
+    print("\n" + "=" * 50)
+    print("Schema setup complete.")
 
 if __name__ == "__main__":
     setup_db()
