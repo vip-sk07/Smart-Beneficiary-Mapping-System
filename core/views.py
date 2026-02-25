@@ -50,7 +50,17 @@ def get_custom_user(django_user):
 def home(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
-    return render(request, 'home.html')
+    try:
+        total_schemes    = Scheme.objects.count()
+        total_categories = Category.objects.count()
+        total_users      = CustomUser.objects.count()
+    except Exception:
+        total_schemes = total_categories = total_users = 0
+    return render(request, 'home.html', {
+        'total_schemes':    total_schemes,
+        'total_categories': total_categories,
+        'total_users':      total_users,
+    })
 
 
 # ── Register ───────────────────────────────────────────────────────────────
