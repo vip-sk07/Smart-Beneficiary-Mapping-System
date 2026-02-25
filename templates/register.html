@@ -206,6 +206,7 @@
                     <div class="col-md-6">
                         <label class="form-label">{{ form.aadhaar_no.label }} <span class="required-star">*</span></label>
                         {{ form.aadhaar_no }}
+                        <div id="aadhaar-feedback" style="font-size:0.8rem;font-weight:600;margin-top:4px;min-height:20px;"></div>
                         {% if form.aadhaar_no.errors %}<div class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ form.aadhaar_no.errors }}</div>{% endif %}
                     </div>
                     <div class="col-12">
@@ -254,8 +255,21 @@
                     </div>
                 {% endif %}
 
-                <button type="submit" class="bb-btn bb-btn-primary w-100 py-3 mt-4 mt-lg-5 fs-6 d-flex align-items-center justify-content-center gap-2">
-                    {% if is_google_user %}Complete Profile & Check Eligibility{% else %}Create Account & Check Eligibility{% endif %}
+                <!-- Aadhaar Consent Checkbox -->
+                <div class="mt-4 p-3 rounded-3" style="background:#f0f7ff;border:1.5px solid #bfdbfe;">
+                    <div class="form-check d-flex align-items-start gap-2">
+                        {{ form.aadhaar_consent }}
+                        <label class="form-check-label small fw-semibold" for="id_aadhaar_consent" style="color:#1e3a5f;cursor:pointer;">
+                            🛡️ {{ form.aadhaar_consent.label }}
+                        </label>
+                    </div>
+                    {% if form.aadhaar_consent.errors %}
+                        <div class="text-danger small mt-1">{{ form.aadhaar_consent.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <button id="submit-btn" type="submit" class="bb-btn bb-btn-primary w-100 py-3 mt-4 mt-lg-5 fs-6 d-flex align-items-center justify-content-center gap-2" disabled>
+                    {% if is_google_user %}Complete Profile &amp; Check Eligibility{% else %}Create Account &amp; Check Eligibility{% endif %}
                     <i class="bi bi-arrow-right"></i>
                 </button>
             </form>
@@ -271,14 +285,50 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Ensure form inputs have correct classes
             document.querySelectorAll('input:not([type="hidden"]), select').forEach(input => {
                 if(input.tagName === 'SELECT') {
                     if(!input.classList.contains('form-select')) input.classList.add('form-select');
                 } else {
-                    if(!input.classList.contains('form-control')) input.classList.add('form-control');
+                    if(!input.classList.contains('form-control') && input.type !== 'checkbox') input.classList.add('form-control');
                 }
             });
+
+            // ── Live Aadhaar Validation ──────────────────────────────────────
+            const aadhaarInput = document.getElementById('id_aadhaar_no');
+            const feedback    = document.getElementById('aadhaar-feedback');
+            const submitBtn   = document.getElementById('submit-btn');
+            const consentBox  = document.getElementById('id_aadhaar_consent');
+
+            function updateSubmitState() {
+                if (submitBtn) submitBtn.disabled = !(consentBox && consentBox.checked);
+            }
+            if (consentBox) consentBox.addEventListener('change', updateSubmitState);
+
+            if (aadhaarInput && feedback) {
+                aadhaarInput.addEventListener('input', function() {
+                    // Strip non-digits, cap at 12
+                    let digits = this.value.replace(/\D/g, '').slice(0, 12);
+                    // Auto-format as XXXX XXXX XXXX
+                    let formatted = digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+                    this.value = formatted;
+
+                    const count = digits.length;
+                    feedback.style.display = 'block';
+
+                    if (count === 0) {
+                        feedback.innerHTML = '';
+                    } else if (count < 12) {
+                        feedback.style.color = '#d97706';
+                        feedback.innerHTML = `<i class="bi bi-hourglass-split"></i> ${count}/12 digits — keep typing...`;
+                    } else if (digits[0] === '0' || digits[0] === '1') {
+                        feedback.style.color = '#dc2626';
+                        feedback.innerHTML = '<i class="bi bi-x-circle"></i> Aadhaar cannot start with 0 or 1';
+                    } else {
+                        feedback.style.color = '#059669';
+                        feedback.innerHTML = '<i class="bi bi-check-circle"></i> Format looks valid ✓';
+                    }
+                });
+            }
         });
     </script>
 </body>

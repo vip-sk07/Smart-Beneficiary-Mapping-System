@@ -41,8 +41,8 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-bold text-muted small mb-1">Aadhaar No. <i class="bi bi-lock text-muted ms-1"></i></label>
-                        <div class="form-control bg-light text-muted fw-semibold" style="cursor: not-allowed; border-color: transparent;">
-                            {{ user.aadhaar_no|default:"—" }}
+                        <div class="form-control bg-light text-muted fw-semibold" style="cursor: not-allowed; border-color: transparent; letter-spacing: 0.1em;">
+                            XXXX-XXXX-{{ user.aadhaar_no|slice:"-4:"|default:"——" }}
                         </div>
                     </div>
                 </div>
