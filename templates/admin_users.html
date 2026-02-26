@@ -40,7 +40,9 @@
                     <td class="fw-bold">{{ u.name }}</td>
                     <td>{{ u.email }}</td>
                     <td>{{ u.dob }}</td>
-                    <td>{{ u.aadhaar_no }}</td>
+                    <td class="text-muted" style="font-family: monospace; letter-spacing: 0.05em;">
+                        XXXX-XXXX-{{ u.aadhaar_no|slice:"-4:"|default:"—" }}
+                    </td>
                     <td class="text-muted" style="font-size: 0.85rem;">{{ u.created_at|date:"d M Y" }}</td>
                 </tr>
                 {% empty %}
