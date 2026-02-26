@@ -389,11 +389,11 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // Sidebar toggle
-    document.getElementById('bb-sidebar-toggle').addEventListener('click', function() {
+    document.getElementById('bb-sidebar-toggle')?.addEventListener('click', function() {
         document.querySelector('.bb-sidebar').classList.toggle('active');
         document.querySelector('.bb-sidebar-overlay').classList.toggle('active');
     });
-    document.querySelector('.bb-sidebar-overlay').addEventListener('click', function() {
+    document.querySelector('.bb-sidebar-overlay')?.addEventListener('click', function() {
         document.querySelector('.bb-sidebar').classList.remove('active');
         this.classList.remove('active');
     });
