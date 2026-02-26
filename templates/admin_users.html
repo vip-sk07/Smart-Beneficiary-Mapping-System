@@ -31,6 +31,7 @@
                     <th>DOB</th>
                     <th>Aadhaar</th>
                     <th>Joined</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -44,10 +45,19 @@
                         XXXX-XXXX-{{ u.aadhaar_no|slice:"-4:"|default:"—" }}
                     </td>
                     <td class="text-muted" style="font-size: 0.85rem;">{{ u.created_at|date:"d M Y" }}</td>
+                    <td>
+                        <form method="POST" action="{% url 'admin_delete_user' u.user_id %}"
+                              onsubmit="return confirm('Delete {{ u.name }} (#{{ u.user_id }})?\nThis removes them from both the user table and login system.\n\nThis action cannot be undone.');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete user">
+                                <i class="bi bi-trash3"></i> Delete
+                            </button>
+                        </form>
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="text-center py-4 text-muted">No users found.</td>
+                    <td colspan="7" class="text-center py-4 text-muted">No users found.</td>
                 </tr>
                 {% endfor %}
             </tbody>
