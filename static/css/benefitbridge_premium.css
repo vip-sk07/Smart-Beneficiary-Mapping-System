@@ -68,6 +68,174 @@
     --transition-bounce: 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+/* ── Dark Mode ─────────────────────────────────────────────────────────── */
+body.dark-mode {
+    --canvas: #0F172A;
+    --surface: #1E293B;
+    --text-main: #F1F5F9;
+    --text-muted: #94A3B8;
+    --text-light: #64748B;
+    --border: #334155;
+    --border-focus: #818CF8;
+    --primary-light: #1E1B4B;
+    --accent-light: #0C2E35;
+    --success-bg: #052E1C;
+    --success-text: #6EE7B7;
+    --warning-bg: #2D1A00;
+    --warning-text: #FCD34D;
+    --danger-bg: #2D0A0A;
+    --danger-text: #FCA5A5;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.4);
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 10px 20px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.6);
+    background-image:
+        radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(0, 216, 255, 0.06) 0px, transparent 50%);
+}
+
+/* Surfaces in dark mode */
+body.dark-mode .bb-card,
+body.dark-mode .bb-sidebar,
+body.dark-mode .bg-white,
+body.dark-mode .card {
+    background-color: var(--surface) !important;
+    border-color: var(--border) !important;
+}
+
+body.dark-mode .bb-navbar {
+    background: rgba(15, 23, 42, 0.92) !important;
+    border-color: var(--border) !important;
+}
+
+body.dark-mode .bb-nav-item {
+    color: var(--text-muted) !important;
+}
+
+body.dark-mode .bb-nav-item:hover,
+body.dark-mode .bb-nav-item.active {
+    background: rgba(99, 102, 241, 0.15) !important;
+    color: #818CF8 !important;
+}
+
+body.dark-mode .form-control,
+body.dark-mode .form-select {
+    background-color: #1E293B !important;
+    border-color: var(--border) !important;
+    color: var(--text-main) !important;
+}
+
+body.dark-mode .form-control::placeholder {
+    color: var(--text-light) !important;
+}
+
+body.dark-mode .table {
+    color: var(--text-main) !important;
+}
+
+body.dark-mode .table-light th {
+    background-color: #1E293B !important;
+    color: var(--text-muted) !important;
+}
+
+body.dark-mode .table-hover tbody tr:hover {
+    background-color: rgba(99, 102, 241, 0.08) !important;
+}
+
+body.dark-mode .bg-light {
+    background-color: #1E293B !important;
+}
+
+body.dark-mode .border {
+    border-color: var(--border) !important;
+}
+
+body.dark-mode .border-top,
+body.dark-mode .border-bottom {
+    border-color: var(--border) !important;
+}
+
+body.dark-mode .alert {
+    background-color: var(--surface) !important;
+    border-color: var(--border) !important;
+}
+
+body.dark-mode .input-group-text {
+    background-color: #1E293B !important;
+    border-color: var(--border) !important;
+    color: var(--text-muted) !important;
+}
+
+body.dark-mode .text-dark {
+    color: var(--text-main) !important;
+}
+
+body.dark-mode .text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* Dark mode toggle pill */
+.dark-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.dark-toggle:hover {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.dark-toggle-switch {
+    width: 38px;
+    height: 22px;
+    border-radius: 11px;
+    background: var(--border);
+    position: relative;
+    transition: background 0.3s;
+    flex-shrink: 0;
+}
+
+.dark-toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.3s, background 0.3s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .dark-toggle-switch {
+    background: var(--primary);
+}
+
+body.dark-mode .dark-toggle-switch::after {
+    transform: translateX(16px);
+}
+
+body.dark-mode .dark-toggle {
+    color: #818CF8;
+}
+
+/* Smooth transition on mode switch */
+body,
+body * {
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
 /* Base Setup */
 body {
     font-family: var(--font-sans);
