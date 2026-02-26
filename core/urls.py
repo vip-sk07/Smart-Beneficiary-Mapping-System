@@ -60,6 +60,7 @@ urlpatterns = [
 
     # Admin Panel Improvements
     path('platform-admin/users/', views.admin_users, name='admin_users'),
+    path('platform-admin/users/<int:user_id>/delete/', views.admin_delete_user, name='admin_delete_user'),
     path('platform-admin/export-csv/', views.admin_export_csv, name='admin_export_csv'),
     path('platform-admin/announcements/', views.admin_announcements, name='admin_announcements'),
 

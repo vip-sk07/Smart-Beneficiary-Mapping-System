@@ -1054,6 +1054,33 @@ def admin_users(request):
     return render(request, 'admin_users.html', {'users': users, 'search_query': search_query})
 
 
+def admin_delete_user(request, user_id):
+    """Staff-only: delete a CustomUser + its linked auth.User by email."""
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('home')
+
+    if request.method == 'POST':
+        try:
+            custom_user = CustomUser.objects.get(user_id=user_id)
+            email = custom_user.email
+
+            # Delete auth.User linked by email (if exists)
+            if email:
+                from django.contrib.auth import get_user_model
+                AuthUser = get_user_model()
+                AuthUser.objects.filter(username=email).delete()
+
+            # Delete the CustomUser (cascades to UserEligibility, UserCategories etc.)
+            custom_user.delete()
+            messages.success(request, f"User #{user_id} deleted successfully.")
+        except CustomUser.DoesNotExist:
+            messages.error(request, f"User #{user_id} not found.")
+        except Exception as e:
+            messages.error(request, f"Error deleting user: {e}")
+
+    return redirect('admin_users')
+
+
 def admin_export_csv(request):
     if not request.user.is_authenticated or not request.user.is_staff:
         return redirect('home')
