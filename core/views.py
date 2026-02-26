@@ -1068,7 +1068,8 @@ def admin_export_csv(request):
     if export_type == 'users':
         writer.writerow(['User ID', 'Name', 'Email', 'Phone', 'DOB', 'Gender', 'Aadhaar', 'Income', 'Occupation'])
         for u in CustomUser.objects.all():
-            writer.writerow([u.user_id, u.name, u.email, u.phone, u.dob, u.gender, u.aadhaar_no, u.income, u.occupation])
+            masked = f"XXXX-XXXX-{u.aadhaar_no[-4:]}" if u.aadhaar_no and len(u.aadhaar_no) >= 4 else "—"
+            writer.writerow([u.user_id, u.name, u.email, u.phone, u.dob, u.gender, masked, u.income, u.occupation])
             
     elif export_type == 'applications':
         writer.writerow(['App ID', 'User Name', 'Scheme Name', 'Status', 'Applied On'])
