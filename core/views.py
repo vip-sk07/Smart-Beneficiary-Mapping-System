@@ -249,11 +249,10 @@ def dashboard(request):
         eligible_schemes = []
 
     try:
-        all_eligible = UserEligibility.objects.filter(
-            user_id=custom_user.user_id, eligibility_status='Eligible'
-        ).select_related('scheme')
-        states        = sorted(set(e.scheme.state for e in all_eligible if e.scheme.state))
-        benefit_types = sorted(set(e.scheme.benefit_type for e in all_eligible if e.scheme.benefit_type))
+        # Pull states & types from ALL schemes so the filter is always fully populated
+        all_schemes_qs = Scheme.objects.values_list('state', 'benefit_type')
+        states        = sorted(set(s for s, _ in all_schemes_qs if s and s.strip()))
+        benefit_types = sorted(set(t for _, t in all_schemes_qs if t and t.strip()))
     except Exception:
         errors.append('states/benefit_types: ' + _tb.format_exc())
         states = []
