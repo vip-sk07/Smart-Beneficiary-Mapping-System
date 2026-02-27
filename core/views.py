@@ -920,35 +920,54 @@ def resolve_grievance(request, grv_id):
     if not request.user.is_staff:
         messages.error(request, 'Admin access only.')
         return redirect('dashboard')
+
     if request.method == 'POST':
+        admin_remark = request.POST.get('admin_remark', '').strip()
         try:
             from django.utils import timezone
-            grv = Grievance.objects.select_related('user').get(grievance_id=grv_id)
-            grv.status      = 'Resolved'
-            grv.resolved_on = timezone.now()
-            grv.admin_remark = request.POST.get('admin_remark', '').strip()
-            grv.save()
-            # Email the user
-            user_email = grv.user.email
-            if user_email:
-                scheme_name = grv.scheme.scheme_name if grv.scheme else 'General'
-                send_mail(
-                    subject=f'Smart Beneficiary Mapping System — Grievance GRV-{grv_id} Resolved',
-                    message=(
-                        f"Dear {grv.user.name},\n\n"
-                        f"Your grievance (GRV-{grv_id}) related to '{scheme_name}' "
-                        f"has been resolved.\n\n"
-                        f"Admin Remark: {grv.admin_remark or 'No additional remarks.'}\n\n"
-                        f"Thank you for reaching out to Smart Beneficiary Mapping System.\n\n"
-                        f"\u2014 Smart Beneficiary Mapping System Team"
-                    ),
-                    from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@benefitbridge.in'),
-                    recipient_list=[user_email],
-                    fail_silently=True,
+            from django.db import connection as db_conn
+
+            now = timezone.now()
+
+            # Use raw SQL so we are never blocked by ORM column-mapping issues
+            with db_conn.cursor() as cur:
+                cur.execute(
+                    """UPDATE Grievances
+                          SET status = 'Resolved',
+                              admin_remark = %s,
+                              resolved_on  = %s
+                        WHERE grievance_id = %s""",
+                    [admin_remark or None, now, grv_id]
                 )
+
+            # Try to e-mail user (fail silently)
+            try:
+                grv = Grievance.objects.select_related('user', 'scheme').get(grievance_id=grv_id)
+                user_email = grv.user.email
+                if user_email:
+                    scheme_name = grv.scheme.scheme_name if grv.scheme else 'General'
+                    send_mail(
+                        subject=f'Smart Beneficiary Mapping System — Grievance GRV-{grv_id} Resolved',
+                        message=(
+                            f"Dear {grv.user.name},\n\n"
+                            f"Your grievance (GRV-{grv_id}) related to '{scheme_name}' "
+                            f"has been resolved.\n\n"
+                            f"Admin Remark: {admin_remark or 'No additional remarks.'}\n\n"
+                            f"Thank you for reaching out to Smart Beneficiary Mapping System.\n\n"
+                            f"\u2014 Smart Beneficiary Mapping System Team"
+                        ),
+                        from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@sbms.in'),
+                        recipient_list=[user_email],
+                        fail_silently=True,
+                    )
+            except Exception:
+                pass  # Email failure is non-fatal
+
             messages.success(request, f'Grievance GRV-{grv_id} marked as Resolved.')
-        except Grievance.DoesNotExist:
-            messages.error(request, 'Grievance not found.')
+
+        except Exception as e:
+            messages.error(request, f'Error resolving grievance: {e}')
+
     return redirect('admin_grievances')
 
 
