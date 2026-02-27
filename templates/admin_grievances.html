@@ -160,8 +160,9 @@
     });
 
     function openModal(grvId, userName, schemeName) {
-        document.getElementById('resolveForm').action = '/admin/grievances/' + grvId + '/resolve/';
+        document.getElementById('resolveForm').action = '/platform-admin/grievances/' + grvId + '/resolve/';
         document.getElementById('modalSub').innerHTML = `Resolving <span class="fw-bold text-dark">GRV-${grvId}</span> for <span class="text-primary fw-medium">${userName}</span> (${schemeName})`;
+
         document.getElementById('remarkTextarea').value = '';
         
         if (resolveModalInstance) {
