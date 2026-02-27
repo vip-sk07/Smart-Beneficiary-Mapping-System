@@ -73,6 +73,12 @@ def setup_db():
         _add_column(cursor,
             "ALTER TABLE Grievances ADD COLUMN admin_remark TEXT NULL",
             "Grievances.admin_remark")
+        _add_column(cursor,
+            "ALTER TABLE Grievances ADD COLUMN resolved_on DATETIME NULL",
+            "Grievances.resolved_on")
+        _add_column(cursor,
+            "ALTER TABLE Grievances ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'Open'",
+            "Grievances.status")
 
         # ── Users columns ───────────────────────────────────────────────────
         print("\n[Users columns]")
