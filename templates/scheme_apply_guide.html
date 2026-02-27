@@ -158,6 +158,12 @@
                             <button class="bb-btn bb-btn-secondary w-100 mb-3" id="copyAllBtn" onclick="copyAllDetails()">
                                 <i class="bi bi-clipboard mt-1"></i> Copy All Details
                             </button>
+                            <!-- Document Checklist Button -->
+                            <button class="bb-btn w-100 mb-2" id="checklistBtn"
+                                onclick="loadChecklist({{ scheme.scheme_id }})"
+                                style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;border:none;">
+                                <i class="bi bi-list-check me-1"></i> ✨ AI Document Checklist
+                            </button>
                             <div class="text-center small text-muted"><i class="bi bi-shield-check text-success me-1"></i> Your data is shown only here for manual copy-pasting.</div>
                         </div>
                     </div>
@@ -244,6 +250,33 @@
 
     </div>
 </div>
+
+<!-- Document Checklist Modal -->
+<div class="modal fade" id="checklistModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 p-4" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);">
+                <div>
+                    <h5 class="modal-title fw-bold text-white mb-0"><i class="bi bi-list-check me-2"></i>AI Document Checklist</h5>
+                    <p class="text-white-50 small mb-0">Personalised for {{ user.name }} · {{ scheme.scheme_name|truncatechars:40 }}</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" id="checklistBody">
+                <!-- Content injected by JS -->
+                <div class="text-center py-5" id="checklistLoader">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <p class="text-muted fw-semibold">✨ Gemini is generating your personalised checklist…</p>
+                </div>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2">
+                <button class="btn btn-outline-secondary rounded-pill" onclick="printChecklist()"><i class="bi bi-printer me-1"></i>Print</button>
+                <button class="btn btn-outline-primary rounded-pill" onclick="copyChecklist()"><i class="bi bi-clipboard me-1"></i>Copy List</button>
+                <button type="button" class="btn btn-primary rounded-pill ms-auto" data-bs-dismiss="modal">Done</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -265,7 +298,6 @@ Education: {{ user.education|default:"—" }}`;
         btn.classList.remove('bb-btn-secondary');
         btn.classList.add('bb-btn-success', 'text-white');
         btn.innerHTML = '<i class="bi bi-check2-circle mt-1"></i> Copied to Clipboard!';
-        
         setTimeout(function() {
             btn.classList.add('bb-btn-secondary');
             btn.classList.remove('bb-btn-success', 'text-white');
@@ -274,6 +306,74 @@ Education: {{ user.education|default:"—" }}`;
     }).catch(function() {
         alert('Copy failed. Please manually select and copy your details from the screen.');
     });
+}
+
+// ── Document Checklist ──────────────────────────────────────────────────
+let _checklistData = [];
+
+async function loadChecklist(schemeId) {
+    const modal = new bootstrap.Modal(document.getElementById('checklistModal'));
+    const body  = document.getElementById('checklistBody');
+    const loader = document.getElementById('checklistLoader');
+
+    // Reset to loader state
+    body.innerHTML = `<div class="text-center py-5" id="checklistLoader">
+        <div class="spinner-border text-primary mb-3" role="status"></div>
+        <p class="text-muted fw-semibold">✨ Gemini is generating your personalised checklist…</p>
+    </div>`;
+    modal.show();
+
+    try {
+        const res  = await fetch(`/scheme/${schemeId}/documents/`);
+        const data = await res.json();
+        _checklistData = data.checklist || [];
+        const isGemini = data.source === 'gemini';
+
+        const mandatory = _checklistData.filter(d => d.mandatory);
+        const optional  = _checklistData.filter(d => !d.mandatory);
+
+        const renderGroup = (items, label, color, icon) => {
+            if (!items.length) return '';
+            const rows = items.map(d => `
+                <div class="d-flex align-items-start gap-3 p-3 rounded-3 mb-2" style="background:#f8fafc;border:1px solid #e2e8f0;">
+                    <div style="width:36px;height:36px;border-radius:10px;background:${color}20;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="bi ${icon}" style="color:${color};font-size:1rem;"></i>
+                    </div>
+                    <div style="flex:1;">
+                        <div class="fw-bold text-dark" style="font-size:0.9rem;">${d.document}</div>
+                        <div class="text-muted" style="font-size:0.78rem;">${d.purpose}</div>
+                    </div>
+                    <span style="font-size:0.65rem;font-weight:700;padding:2px 8px;border-radius:20px;background:${color}20;color:${color};white-space:nowrap;flex-shrink:0;">${label}</span>
+                </div>`).join('');
+            return `<h6 class="fw-bold text-uppercase mb-2 mt-3" style="font-size:0.7rem;letter-spacing:0.06em;color:${color};">${label} Documents</h6>${rows}`;
+        };
+
+        body.innerHTML = `
+            ${isGemini ? '<div class="d-flex align-items-center gap-2 mb-3"><span style="background:#ede9fe;color:#5b21b6;font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:20px;">✨ Gemini Generated</span><span class="text-muted small">Personalised for your profile</span></div>' : '<div class="text-muted small mb-3">⚠️ Generic checklist (AI unavailable)</div>'}
+            ${renderGroup(mandatory, 'MANDATORY', '#4f46e5', 'bi-file-earmark-check-fill')}
+            ${renderGroup(optional,  'OPTIONAL',  '#0891b2', 'bi-file-earmark-plus')}
+        `;
+    } catch(e) {
+        document.getElementById('checklistBody') && (document.getElementById('checklistBody').innerHTML =
+            '<div class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle fs-2 mb-2 d-block"></i>Failed to load checklist. Please try again.</div>');
+    }
+}
+
+function copyChecklist() {
+    const lines = _checklistData.map(d =>
+        `${d.mandatory ? '[MANDATORY]' : '[OPTIONAL]'} ${d.document} — ${d.purpose}`
+    ).join('\n');
+    navigator.clipboard.writeText(`Document Checklist for {{ scheme.scheme_name }}\n${'='.repeat(50)}\n${lines}`);
+}
+
+function printChecklist() {
+    const content = document.getElementById('checklistBody').innerHTML;
+    const w = window.open('', '_blank');
+    w.document.write(`<html><head><title>Document Checklist — {{ scheme.scheme_name }}</title>
+        <style>body{font-family:sans-serif;padding:24px;} .text-muted{color:#64748b;} .fw-bold{font-weight:700;}</style>
+        </head><body><h2>Document Checklist</h2><h3>{{ scheme.scheme_name }}</h3><h4>Applicant: {{ user.name }}</h4>${content}</body></html>`);
+    w.document.close();
+    w.print();
 }
 </script>
 {% endblock %}

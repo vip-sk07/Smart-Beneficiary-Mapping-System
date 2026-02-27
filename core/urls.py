@@ -11,8 +11,9 @@ urlpatterns = [
     path('eligibility/', views.eligibility_view,            name='eligibility'),
 
     # Scheme guide + apply
-    path('scheme/<int:scheme_id>/apply/',     views.scheme_apply_guide, name='scheme_apply_guide'),
-    path('scheme/<int:scheme_id>/apply-now/', views.apply_scheme,       name='apply_scheme'),
+    path('scheme/<int:scheme_id>/apply/',         views.scheme_apply_guide,   name='scheme_apply_guide'),
+    path('scheme/<int:scheme_id>/apply-now/',      views.apply_scheme,         name='apply_scheme'),
+    path('scheme/<int:scheme_id>/documents/',      views.document_checklist,   name='document_checklist'),
 
     # My Applications
     path('my-applications/', views.my_applications, name='my_applications'),
