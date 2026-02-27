@@ -411,6 +411,90 @@ def scheme_apply_guide(request, scheme_id):
     })
 
 
+# ── Document Checklist (Gemini-powered, AJAX) ──────────────────────────────
+def document_checklist(request, scheme_id):
+    """Return a Gemini-generated personalised document checklist as JSON."""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Login required'}, status=403)
+
+    custom_user = get_custom_user(request.user)
+    scheme      = get_object_or_404(Scheme, scheme_id=scheme_id)
+    api_key     = getattr(settings, 'GEMINI_API_KEY', None)
+
+    # ── Build user summary for Gemini ─────────────────────────────────────
+    if custom_user:
+        from datetime import date
+        today = date.today()
+        dob   = custom_user.dob
+        age   = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+        user_ctx = (
+            f"Name: {custom_user.name}, Age: {age}, Gender: {custom_user.gender or 'Not specified'}, "
+            f"Income: ₹{custom_user.income or 'Not specified'}/year, "
+            f"Occupation: {custom_user.occupation or 'Not specified'}, "
+            f"Education: {custom_user.education or 'Not specified'}, "
+            f"Address: {custom_user.address or 'Not specified'}"
+        )
+    else:
+        user_ctx = "Profile not available"
+
+    scheme_ctx = (
+        f"Scheme: {scheme.scheme_name}\n"
+        f"Type: {scheme.benefit_type or 'Government Scheme'}\n"
+        f"State: {scheme.state or 'All India'}\n"
+        f"Benefits: {scheme.benefits or 'Not specified'}\n"
+        f"Description: {(scheme.description or '')[:300]}"
+    )
+
+    # ── Gemini call ────────────────────────────────────────────────────────
+    if api_key:
+        try:
+            import google.generativeai as _genai, json as _json
+            _genai.configure(api_key=api_key)
+            model = _genai.GenerativeModel('gemini-2.5-flash')
+
+            prompt = (
+                "You are a government scheme document expert for India.\n"
+                "Given the scheme and applicant profile below, generate a personalised document checklist.\n\n"
+                f"SCHEME:\n{scheme_ctx}\n\n"
+                f"APPLICANT:\n{user_ctx}\n\n"
+                "Respond with ONLY a valid JSON array (no markdown, no explanation):\n"
+                "[\n"
+                "  {\"document\": \"<document name>\", \"purpose\": \"<why it is needed>\", \"mandatory\": true/false},\n"
+                "  ...\n"
+                "]\n\n"
+                "Rules:\n"
+                "- Include 6-10 documents that are specifically relevant to this scheme and applicant\n"
+                "- Mark truly essential ones as mandatory: true, optional/supporting ones as false\n"
+                "- Be specific: e.g. 'Aadhaar Card' not just 'identity proof'\n"
+                "- Output ONLY the JSON array"
+            )
+
+            resp = model.generate_content(prompt)
+            raw  = resp.text.strip()
+            if raw.startswith('```'):
+                raw = raw.split('```')[1]
+                if raw.startswith('json'):
+                    raw = raw[4:]
+            checklist = _json.loads(raw.strip())
+            return JsonResponse({'checklist': checklist, 'source': 'gemini'})
+
+        except Exception as e:
+            print(f"Gemini checklist error: {e}")
+
+    # ── Generic fallback checklist ─────────────────────────────────────────
+    fallback = [
+        {'document': 'Aadhaar Card',          'purpose': 'Primary identity & address proof', 'mandatory': True},
+        {'document': 'PAN Card',               'purpose': 'Tax identification',               'mandatory': True},
+        {'document': 'Bank Passbook / IFSC',   'purpose': 'Direct benefit transfer (DBT)',    'mandatory': True},
+        {'document': 'Income Certificate',     'purpose': 'Proof of annual income',           'mandatory': True},
+        {'document': 'Passport Size Photo',    'purpose': 'Application form requirement',     'mandatory': True},
+        {'document': 'Caste / Category Certificate', 'purpose': 'For reserved category benefits', 'mandatory': False},
+        {'document': 'Address Proof',          'purpose': 'Confirm residential address',      'mandatory': False},
+        {'document': 'Mobile Number (Aadhaar-linked)', 'purpose': 'OTP verification',        'mandatory': True},
+    ]
+    return JsonResponse({'checklist': fallback, 'source': 'fallback'})
+
+
 # ── Apply to a Scheme ──────────────────────────────────────────────────────
 @require_POST
 def apply_scheme(request, scheme_id):
