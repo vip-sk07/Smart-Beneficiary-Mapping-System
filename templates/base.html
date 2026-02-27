@@ -276,6 +276,11 @@
                 style="flex:1;border:1.5px solid #e0e7ff;border-radius:22px;padding:9px 16px;outline:none;font-size:0.875rem;color:#1e293b;background:#f8faff;transition:border-color 0.2s;"
                 onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e0e7ff'"
                 onkeypress="if(event.key==='Enter')sendSBMSMessage()">
+            <!-- Mic button -->
+            <button id="sbms-mic-btn" onclick="toggleVoiceInput()" title="Speak your question"
+                style="background:#f1f5f9;border:1.5px solid #e0e7ff;color:#64748b;cursor:pointer;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;">
+                <i class="bi bi-mic-fill" style="font-size:0.95rem;"></i>
+            </button>
             <button id="sbms-send-btn" onclick="sendSBMSMessage()"
                 style="background:#4f46e5;border:none;color:white;cursor:pointer;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(79,70,229,0.35);transition:all 0.2s;"
                 onmouseover="this.style.background='#4338ca'" onmouseout="this.style.background='#4f46e5'">
@@ -388,7 +393,75 @@
             input.focus();
         }
     }
+
+    // ── Voice Input ──────────────────────────────────────────────────────────
+    let sbmsRecognition = null;
+    let sbmsRecording   = false;
+
+    function toggleVoiceInput() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            addSBMSMessage('🎤 Voice input is not supported in this browser. Please use Chrome or Edge.', 'bot');
+            return;
+        }
+
+        const micBtn = document.getElementById('sbms-mic-btn');
+
+        if (sbmsRecording) {
+            // Stop recording
+            sbmsRecognition.stop();
+            return;
+        }
+
+        // Start recording
+        sbmsRecognition = new SpeechRecognition();
+        sbmsRecognition.lang         = 'en-IN';  // Indian English; Gemini handles Hindi too
+        sbmsRecognition.interimResults = false;
+        sbmsRecognition.maxAlternatives = 1;
+
+        sbmsRecognition.onstart = () => {
+            sbmsRecording = true;
+            micBtn.style.background   = '#fee2e2';
+            micBtn.style.borderColor  = '#ef4444';
+            micBtn.style.color        = '#ef4444';
+            micBtn.style.animation    = 'pulse-mic 0.8s ease-in-out infinite';
+            document.getElementById('sbms-input').placeholder = '🎤 Listening...';
+        };
+
+        sbmsRecognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            document.getElementById('sbms-input').value = transcript;
+            // Auto-send after a short delay so user can see the transcription
+            setTimeout(() => sendSBMSMessage(), 400);
+        };
+
+        sbmsRecognition.onerror = (event) => {
+            const msgs = {
+                'not-allowed': '🎤 Microphone access denied. Please allow mic access in your browser settings.',
+                'no-speech':   '🎤 No speech detected. Please try again.',
+                'network':     '🎤 Network error during voice recognition.',
+            };
+            addSBMSMessage(msgs[event.error] || `🎤 Voice error: ${event.error}`, 'bot');
+        };
+
+        sbmsRecognition.onend = () => {
+            sbmsRecording = false;
+            micBtn.style.background   = '#f1f5f9';
+            micBtn.style.borderColor  = '#e0e7ff';
+            micBtn.style.color        = '#64748b';
+            micBtn.style.animation    = 'none';
+            document.getElementById('sbms-input').placeholder = 'Ask me anything...';
+        };
+
+        sbmsRecognition.start();
+    }
 </script>
+<style>
+@keyframes pulse-mic {
+    0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+    50%      { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+}
+</style>
 
 
 
