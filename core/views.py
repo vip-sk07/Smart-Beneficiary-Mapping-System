@@ -551,7 +551,7 @@ def my_grievances(request):
     })
 
 
-# ── AI Voice Bot NLP (AJAX) ────────────────────────────────────────────────
+# ── AI Voice Bot NLP (AJAX) — Gemini-powered intent detection ─────────────
 def voice_bot_nlp(request):
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'Not authenticated'}, status=403)
@@ -564,61 +564,126 @@ def voice_bot_nlp(request):
 
     try:
         data  = json.loads(request.body)
-        query = data.get('query', '').lower().strip()
+        query = data.get('query', '').strip()
     except (json.JSONDecodeError, AttributeError):
-        query = request.POST.get('query', '').lower().strip()
+        query = request.POST.get('query', '').strip()
 
     if not query:
         return JsonResponse({'error': 'query is required'}, status=400)
 
-    intent_map = [
-        {'intent': 'Agricultural Support',   'keywords': ['farmer','farming','crop','kisan','agriculture','field','harvest','irrigation','paddy','wheat','rural'], 'confidence': 0.95},
-        {'intent': 'Senior Citizen Welfare', 'keywords': ['pension','old','elderly','senior','retired','grandmother','grandfather','aged'], 'confidence': 0.92},
-        {'intent': 'Educational Support',    'keywords': ['student','school','scholarship','college','education','study','tuition','degree','university','merit'], 'confidence': 0.93},
-        {'intent': 'Women Empowerment',      'keywords': ['woman','women','female','girl','mahila','widow','mother','maternity'], 'confidence': 0.91},
-        {'intent': 'Disability & Health',    'keywords': ['disabled','disability','handicap','divyang','blind','health','medical','hospital'], 'confidence': 0.90},
-        {'intent': 'Business & MSME',        'keywords': ['business','loan','msme','startup','entrepreneur','shop','trade','industry'], 'confidence': 0.89},
-        {'intent': 'Housing Support',        'keywords': ['house','housing','home','shelter','construction','pmay','awas'], 'confidence': 0.88},
-        {'intent': 'Unemployment & Labour',  'keywords': ['unemployed','unemployment','job','work','labour','worker','wage','mgnrega','skill'], 'confidence': 0.87},
-    ]
-
+    # ── Step 1: Use Gemini to extract intent + search keywords ────────────
     matched_intent = 'General Welfare'
-    confidence = 0.60
-    for entry in intent_map:
-        if any(kw in query for kw in entry['keywords']):
-            matched_intent = entry['intent']
-            confidence = entry['confidence']
-            break
+    confidence     = 0.60
+    gemini_keywords = []
 
-    eligible = UserEligibility.objects.filter(
+    api_key = getattr(settings, 'GEMINI_API_KEY', None)
+    if api_key:
+        try:
+            import google.generativeai as _genai, json as _json
+            _genai.configure(api_key=api_key)
+            nlp_model = _genai.GenerativeModel('gemini-2.5-flash')
+
+            nlp_prompt = (
+                "You are an NLP classifier for an Indian government scheme discovery system.\n"
+                "Analyze the following user query and respond with ONLY valid JSON (no markdown, no explanation).\n\n"
+                f'User query: "{query}"\n\n'
+                "Respond exactly in this JSON format:\n"
+                '{\n'
+                '  "intent": "<one of: Agricultural Support | Educational Support | Women Empowerment | '
+                'Senior Citizen Welfare | Disability & Health | Business & MSME | Housing Support | '
+                'Unemployment & Labour | General Welfare>",\n'
+                '  "confidence": <float between 0.0 and 1.0>,\n'
+                '  "keywords": ["<keyword1>", "<keyword2>", "<keyword3>", "<keyword4>", "<keyword5>"]\n'
+                '}\n\n'
+                "Rules:\n"
+                "- keywords must be single English words relevant to government schemes\n"
+                "- confidence should reflect how clearly the query maps to the intent\n"
+                "- Output ONLY the JSON, nothing else"
+            )
+
+            nlp_resp = nlp_model.generate_content(nlp_prompt)
+            raw = nlp_resp.text.strip()
+            # Strip markdown code fences if Gemini wraps in ```json
+            if raw.startswith('```'):
+                raw = raw.split('```')[1]
+                if raw.startswith('json'):
+                    raw = raw[4:]
+            parsed = _json.loads(raw.strip())
+
+            matched_intent  = parsed.get('intent', 'General Welfare')
+            confidence      = float(parsed.get('confidence', 0.70))
+            gemini_keywords = [k.lower() for k in parsed.get('keywords', [])]
+
+        except Exception as nlp_err:
+            # Fallback: basic keyword scoring (original logic)
+            print(f"Gemini NLP error (falling back): {nlp_err}")
+            fallback_map = [
+                ('Agricultural Support',   ['farmer','farming','crop','kisan','agriculture','irrigation'], 0.85),
+                ('Senior Citizen Welfare', ['pension','elderly','senior','retired','aged'],                0.82),
+                ('Educational Support',    ['student','scholarship','college','education','study'],        0.83),
+                ('Women Empowerment',      ['woman','women','female','mahila','widow','maternity'],        0.81),
+                ('Disability & Health',    ['disabled','disability','health','medical','hospital'],        0.80),
+                ('Business & MSME',        ['business','loan','msme','startup','entrepreneur'],            0.79),
+                ('Housing Support',        ['house','housing','shelter','pmay','awas'],                    0.78),
+                ('Unemployment & Labour',  ['unemployed','job','labour','worker','mgnrega','skill'],       0.77),
+            ]
+            ql = query.lower()
+            for intent, kws, conf in fallback_map:
+                if any(k in ql for k in kws):
+                    matched_intent = intent
+                    confidence     = conf
+                    break
+            gemini_keywords = [w for w in ql.split() if len(w) > 3][:5]
+
+    # ── Step 2: Search DB using Gemini's keywords ─────────────────────────
+    # Priority: user's eligible schemes first, then all schemes
+    eligible_qs = UserEligibility.objects.filter(
         user_id=custom_user.user_id, eligibility_status='Eligible'
     ).select_related('scheme')
 
-    query_words = set(query.split())
-    scored = []
-    for ue in eligible:
-        text = (
-            (ue.scheme.scheme_name or '') + ' ' +
-            (ue.scheme.description or '') + ' ' +
-            (ue.scheme.benefits or '')
-        ).lower()
-        score = sum(1 for w in query_words if w in text)
-        scored.append((score, ue.scheme))
+    search_terms = gemini_keywords or [w.lower() for w in query.split() if len(w) > 3]
 
-    scored.sort(key=lambda x: x[0], reverse=True)
-    matched = [s for sc, s in scored if sc > 0][:5]
+    def score_scheme(scheme):
+        text = (
+            (scheme.scheme_name   or '') + ' ' +
+            (scheme.description   or '') + ' ' +
+            (scheme.benefits      or '') + ' ' +
+            (scheme.benefit_type  or '')
+        ).lower()
+        return sum(1 for kw in search_terms if kw in text)
+
+    # Score eligible schemes
+    scored_eligible = sorted(
+        [(score_scheme(ue.scheme), ue.scheme) for ue in eligible_qs],
+        key=lambda x: x[0], reverse=True
+    )
+    matched = [s for sc, s in scored_eligible if sc > 0][:5]
+
+    # If fewer than 3 matched eligible, supplement from all schemes
+    if len(matched) < 3:
+        all_schemes_qs = Scheme.objects.all()[:100]
+        scored_all = sorted(
+            [(score_scheme(s), s) for s in all_schemes_qs if s not in matched],
+            key=lambda x: x[0], reverse=True
+        )
+        matched += [s for sc, s in scored_all if sc > 0][:5 - len(matched)]
+
+    # Last resort fallback: top 3 eligible schemes
     if not matched:
-        matched = [s for _, s in scored[:3]]
+        matched = [s for _, s in scored_eligible[:3]]
 
     return JsonResponse({
         'intent':          matched_intent,
-        'confidence':      confidence,
+        'confidence':      round(confidence, 2),
+        'keywords':        gemini_keywords,
         'matched_schemes': [{'id': s.scheme_id, 'name': s.scheme_name} for s in matched],
-        'total_eligible':  eligible.count(),
+        'total_eligible':  eligible_qs.count(),
     })
 
 
+
 # ── NLP Scheme Finder (full page) ─────────────────────────────────────────
+
 def nlp_scheme_finder(request):
     if not request.user.is_authenticated:
         return redirect('login')
