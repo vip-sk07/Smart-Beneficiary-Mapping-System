@@ -45,6 +45,39 @@
     <div class="col-12 col-xl-10">
         <!-- Results Section -->
         {% if query %}
+            {% if intent %}
+            <!-- Gemini NLP Analysis Panel -->
+            <div class="bb-card p-4 mb-4 border-2" style="border-color: rgba(79,70,229,0.2); background: linear-gradient(135deg, #f8f7ff, #f0f4ff);">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="background:#4f46e5;color:white;font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.05em;">
+                            ✨ GEMINI ANALYSIS
+                        </span>
+                        <h6 class="fw-bold mb-0 text-dark">{{ intent }}</h6>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-muted small fw-semibold">Confidence</span>
+                        <div style="width:120px;height:8px;background:#e2e8f0;border-radius:8px;overflow:hidden;">
+                            {% widthratio confidence 1 100 as pct %}
+                            <div style="width:{{ pct }}%;height:100%;background:linear-gradient(90deg,#4f46e5,#818cf8);border-radius:8px;"></div>
+                        </div>
+                        <span class="fw-bold small text-primary">{{ pct }}%</span>
+                    </div>
+                </div>
+                {% if ai_summary %}
+                <p class="text-muted small mb-3 fst-italic">"{{ ai_summary }}"</p>
+                {% endif %}
+                {% if keywords %}
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="text-muted small fw-semibold me-1">Keywords:</span>
+                    {% for kw in keywords %}
+                    <span style="background:#ede9fe;color:#5b21b6;font-size:0.75rem;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid #ddd6fe;">{{ kw }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
             <div class="d-flex align-items-center justify-content-between mb-4 border-bottom pb-2">
                 <h5 class="fw-bold m-0 text-dark">Results for "<span class="text-primary">{{ query|truncatechars:40 }}</span>"</h5>
                 <span class="bb-badge bb-badge-primary">{{ results|length }} scheme{{ results|length|pluralize }} found</span>
@@ -96,6 +129,7 @@
                 <p class="text-muted mb-0">Type your situation above to let our NLP engine find your matches instantly.</p>
             </div>
         {% endif %}
+
     </div>
 </div>
 
