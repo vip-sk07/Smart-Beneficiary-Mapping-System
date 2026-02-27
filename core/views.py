@@ -682,44 +682,119 @@ def voice_bot_nlp(request):
 
 
 
-# ── NLP Scheme Finder (full page) ─────────────────────────────────────────
+# ── NLP Scheme Finder (full page) — Gemini-powered ───────────────────────
 
 def nlp_scheme_finder(request):
     if not request.user.is_authenticated:
         return redirect('login')
 
     custom_user = get_custom_user(request.user)
-    results = []
-    query   = ''
+    results     = []
+    query       = ''
+    intent      = ''
+    confidence  = 0.0
+    keywords    = []
+    ai_summary  = ''
 
     if request.method == 'POST':
         query = request.POST.get('query', '').strip()
         if query:
-            stop_words = {'want','need','looking','help','with','that','this','have',
-                          'from','about','what','schemes','scheme','benefit','government',
-                          'india','apply','get','some','please','find'}
-            keywords = [w for w in query.lower().split() if len(w) > 3 and w not in stop_words]
+            api_key = getattr(settings, 'GEMINI_API_KEY', None)
+            gemini_ok = False
 
+            # ── Step 1: Gemini keyword + intent extraction ─────────────────
+            if api_key:
+                try:
+                    import google.generativeai as _genai, json as _json
+                    _genai.configure(api_key=api_key)
+                    nlp_model = _genai.GenerativeModel('gemini-2.5-flash')
+
+                    nlp_prompt = (
+                        "You are an NLP engine for an Indian government scheme discovery system.\n"
+                        "Given the user's plain-language query, respond with ONLY valid JSON (no markdown, no explanation).\n\n"
+                        f'User query: "{query}"\n\n'
+                        "Respond exactly in this JSON format:\n"
+                        '{\n'
+                        '  "intent": "<one of: Agricultural Support | Educational Support | Women Empowerment'
+                        ' | Senior Citizen Welfare | Disability & Health | Business & MSME'
+                        ' | Housing Support | Unemployment & Labour | General Welfare>",\n'
+                        '  "confidence": <float 0.0–1.0>,\n'
+                        '  "keywords": ["<kw1>","<kw2>","<kw3>","<kw4>","<kw5>"],\n'
+                        '  "summary": "<1-sentence description of what the user is looking for, in plain English>"\n'
+                        '}\n\n'
+                        "Rules:\n"
+                        "- keywords: 5 single English words best suited to search government scheme names/descriptions\n"
+                        "- summary: max 20 words, friendly, no quotes inside\n"
+                        "- Output ONLY the JSON object, absolutely nothing else"
+                    )
+
+                    resp = nlp_model.generate_content(nlp_prompt)
+                    raw = resp.text.strip()
+                    if raw.startswith('```'):
+                        raw = raw.split('```')[1]
+                        if raw.startswith('json'):
+                            raw = raw[4:]
+                    parsed     = _json.loads(raw.strip())
+                    intent     = parsed.get('intent', 'General Welfare')
+                    confidence = round(float(parsed.get('confidence', 0.70)), 2)
+                    keywords   = [k.lower().strip() for k in parsed.get('keywords', []) if k.strip()]
+                    ai_summary = parsed.get('summary', '')
+                    gemini_ok  = True
+
+                except Exception as e:
+                    print(f"Gemini NLP finder error (falling back): {e}")
+
+            # ── Fallback: stop-word split ──────────────────────────────────
+            if not gemini_ok or not keywords:
+                stop_words = {
+                    'want','need','looking','help','with','that','this','have',
+                    'from','about','what','schemes','scheme','benefit','government',
+                    'india','apply','get','some','please','find','i','am','my',
+                    'for','the','and','are','has','can','will','there','those',
+                }
+                keywords  = [w for w in query.lower().split() if len(w) > 3 and w not in stop_words][:6]
+                intent    = intent or 'General Welfare'
+                confidence = confidence or 0.60
+
+            # ── Step 2: DB search using Gemini keywords ────────────────────
             if keywords:
                 q_filter = Q()
                 for kw in keywords:
                     q_filter |= (
                         Q(scheme_name__icontains=kw) |
                         Q(description__icontains=kw) |
-                        Q(benefits__icontains=kw) |
+                        Q(benefits__icontains=kw)    |
                         Q(benefit_type__icontains=kw)
                     )
-                matched_schemes = Scheme.objects.filter(q_filter).distinct()[:12]
+                matched_schemes = Scheme.objects.filter(q_filter).distinct()[:20]
+
+                # Score results: eligibility match + keyword relevance
                 for scheme in matched_schemes:
-                    score = _calculate_match_score(custom_user, scheme) if custom_user else 70
-                    results.append({'scheme': scheme, 'score': score})
+                    base_score = _calculate_match_score(custom_user, scheme) if custom_user else 65
+                    # Boost score by keyword density in scheme text
+                    text = (
+                        (scheme.scheme_name  or '') + ' ' +
+                        (scheme.description  or '') + ' ' +
+                        (scheme.benefits     or '') + ' ' +
+                        (scheme.benefit_type or '')
+                    ).lower()
+                    keyword_hits = sum(1 for kw in keywords if kw in text)
+                    boosted_score = min(100, base_score + keyword_hits * 3)
+                    results.append({'scheme': scheme, 'score': boosted_score})
+
                 results.sort(key=lambda x: x['score'], reverse=True)
+                results = results[:12]
 
     return render(request, 'nlp_finder.html', {
-        'user':    custom_user,
-        'results': results,
-        'query':   query,
+        'user':       custom_user,
+        'results':    results,
+        'query':      query,
+        'intent':     intent,
+        'confidence': confidence,
+        'keywords':   keywords,
+        'ai_summary': ai_summary,
     })
+
 
 
 # ── Admin Stats Dashboard ──────────────────────────────────────────────────
