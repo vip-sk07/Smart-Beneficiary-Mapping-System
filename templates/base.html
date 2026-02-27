@@ -258,7 +258,14 @@
                     </div>
                 </div>
             </div>
-            <button onclick="toggleSBMSChat()" style="background:rgba(255,255,255,0.15);border:none;color:white;cursor:pointer;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;">&times;</button>
+            <div style="display:flex;align-items:center;gap:6px;">
+                <button onclick="clearSBMSChat()" title="Clear conversation history"
+                    style="background:rgba(255,255,255,0.12);border:none;color:rgba(255,255,255,0.8);cursor:pointer;padding:4px 10px;border-radius:20px;font-size:0.7rem;font-weight:600;letter-spacing:0.04em;display:flex;align-items:center;gap:4px;transition:background 0.2s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.22)'" onmouseout="this.style.background='rgba(255,255,255,0.12)'">
+                    <i class="bi bi-trash3"></i> Clear
+                </button>
+                <button onclick="toggleSBMSChat()" style="background:rgba(255,255,255,0.15);border:none;color:white;cursor:pointer;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;">&times;</button>
+            </div>
         </div>
 
         <!-- Messages -->
@@ -454,6 +461,23 @@
         };
 
         sbmsRecognition.start();
+    }
+
+    // ── Clear Chat History ────────────────────────────────────────────────
+    async function clearSBMSChat() {
+        try {
+            const fd = new FormData();
+            fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+            await fetch("{% url 'clear_chat' %}", { method: 'POST', body: fd });
+        } catch(e) { /* fail silently */ }
+
+        // Reset UI — keep only the welcome message
+        const msgDiv = document.getElementById('sbms-messages');
+        msgDiv.innerHTML = `
+            <div style="background:#fff;padding:12px 15px;border-radius:16px;border-bottom-left-radius:4px;max-width:88%;align-self:flex-start;border:1px solid #e0e7ff;color:#1e293b;line-height:1.5;box-shadow:0 2px 8px rgba(79,70,229,0.06);">
+                👋 <b>Welcome!</b> I am your AI Assistant for the <b>Smart Beneficiary Mapping System</b>.<br><br>
+                I can help you find government schemes you are eligible for, understand how to apply, or track your applications. How can I help you today?
+            </div>`;
     }
 </script>
 <style>

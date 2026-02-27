@@ -1011,14 +1011,27 @@ def gemini_chat(request):
             "- Respond in English. If user writes in Hindi or regional language, respond in the same language.\n\n"
         )
 
-        # ── User profile context ─────────────────────────────────────────────
+        # ── Build system context (sent once as first model turn) ─────────────
         custom_user = get_custom_user(request.user)
+        system_ctx = (
+            "You are the AI Assistant for the 'Smart Beneficiary Mapping System' (SBMS), "
+            "a government platform that helps everyday citizens in India discover benefit schemes "
+            "they are personally eligible for, apply for them, track applications, and raise grievances.\n\n"
+            "Your Role:\n"
+            "- Help citizens find schemes they qualify for.\n"
+            "- Explain how to apply, what documents are needed, and what benefits they get.\n"
+            "- Guide users through the SBMS platform (dashboard, categories, applications, grievances).\n"
+            "- Be extremely polite, empathetic, simple, and concise.\n"
+            "- Format replies using markdown (bold for key info, bullet points for steps).\n"
+            "- Respond in English. If user writes in Hindi or regional language, respond in the same language.\n\n"
+        )
+
         if custom_user:
             from datetime import date
             today = date.today()
             dob = custom_user.dob
             age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-            system_prompt += (
+            system_ctx += (
                 f"Current User Profile:\n"
                 f"- Name: {custom_user.name}\n"
                 f"- Age: {age} years\n"
@@ -1027,7 +1040,6 @@ def gemini_chat(request):
                 f"- Occupation: {custom_user.occupation or 'Not specified'}\n"
                 f"- Education: {custom_user.education or 'Not specified'}\n\n"
             )
-            # Eligible schemes
             eligible = UserEligibility.objects.filter(
                 user_id=custom_user.user_id, eligibility_status='Eligible'
             ).select_related('scheme')[:20]
@@ -1036,28 +1048,64 @@ def gemini_chat(request):
                     f"  • {e.scheme.scheme_name} ({e.scheme.benefit_type or 'General'}, {e.scheme.state or 'All India'})"
                     for e in eligible
                 )
-                system_prompt += f"Schemes This User is Eligible For:\n{scheme_list}\n\n"
+                system_ctx += f"Schemes This User is Eligible For:\n{scheme_list}\n\n"
 
-        # ── Available schemes context (top 40) ───────────────────────────────
         schemes_qs = Scheme.objects.all()[:40]
         if schemes_qs.exists():
             scheme_context = "\n".join(
                 f"• {s.scheme_name} | Type: {s.benefit_type or '-'} | State: {s.state or 'All India'} | {(s.description or '')[:120]}"
                 for s in schemes_qs
             )
-            system_prompt += f"Available Government Schemes in Database:\n{scheme_context}\n\n"
+            system_ctx += f"Available Government Schemes in Database:\n{scheme_context}\n\n"
 
-        system_prompt += f"Citizen's Question: {user_msg}"
+        # ── Session-based history ────────────────────────────────────────────
+        SESSION_KEY = f'sbms_chat_{request.user.id}'
+        MAX_TURNS   = 20   # keep last 20 exchanges to avoid token bloat
 
-        response = model.generate_content(system_prompt)
+        raw_history = request.session.get(SESSION_KEY, [])
+
+        # Build Gemini-formatted history list
+        # First turn is always the system context so Gemini has full context
+        gemini_history = [
+            {'role': 'user',  'parts': [system_ctx]},
+            {'role': 'model', 'parts': ['Understood. I am ready to assist citizens of the Smart Beneficiary Mapping System. How can I help today?']},
+        ]
+        # Append past conversation turns (already in {role, parts} format)
+        gemini_history.extend(raw_history)
+
+        # Start multi-turn chat with history
+        chat = model.start_chat(history=gemini_history)
+        response = chat.send_message(user_msg)
         reply_text = response.text
 
-        # Simple markdown → HTML for the widget
+        # ── Save updated history to session ─────────────────────────────────
+        raw_history.append({'role': 'user',  'parts': [user_msg]})
+        raw_history.append({'role': 'model', 'parts': [reply_text]})
+
+        # Trim to last MAX_TURNS pairs (2 entries per turn)
+        if len(raw_history) > MAX_TURNS * 2:
+            raw_history = raw_history[-(MAX_TURNS * 2):]
+
+        request.session[SESSION_KEY] = raw_history
+        request.session.modified = True
+
         return JsonResponse({'reply': reply_text})
 
     except Exception as e:
         print(f"Gemini API Error: {e}")
         return JsonResponse({'reply': 'I am having trouble connecting right now. Please try again in a moment.'})
+
+
+@require_POST
+def clear_chat(request):
+    """Clear the user's chat session history."""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    SESSION_KEY = f'sbms_chat_{request.user.id}'
+    request.session.pop(SESSION_KEY, None)
+    request.session.modified = True
+    return JsonResponse({'status': 'cleared'})
+
 
 
 def admin_users(request):
