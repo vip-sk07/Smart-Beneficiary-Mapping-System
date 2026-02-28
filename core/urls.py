@@ -57,8 +57,7 @@ urlpatterns = [
     path('platform-admin/grievances/<int:grv_id>/resolve/', views.resolve_grievance, name='resolve_grievance'),
 
     # Gemini Chatbot API
-    path('api/gemini-chat/', views.gemini_chat, name='gemini_chat'),
-    path('api/clear-chat/',  views.clear_chat,  name='clear_chat'),
+    path('api/ai/chat/', views.api_ai_chat, name='api_ai_chat'),
 
     # Admin Panel Improvements
     path('platform-admin/users/', views.admin_users, name='admin_users'),
