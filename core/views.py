@@ -1221,81 +1221,71 @@ def gemini_chat(request):
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-1.5-flash')
 
-        # ── Build system context ─────────────────────────────────────────────
+        # ── System context ───────────────────────────────────────────────────
         custom_user = get_custom_user(request.user)
         system_ctx = (
-            "You are the AI Assistant for the 'Smart Beneficiary Mapping System' (SBMS), "
-            "a government platform that helps everyday citizens in India discover benefit schemes "
-            "they are personally eligible for, apply for them, track applications, and raise grievances.\n\n"
-            "Your Role:\n"
-            "- Help citizens find schemes they qualify for.\n"
-            "- Explain how to apply, what documents are needed, and what benefits they get.\n"
-            "- Guide users through the SBMS platform (dashboard, categories, applications, grievances).\n"
-            "- Be extremely polite, empathetic, simple, and concise.\n"
-            "- Format replies using markdown (bold for key info, bullet points for steps).\n"
-            "- Respond in English. If user writes in Hindi or regional language, respond in the same language.\n\n"
+            "You are the AI Assistant for the Smart Beneficiary Mapping System (SBMS), "
+            "a government platform helping Indian citizens discover & apply for benefit schemes.\n"
+            "Be polite, concise, and use markdown formatting. "
+            "Reply in the same language the user writes in.\n\n"
         )
 
         if custom_user:
             try:
                 from datetime import date
-                today = date.today()
                 dob = custom_user.dob
-                age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+                age = date.today().year - dob.year - (
+                    (date.today().month, date.today().day) < (dob.month, dob.day)
+                )
                 system_ctx += (
-                    f"Current User Profile:\n"
-                    f"- Name: {custom_user.name}\n"
-                    f"- Age: {age} years\n"
-                    f"- Gender: {custom_user.gender or 'Not specified'}\n"
-                    f"- Income: \u20b9{custom_user.income or 'Not specified'}/year\n"
-                    f"- Occupation: {custom_user.occupation or 'Not specified'}\n"
-                    f"- Education: {custom_user.education or 'Not specified'}\n\n"
+                    f"User: {custom_user.name}, Age {age}, "
+                    f"Income \u20b9{custom_user.income or '?'}/yr, "
+                    f"Occupation: {custom_user.occupation or '?'}, "
+                    f"Education: {custom_user.education or '?'}\n"
                 )
             except Exception:
-                system_ctx += f"Current User: {custom_user.name}\n\n"
+                system_ctx += f"User: {custom_user.name}\n"
+
             eligible = UserEligibility.objects.filter(
                 user_id=custom_user.user_id, eligibility_status='Eligible'
-            ).select_related('scheme')[:20]
+            ).select_related('scheme')[:15]
             if eligible.exists():
-                scheme_list = "\n".join(
-                    f"  • {e.scheme.scheme_name} ({e.scheme.benefit_type or 'General'}, {e.scheme.state or 'All India'})"
-                    for e in eligible
-                )
-                system_ctx += f"Schemes This User is Eligible For:\n{scheme_list}\n\n"
+                system_ctx += "Eligible schemes: " + ", ".join(
+                    e.scheme.scheme_name for e in eligible
+                ) + "\n"
 
-        schemes_qs = Scheme.objects.all()[:40]
+        schemes_qs = Scheme.objects.all()[:30]
         if schemes_qs.exists():
-            scheme_context = "\n".join(
-                f"• {s.scheme_name} | Type: {s.benefit_type or '-'} | State: {s.state or 'All India'} | {(s.description or '')[:120]}"
-                for s in schemes_qs
-            )
-            system_ctx += f"Available Government Schemes in Database:\n{scheme_context}\n\n"
+            system_ctx += "All schemes: " + " | ".join(
+                f"{s.scheme_name}({s.benefit_type or '-'})" for s in schemes_qs
+            ) + "\n"
 
-        # ── Session-based history ────────────────────────────────────────────
-        SESSION_KEY = f'sbms_chat_{request.user.id}'
-        MAX_TURNS   = 20   # keep last 20 exchanges to avoid token bloat
+        # ── Session history ──────────────────────────────────────────────────
+        SESSION_KEY  = f'sbms_chat_{request.user.id}'
+        MAX_TURNS    = 8
+        raw_history  = request.session.get(SESSION_KEY, [])
 
-        raw_history = request.session.get(SESSION_KEY, [])
+        history_text = ""
+        for entry in raw_history:
+            role = entry.get('role', '')
+            text = (entry.get('parts') or [''])[0]
+            if role == 'user':
+                history_text += f"User: {text}\n"
+            elif role == 'model':
+                history_text += f"Assistant: {text}\n"
 
-        # Build Gemini-formatted history list
-        # First turn is always the system context so Gemini has full context
-        gemini_history = [
-            {'role': 'user',  'parts': [system_ctx]},
-            {'role': 'model', 'parts': ['Understood. I am ready to assist citizens of the Smart Beneficiary Mapping System. How can I help today?']},
-        ]
-        # Append past conversation turns (already in {role, parts} format)
-        gemini_history.extend(raw_history)
+        # ── Full prompt ──────────────────────────────────────────────────────
+        full_prompt = system_ctx
+        if history_text:
+            full_prompt += f"\nConversation so far:\n{history_text}"
+        full_prompt += f"\nUser: {user_msg}\nAssistant:"
 
-        # Start multi-turn chat with history
-        chat = model.start_chat(history=gemini_history)
-        response = chat.send_message(user_msg)
-        reply_text = response.text
+        response   = model.generate_content(full_prompt)
+        reply_text = response.text.strip()
 
-        # ── Save updated history to session ─────────────────────────────────
+        # ── Save history ─────────────────────────────────────────────────────
         raw_history.append({'role': 'user',  'parts': [user_msg]})
         raw_history.append({'role': 'model', 'parts': [reply_text]})
-
-        # Trim to last MAX_TURNS pairs (2 entries per turn)
         if len(raw_history) > MAX_TURNS * 2:
             raw_history = raw_history[-(MAX_TURNS * 2):]
 
@@ -1306,10 +1296,8 @@ def gemini_chat(request):
 
     except Exception as e:
         import traceback
-        err_detail = traceback.format_exc()
-        print(f"Gemini API Error: {e}\n{err_detail}")
-        return JsonResponse({'reply': f'I am having trouble connecting right now. Please try again in a moment.'})
-
+        print(f"[SBMS Gemini Error] {e}\n{traceback.format_exc()}")
+        return JsonResponse({'reply': 'I am having trouble connecting right now. Please try again in a moment.'})
 
 @require_POST
 def clear_chat(request):
