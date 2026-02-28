@@ -1221,13 +1221,12 @@ def gemini_chat(request):
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-1.5-flash')
 
-        # ── System context ───────────────────────────────────────────────────
+        # ── System context (keep lean to stay under token limits) ────────────
         custom_user = get_custom_user(request.user)
         system_ctx = (
-            "You are the AI Assistant for the Smart Beneficiary Mapping System (SBMS), "
-            "a government platform helping Indian citizens discover & apply for benefit schemes.\n"
-            "Be polite, concise, and use markdown formatting. "
-            "Reply in the same language the user writes in.\n\n"
+            "You are SBMS Assistant for the Smart Beneficiary Mapping System — "
+            "an Indian government platform for discovering benefit schemes.\n"
+            "Be polite, concise, use markdown. Reply in the user's language.\n"
         )
 
         if custom_user:
@@ -1238,49 +1237,88 @@ def gemini_chat(request):
                     (date.today().month, date.today().day) < (dob.month, dob.day)
                 )
                 system_ctx += (
-                    f"User: {custom_user.name}, Age {age}, "
-                    f"Income \u20b9{custom_user.income or '?'}/yr, "
-                    f"Occupation: {custom_user.occupation or '?'}, "
-                    f"Education: {custom_user.education or '?'}\n"
+                    f"User: {custom_user.name}, {age}yrs, "
+                    f"\u20b9{custom_user.income or '?'}/yr, "
+                    f"{custom_user.occupation or '?'}, {custom_user.education or '?'}\n"
                 )
             except Exception:
                 system_ctx += f"User: {custom_user.name}\n"
 
             eligible = UserEligibility.objects.filter(
                 user_id=custom_user.user_id, eligibility_status='Eligible'
-            ).select_related('scheme')[:15]
+            ).select_related('scheme')[:10]
             if eligible.exists():
-                system_ctx += "Eligible schemes: " + ", ".join(
+                system_ctx += "Eligible: " + ", ".join(
                     e.scheme.scheme_name for e in eligible
                 ) + "\n"
 
-        schemes_qs = Scheme.objects.all()[:30]
-        if schemes_qs.exists():
-            system_ctx += "All schemes: " + " | ".join(
-                f"{s.scheme_name}({s.benefit_type or '-'})" for s in schemes_qs
+        # Schemes list only added if prompt budget allows (trimmed first if needed)
+        schemes_line = ""
+        schemes_qs = Scheme.objects.values_list('scheme_name', 'benefit_type')[:20]
+        if schemes_qs:
+            schemes_line = "Schemes: " + " | ".join(
+                f"{n}({t or '-'})" for n, t in schemes_qs
             ) + "\n"
 
         # ── Session history ──────────────────────────────────────────────────
-        SESSION_KEY  = f'sbms_chat_{request.user.id}'
-        MAX_TURNS    = 8
-        raw_history  = request.session.get(SESSION_KEY, [])
+        SESSION_KEY = f'sbms_chat_{request.user.id}'
+        MAX_TURNS   = 6
+        raw_history = request.session.get(SESSION_KEY, [])
 
         history_text = ""
         for entry in raw_history:
             role = entry.get('role', '')
-            text = (entry.get('parts') or [''])[0]
+            text = (entry.get('parts') or [''])[0][:500]   # cap each turn at 500 chars
             if role == 'user':
                 history_text += f"User: {text}\n"
             elif role == 'model':
                 history_text += f"Assistant: {text}\n"
 
-        # ── Full prompt ──────────────────────────────────────────────────────
-        full_prompt = system_ctx
-        if history_text:
-            full_prompt += f"\nConversation so far:\n{history_text}"
-        full_prompt += f"\nUser: {user_msg}\nAssistant:"
+        # ── Build prompt within ~6000 char budget for safety ─────────────────
+        CHAR_BUDGET = 6000
 
-        response   = model.generate_content(full_prompt)
+        def build_prompt(include_schemes, include_history):
+            p = system_ctx
+            if include_schemes:
+                p += schemes_line
+            if include_history and history_text:
+                p += f"\nConversation:\n{history_text}"
+            p += f"\nUser: {user_msg}\nAssistant:"
+            return p
+
+        full_prompt = build_prompt(True, True)
+        if len(full_prompt) > CHAR_BUDGET:
+            full_prompt = build_prompt(False, True)   # drop schemes, keep history
+        if len(full_prompt) > CHAR_BUDGET:
+            full_prompt = build_prompt(False, False)  # drop both, bare minimum
+
+        # ── Call Gemini with one retry on transient failure ───────────────────
+        response = None
+        last_err  = None
+        for attempt in range(2):
+            try:
+                response  = model.generate_content(full_prompt)
+                break
+            except Exception as ex:
+                last_err = ex
+                err_str  = str(ex).lower()
+                # Rate limit / quota — no point retrying immediately
+                if 'quota' in err_str or '429' in err_str or 'resource exhausted' in err_str:
+                    return JsonResponse({'reply':
+                        '⏳ The AI assistant is receiving too many requests right now. '
+                        'Please wait a few seconds and try again.'
+                    })
+                # Token limit exceeded — trim and retry without history/schemes
+                if 'token' in err_str or 'too large' in err_str or '400' in err_str:
+                    full_prompt = build_prompt(False, False)
+                    continue
+                # Any other error on second attempt — bail out
+                if attempt == 1:
+                    raise
+
+        if response is None:
+            raise last_err
+
         reply_text = response.text.strip()
 
         # ── Save history ─────────────────────────────────────────────────────
@@ -1296,8 +1334,18 @@ def gemini_chat(request):
 
     except Exception as e:
         import traceback
+        err_str = str(e).lower()
         print(f"[SBMS Gemini Error] {e}\n{traceback.format_exc()}")
-        return JsonResponse({'reply': 'I am having trouble connecting right now. Please try again in a moment.'})
+
+        if 'quota' in err_str or '429' in err_str or 'resource exhausted' in err_str:
+            msg = '⏳ The AI is busy right now. Please wait a few seconds and try again.'
+        elif 'timeout' in err_str or 'deadline' in err_str:
+            msg = '⏱️ The request timed out. Please try again.'
+        else:
+            msg = '⚠️ Something went wrong. Please try again in a moment.'
+
+        return JsonResponse({'reply': msg})
+
 
 @require_POST
 def clear_chat(request):
