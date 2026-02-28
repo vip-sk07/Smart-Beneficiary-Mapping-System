@@ -455,7 +455,7 @@ def document_checklist(request, scheme_id):
         try:
             import google.generativeai as _genai, json as _json
             _genai.configure(api_key=api_key)
-            
+            model = _genai.GenerativeModel('gemini-1.5-flash')
 
             prompt = (
                 "You are a government scheme document expert for India.\n"
@@ -670,7 +670,7 @@ def voice_bot_nlp(request):
         try:
             import google.generativeai as _genai, json as _json
             _genai.configure(api_key=api_key)
-            nlp_
+            nlp_model = _genai.GenerativeModel('gemini-1.5-flash')
 
             nlp_prompt = (
                 "You are an NLP classifier for an Indian government scheme discovery system.\n"
@@ -796,7 +796,7 @@ def nlp_scheme_finder(request):
                 try:
                     import google.generativeai as _genai, json as _json
                     _genai.configure(api_key=api_key)
-                    nlp_
+                    nlp_model = _genai.GenerativeModel('gemini-1.5-flash')
 
                     nlp_prompt = (
                         "You are an NLP engine for an Indian government scheme discovery system.\n"
