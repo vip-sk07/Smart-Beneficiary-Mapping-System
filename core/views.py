@@ -17,6 +17,11 @@ import random
 import string
 from typing import Any
 
+try:
+    import google.generativeai as genai
+except ImportError:
+    genai = None
+
 from .models import CustomUser, UserCategories, UserEligibility, Scheme, Application, Grievance, Category, RuleEngine, Announcement
 from .forms import (
     UserRegistrationForm, CategorySelectionForm, LoginForm,
@@ -1214,7 +1219,7 @@ def gemini_chat(request):
         return JsonResponse({'error': 'Empty message'}, status=400)
 
     api_key = getattr(settings, 'GEMINI_API_KEY', None)
-    if not api_key:
+    if not api_key or genai is None:
         return JsonResponse({'reply': 'AI Chat is currently unavailable (no API key configured).'})
 
     try:
@@ -1319,7 +1324,14 @@ def gemini_chat(request):
         if response is None:
             raise last_err
 
-        reply_text = response.text.strip()
+        # Safe text extraction — .text throws if safety-filtered
+        try:
+            reply_text = response.text.strip()
+        except (ValueError, AttributeError):
+            try:
+                reply_text = response.candidates[0].content.parts[0].text.strip()
+            except Exception:
+                reply_text = "I couldn't generate a response for that. Please rephrase your question."
 
         # ── Save history ─────────────────────────────────────────────────────
         raw_history.append({'role': 'user',  'parts': [user_msg]})
