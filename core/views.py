@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect, get_object_or_404
+﻿from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import CreateView, FormView
 from django.contrib import messages
 from django.contrib.auth import login, logout, update_session_auth_hash
@@ -42,7 +42,7 @@ def _is_via_google(request):
         return False
 
 
-# ── Home ───────────────────────────────────────────────────────────────────
+# â”€â”€ Home â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def get_custom_user(django_user):
     if not django_user.is_authenticated:
         return None
@@ -68,7 +68,7 @@ def home(request):
     })
 
 
-# ── Register ───────────────────────────────────────────────────────────────
+# â”€â”€ Register â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class UserRegistrationView(CreateView):
     model = CustomUser
     form_class = UserRegistrationForm
@@ -131,7 +131,7 @@ class UserRegistrationView(CreateView):
         return redirect('dashboard')
 
 
-# ── Login ──────────────────────────────────────────────────────────────────
+# â”€â”€ Login â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class UserLoginView(DjangoLoginView):
     template_name = 'login.html'
     form_class = LoginForm
@@ -145,7 +145,7 @@ def logout_view(request):
     return redirect('home')
 
 
-# ── Helper: match score ────────────────────────────────────────────────────
+# â”€â”€ Helper: match score â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def _calculate_match_score(custom_user, scheme):
     """Returns 0-100 representing how well the user fits the scheme rules."""
     try:
@@ -196,7 +196,7 @@ def _calculate_match_score(custom_user, scheme):
         return 75
 
 
-# ── Dashboard ──────────────────────────────────────────────────────────────
+# â”€â”€ Dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def dashboard(request):
     import traceback as _tb
 
@@ -216,7 +216,7 @@ def dashboard(request):
             messages.error(request, 'Profile not found. Please register again.')
             return redirect('register')
 
-    # ── collect every piece of data individually so we can isolate failures ──
+    # â”€â”€ collect every piece of data individually so we can isolate failures â”€â”€
     errors = []
 
     try:
@@ -292,14 +292,14 @@ def dashboard(request):
         errors.append('grievances: ' + _tb.format_exc())
         grievances = []
 
-    # Announcement banner — skip silently if table doesn't exist yet
+    # Announcement banner â€” skip silently if table doesn't exist yet
     active_announcement = None
     try:
         active_announcement = Announcement.objects.filter(is_active=True).first()
     except Exception:
-        pass  # Announcements table doesn't exist yet on Railway — it's cosmetic, ignore
+        pass  # Announcements table doesn't exist yet on Railway â€” it's cosmetic, ignore
 
-    # ── If any CRITICAL query failed, show diagnostic (not a blank 500) ──
+    # â”€â”€ If any CRITICAL query failed, show diagnostic (not a blank 500) â”€â”€
     if errors:
         error_html = '<h2 style="font-family:monospace">Dashboard DB Errors - share with developer</h2>'
         for err in errors:
@@ -323,7 +323,7 @@ def dashboard(request):
     })
 
 
-# ── Category selection ─────────────────────────────────────────────────────
+# â”€â”€ Category selection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class CategorySelectionView(FormView):
     template_name = 'categories.html'
     form_class = CategorySelectionForm
@@ -351,7 +351,7 @@ class CategorySelectionView(FormView):
         return super().form_valid(form)
 
 
-# ── Delete searches ────────────────────────────────────────────────────────
+# â”€â”€ Delete searches â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def delete_search(request, user_cat_id):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -391,7 +391,7 @@ def eligibility_view(request):
     return redirect('dashboard')
 
 
-# ── Scheme Apply Guide ─────────────────────────────────────────────────────
+# â”€â”€ Scheme Apply Guide â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def scheme_apply_guide(request, scheme_id):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -416,7 +416,7 @@ def scheme_apply_guide(request, scheme_id):
     })
 
 
-# ── Document Checklist (Gemini-powered, AJAX) ──────────────────────────────
+# â”€â”€ Document Checklist (Gemini-powered, AJAX) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def document_checklist(request, scheme_id):
     """Return a Gemini-generated personalised document checklist as JSON."""
     if not request.user.is_authenticated:
@@ -426,7 +426,7 @@ def document_checklist(request, scheme_id):
     scheme      = get_object_or_404(Scheme, scheme_id=scheme_id)
     api_key     = getattr(settings, 'GEMINI_API_KEY', None)
 
-    # ── Build user summary for Gemini ─────────────────────────────────────
+    # â”€â”€ Build user summary for Gemini â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if custom_user:
         from datetime import date
         today = date.today()
@@ -434,7 +434,7 @@ def document_checklist(request, scheme_id):
         age   = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
         user_ctx = (
             f"Name: {custom_user.name}, Age: {age}, Gender: {custom_user.gender or 'Not specified'}, "
-            f"Income: ₹{custom_user.income or 'Not specified'}/year, "
+            f"Income: â‚¹{custom_user.income or 'Not specified'}/year, "
             f"Occupation: {custom_user.occupation or 'Not specified'}, "
             f"Education: {custom_user.education or 'Not specified'}, "
             f"Address: {custom_user.address or 'Not specified'}"
@@ -450,7 +450,7 @@ def document_checklist(request, scheme_id):
         f"Description: {(scheme.description or '')[:300]}"
     )
 
-    # ── Gemini call ────────────────────────────────────────────────────────
+    # â”€â”€ Gemini call â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if api_key:
         try:
             import google.generativeai as _genai, json as _json
@@ -486,7 +486,7 @@ def document_checklist(request, scheme_id):
         except Exception as e:
             print(f"Gemini checklist error: {e}")
 
-    # ── Generic fallback checklist ─────────────────────────────────────────
+    # â”€â”€ Generic fallback checklist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     fallback = [
         {'document': 'Aadhaar Card',          'purpose': 'Primary identity & address proof', 'mandatory': True},
         {'document': 'PAN Card',               'purpose': 'Tax identification',               'mandatory': True},
@@ -500,7 +500,7 @@ def document_checklist(request, scheme_id):
     return JsonResponse({'checklist': fallback, 'source': 'fallback'})
 
 
-# ── Apply to a Scheme ──────────────────────────────────────────────────────
+# â”€â”€ Apply to a Scheme â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @require_POST
 def apply_scheme(request, scheme_id):
     if not request.user.is_authenticated:
@@ -539,7 +539,7 @@ def apply_scheme(request, scheme_id):
     return redirect('scheme_apply_guide', scheme_id=scheme_id)
 
 
-# ── My Applications ────────────────────────────────────────────────────────
+# â”€â”€ My Applications â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def my_applications(request):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -566,7 +566,7 @@ def my_applications(request):
     })
 
 
-# ── Grievance Submission ───────────────────────────────────────────────────
+# â”€â”€ Grievance Submission â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def submit_grievance(request):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -583,7 +583,7 @@ def submit_grievance(request):
         form = GrievanceForm(request.POST, scheme_queryset=eligible_schemes)
         if form.is_valid():
             scheme_obj = form.cleaned_data.get('scheme')
-            # Duplicate check — same scheme + status Open
+            # Duplicate check â€” same scheme + status Open
             duplicate_qs = Grievance.objects.filter(
                 user_id=custom_user.user_id,
                 status='Open',
@@ -622,7 +622,7 @@ def submit_grievance(request):
     })
 
 
-# ── My Grievances ──────────────────────────────────────────────────────────
+# â”€â”€ My Grievances â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def my_grievances(request):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -640,7 +640,7 @@ def my_grievances(request):
     })
 
 
-# ── AI Voice Bot NLP (AJAX) — Gemini-powered intent detection ─────────────
+# â”€â”€ AI Voice Bot NLP (AJAX) â€” Gemini-powered intent detection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def voice_bot_nlp(request):
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'Not authenticated'}, status=403)
@@ -660,7 +660,7 @@ def voice_bot_nlp(request):
     if not query:
         return JsonResponse({'error': 'query is required'}, status=400)
 
-    # ── Step 1: Use Gemini to extract intent + search keywords ────────────
+    # â”€â”€ Step 1: Use Gemini to extract intent + search keywords â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     matched_intent = 'General Welfare'
     confidence     = 0.60
     gemini_keywords = []
@@ -724,7 +724,7 @@ def voice_bot_nlp(request):
                     break
             gemini_keywords = [w for w in ql.split() if len(w) > 3][:5]
 
-    # ── Step 2: Search DB using Gemini's keywords ─────────────────────────
+    # â”€â”€ Step 2: Search DB using Gemini's keywords â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     # Priority: user's eligible schemes first, then all schemes
     eligible_qs = UserEligibility.objects.filter(
         user_id=custom_user.user_id, eligibility_status='Eligible'
@@ -771,7 +771,7 @@ def voice_bot_nlp(request):
 
 
 
-# ── NLP Scheme Finder (full page) — Gemini-powered ───────────────────────
+# â”€â”€ NLP Scheme Finder (full page) â€” Gemini-powered â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def nlp_scheme_finder(request):
     if not request.user.is_authenticated:
@@ -791,7 +791,7 @@ def nlp_scheme_finder(request):
             api_key = getattr(settings, 'GEMINI_API_KEY', None)
             gemini_ok = False
 
-            # ── Step 1: Gemini keyword + intent extraction ─────────────────
+            # â”€â”€ Step 1: Gemini keyword + intent extraction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if api_key:
                 try:
                     import google.generativeai as _genai, json as _json
@@ -807,7 +807,7 @@ def nlp_scheme_finder(request):
                         '  "intent": "<one of: Agricultural Support | Educational Support | Women Empowerment'
                         ' | Senior Citizen Welfare | Disability & Health | Business & MSME'
                         ' | Housing Support | Unemployment & Labour | General Welfare>",\n'
-                        '  "confidence": <float 0.0–1.0>,\n'
+                        '  "confidence": <float 0.0â€“1.0>,\n'
                         '  "keywords": ["<kw1>","<kw2>","<kw3>","<kw4>","<kw5>"],\n'
                         '  "summary": "<1-sentence description of what the user is looking for, in plain English>"\n'
                         '}\n\n'
@@ -833,7 +833,7 @@ def nlp_scheme_finder(request):
                 except Exception as e:
                     print(f"Gemini NLP finder error (falling back): {e}")
 
-            # ── Fallback: stop-word split ──────────────────────────────────
+            # â”€â”€ Fallback: stop-word split â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if not gemini_ok or not keywords:
                 stop_words = {
                     'want','need','looking','help','with','that','this','have',
@@ -845,7 +845,7 @@ def nlp_scheme_finder(request):
                 intent    = intent or 'General Welfare'
                 confidence = confidence or 0.60
 
-            # ── Step 2: DB search using Gemini keywords ────────────────────
+            # â”€â”€ Step 2: DB search using Gemini keywords â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if keywords:
                 q_filter = Q()
                 for kw in keywords:
@@ -886,7 +886,7 @@ def nlp_scheme_finder(request):
 
 
 
-# ── Admin Stats Dashboard ──────────────────────────────────────────────────
+# â”€â”€ Admin Stats Dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def admin_stats(request):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -941,9 +941,9 @@ def admin_stats(request):
     })
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PASSWORD RESET — EMAIL OTP FLOW
-# ─────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# PASSWORD RESET â€” EMAIL OTP FLOW
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def _generate_otp():
     return ''.join(random.choices(string.digits, k=6))
@@ -968,11 +968,11 @@ def forgot_password(request):
 
         try:
             send_mail(
-                subject='Smart Beneficiary Mapping System — Password Reset OTP',
+                subject='Smart Beneficiary Mapping System â€” Password Reset OTP',
                 message=(
                     f"Hello,\n\nYour OTP to reset your Smart Beneficiary Mapping System password is:\n\n"
                     f"    {otp}\n\nThis code expires in 10 minutes. Do not share it.\n\n"
-                    f"If you didn't request this, ignore this email.\n\n— Smart Beneficiary Mapping System Team"
+                    f"If you didn't request this, ignore this email.\n\nâ€” Smart Beneficiary Mapping System Team"
                 ),
                 from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@benefitbridge.in'),
                 recipient_list=[email],
@@ -1045,7 +1045,7 @@ def reset_password(request):
     return render(request, 'reset_password.html', {'form': form})
 
 
-# ── Change Password ────────────────────────────────────────────────────────
+# â”€â”€ Change Password â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def change_password(request):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -1058,7 +1058,7 @@ def change_password(request):
     return render(request, 'change_password.html', {'form': form})
 
 
-# ── Edit Profile (Backtracking) ─────────────────────────────────────────────
+# â”€â”€ Edit Profile (Backtracking) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def edit_profile(request):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -1081,7 +1081,7 @@ def edit_profile(request):
     return render(request, 'edit_profile.html', {'form': form, 'user': custom_user})
 
 
-# ── Re-check Eligibility ───────────────────────────────────────────────
+# â”€â”€ Re-check Eligibility â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def recheck_eligibility(request):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -1094,7 +1094,7 @@ def recheck_eligibility(request):
     return redirect('dashboard')
 
 
-# ── Withdraw Application ─────────────────────────────────────────────────
+# â”€â”€ Withdraw Application â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def withdraw_application(request, app_id):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -1113,7 +1113,7 @@ def withdraw_application(request, app_id):
     return redirect('my_applications')
 
 
-# ── Admin: List All Grievances ───────────────────────────────────────────
+# â”€â”€ Admin: List All Grievances â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def admin_grievances(request):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -1142,7 +1142,7 @@ def admin_grievances(request):
         return HttpResponse(f"<pre>{traceback.format_exc()}</pre>", status=500)
 
 
-# ── Admin: Resolve a Grievance ─────────────────────────────────────────────
+# â”€â”€ Admin: Resolve a Grievance â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def resolve_grievance(request, grv_id):
     if not request.user.is_authenticated:
         return redirect('login')
@@ -1176,7 +1176,7 @@ def resolve_grievance(request, grv_id):
                 if user_email:
                     scheme_name = grv.scheme.scheme_name if grv.scheme else 'General'
                     send_mail(
-                        subject=f'Smart Beneficiary Mapping System — Grievance GRV-{grv_id} Resolved',
+                        subject=f'Smart Beneficiary Mapping System â€” Grievance GRV-{grv_id} Resolved',
                         message=(
                             f"Dear {grv.user.name},\n\n"
                             f"Your grievance (GRV-{grv_id}) related to '{scheme_name}' "
@@ -1200,9 +1200,9 @@ def resolve_grievance(request, grv_id):
     return redirect('admin_grievances')
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # NEW FEATURES: GEMINI CHAT, ADMIN TOOLS, SCHEME MANAGER
-# ─────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 import csv
 import google.generativeai as genai
@@ -1219,144 +1219,97 @@ def gemini_chat(request):
         return JsonResponse({'error': 'Empty message'}, status=400)
 
     api_key = getattr(settings, 'GEMINI_API_KEY', None)
-    if not api_key or genai is None:
-        return JsonResponse({'reply': 'AI Chat is currently unavailable (no API key configured).'})
+    if not api_key:
+        return JsonResponse({'reply': 'AI Chat is currently unavailable.'})
 
     try:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # â”€â”€ Always inline import â€” never rely on module-level state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        import google.generativeai as _genai
+        _genai.configure(api_key=api_key)
+        model = _genai.GenerativeModel('gemini-1.5-flash')
 
-        # ── System context (keep lean to stay under token limits) ────────────
+        # â”€â”€ Build a tight prompt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         custom_user = get_custom_user(request.user)
-        system_ctx = (
-            "You are SBMS Assistant for the Smart Beneficiary Mapping System — "
-            "an Indian government platform for discovering benefit schemes.\n"
-            "Be polite, concise, use markdown. Reply in the user's language.\n"
-        )
 
+        user_info = ""
         if custom_user:
             try:
-                from datetime import date
+                from datetime import date as _date
                 dob = custom_user.dob
-                age = date.today().year - dob.year - (
-                    (date.today().month, date.today().day) < (dob.month, dob.day)
+                age = _date.today().year - dob.year - (
+                    (_date.today().month, _date.today().day) < (dob.month, dob.day)
                 )
-                system_ctx += (
-                    f"User: {custom_user.name}, {age}yrs, "
-                    f"\u20b9{custom_user.income or '?'}/yr, "
-                    f"{custom_user.occupation or '?'}, {custom_user.education or '?'}\n"
-                )
+                user_info = f"User profile: {custom_user.name}, {age}yrs, income â‚¹{custom_user.income or '?'}/yr, {custom_user.occupation or '?'}."
             except Exception:
-                system_ctx += f"User: {custom_user.name}\n"
+                user_info = f"User: {getattr(custom_user, 'name', 'Citizen')}."
 
-            eligible = UserEligibility.objects.filter(
-                user_id=custom_user.user_id, eligibility_status='Eligible'
-            ).select_related('scheme')[:10]
-            if eligible.exists():
-                system_ctx += "Eligible: " + ", ".join(
-                    e.scheme.scheme_name for e in eligible
-                ) + "\n"
-
-        # Schemes list only added if prompt budget allows (trimmed first if needed)
-        schemes_line = ""
-        schemes_qs = Scheme.objects.values_list('scheme_name', 'benefit_type')[:20]
-        if schemes_qs:
-            schemes_line = "Schemes: " + " | ".join(
-                f"{n}({t or '-'})" for n, t in schemes_qs
-            ) + "\n"
-
-        # ── Session history ──────────────────────────────────────────────────
+        # â”€â”€ Conversation history (last 5 turns max) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         SESSION_KEY = f'sbms_chat_{request.user.id}'
-        MAX_TURNS   = 6
-        raw_history = request.session.get(SESSION_KEY, [])
+        raw_history = request.session.get(SESSION_KEY, [])[-10:]   # last 10 entries = 5 turns
 
-        history_text = ""
+        history_lines = []
         for entry in raw_history:
             role = entry.get('role', '')
-            text = (entry.get('parts') or [''])[0][:500]   # cap each turn at 500 chars
+            text = str((entry.get('parts') or [''])[0])[:400]
             if role == 'user':
-                history_text += f"User: {text}\n"
+                history_lines.append(f"User: {text}")
             elif role == 'model':
-                history_text += f"Assistant: {text}\n"
+                history_lines.append(f"Assistant: {text}")
 
-        # ── Build prompt within ~6000 char budget for safety ─────────────────
-        CHAR_BUDGET = 6000
+        history_text = "\n".join(history_lines)
 
-        def build_prompt(include_schemes, include_history):
-            p = system_ctx
-            if include_schemes:
-                p += schemes_line
-            if include_history and history_text:
-                p += f"\nConversation:\n{history_text}"
-            p += f"\nUser: {user_msg}\nAssistant:"
-            return p
+        prompt = (
+            "You are SBMS Assistant â€” AI for the Smart Beneficiary Mapping System, "
+            "an Indian government scheme discovery platform. Be helpful, brief, use markdown.\n"
+            f"{user_info}\n"
+            + (f"\nPrevious messages:\n{history_text}\n" if history_text else "")
+            + f"\nUser: {user_msg}\nAssistant:"
+        )
 
-        full_prompt = build_prompt(True, True)
-        if len(full_prompt) > CHAR_BUDGET:
-            full_prompt = build_prompt(False, True)   # drop schemes, keep history
-        if len(full_prompt) > CHAR_BUDGET:
-            full_prompt = build_prompt(False, False)  # drop both, bare minimum
+        # Hard cap at 4000 chars to stay safely within free-tier token limit
+        if len(prompt) > 4000:
+            prompt = (
+                "You are SBMS Assistant for the Smart Beneficiary Mapping System. "
+                "Be helpful and brief.\n"
+                f"User: {user_msg}\nAssistant:"
+            )
 
-        # ── Call Gemini with one retry on transient failure ───────────────────
-        response = None
-        last_err  = None
-        for attempt in range(2):
-            try:
-                response  = model.generate_content(full_prompt)
-                break
-            except Exception as ex:
-                last_err = ex
-                err_str  = str(ex).lower()
-                # Rate limit / quota — no point retrying immediately
-                if 'quota' in err_str or '429' in err_str or 'resource exhausted' in err_str:
-                    return JsonResponse({'reply':
-                        '⏳ The AI assistant is receiving too many requests right now. '
-                        'Please wait a few seconds and try again.'
-                    })
-                # Token limit exceeded — trim and retry without history/schemes
-                if 'token' in err_str or 'too large' in err_str or '400' in err_str:
-                    full_prompt = build_prompt(False, False)
-                    continue
-                # Any other error on second attempt — bail out
-                if attempt == 1:
-                    raise
+        response   = model.generate_content(prompt)
+        reply_text = ""
 
-        if response is None:
-            raise last_err
-
-        # Safe text extraction — .text throws if safety-filtered
         try:
             reply_text = response.text.strip()
-        except (ValueError, AttributeError):
+        except Exception:
             try:
                 reply_text = response.candidates[0].content.parts[0].text.strip()
             except Exception:
-                reply_text = "I couldn't generate a response for that. Please rephrase your question."
+                reply_text = "I couldn't process that. Please try rephrasing."
 
-        # ── Save history ─────────────────────────────────────────────────────
+        # â”€â”€ Save to session â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        raw_history = request.session.get(SESSION_KEY, [])
         raw_history.append({'role': 'user',  'parts': [user_msg]})
         raw_history.append({'role': 'model', 'parts': [reply_text]})
-        if len(raw_history) > MAX_TURNS * 2:
-            raw_history = raw_history[-(MAX_TURNS * 2):]
-
-        request.session[SESSION_KEY] = raw_history
+        request.session[SESSION_KEY] = raw_history[-12:]   # keep last 6 turns
         request.session.modified = True
 
         return JsonResponse({'reply': reply_text})
 
     except Exception as e:
         import traceback
-        err_str = str(e).lower()
-        print(f"[SBMS Gemini Error] {e}\n{traceback.format_exc()}")
+        tb = traceback.format_exc()
+        e_str = str(e).lower()
+        print(f"[SBMS Chat Error] {type(e).__name__}: {e}\n{tb}")
 
-        if 'quota' in err_str or '429' in err_str or 'resource exhausted' in err_str:
-            msg = '⏳ The AI is busy right now. Please wait a few seconds and try again.'
-        elif 'timeout' in err_str or 'deadline' in err_str:
-            msg = '⏱️ The request timed out. Please try again.'
-        else:
-            msg = '⚠️ Something went wrong. Please try again in a moment.'
+        if '429' in e_str or 'quota' in e_str or 'exhausted' in e_str:
+            return JsonResponse({'reply': 'Too many requests. Please wait a few seconds and try again.'})
+        if 'timeout' in e_str or 'deadline' in e_str:
+            return JsonResponse({'reply': 'Request timed out. Please try again.'})
+        if 'api_key' in e_str or 'invalid' in e_str or 'permission' in e_str:
+            return JsonResponse({'reply': 'API key issue. Please contact the administrator.'})
 
-        return JsonResponse({'reply': msg})
+        # Log the ACTUAL error type so we can diagnose from Railway logs
+        return JsonResponse({'reply': f'Error ({type(e).__name__}). Please try again.'})
+
 
 
 @require_POST
@@ -1425,7 +1378,7 @@ def admin_export_csv(request):
     if export_type == 'users':
         writer.writerow(['User ID', 'Name', 'Email', 'Phone', 'DOB', 'Gender', 'Aadhaar', 'Income', 'Occupation'])
         for u in CustomUser.objects.all():
-            masked = f"XXXX-XXXX-{u.aadhaar_no[-4:]}" if u.aadhaar_no and len(u.aadhaar_no) >= 4 else "—"
+            masked = f"XXXX-XXXX-{u.aadhaar_no[-4:]}" if u.aadhaar_no and len(u.aadhaar_no) >= 4 else "â€”"
             writer.writerow([u.user_id, u.name, u.email, u.phone, u.dob, u.gender, masked, u.income, u.occupation])
             
     elif export_type == 'applications':
@@ -1440,7 +1393,7 @@ def admin_announcements(request):
     if not request.user.is_authenticated or not request.user.is_staff:
         return redirect('home')
 
-    # ── Ensure the Announcements table exists (create on-the-fly if missing) ──
+    # â”€â”€ Ensure the Announcements table exists (create on-the-fly if missing) â”€â”€
     from django.db import connection as _conn
     try:
         with _conn.cursor() as cur:
