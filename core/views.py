@@ -455,7 +455,7 @@ def document_checklist(request, scheme_id):
         try:
             import google.generativeai as _genai, json as _json
             _genai.configure(api_key=api_key)
-            model = _genai.GenerativeModel('gemini-1.5-flash')
+            
 
             prompt = (
                 "You are a government scheme document expert for India.\n"
@@ -670,7 +670,7 @@ def voice_bot_nlp(request):
         try:
             import google.generativeai as _genai, json as _json
             _genai.configure(api_key=api_key)
-            nlp_model = _genai.GenerativeModel('gemini-1.5-flash')
+            nlp_
 
             nlp_prompt = (
                 "You are an NLP classifier for an Indian government scheme discovery system.\n"
@@ -796,7 +796,7 @@ def nlp_scheme_finder(request):
                 try:
                     import google.generativeai as _genai, json as _json
                     _genai.configure(api_key=api_key)
-                    nlp_model = _genai.GenerativeModel('gemini-1.5-flash')
+                    nlp_
 
                     nlp_prompt = (
                         "You are an NLP engine for an Indian government scheme discovery system.\n"
@@ -1226,7 +1226,7 @@ def gemini_chat(request):
         # â”€â”€ Always inline import â€” never rely on module-level state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         import google.generativeai as _genai
         _genai.configure(api_key=api_key)
-        model = _genai.GenerativeModel('gemini-1.5-flash')
+        
 
         # â”€â”€ Build a tight prompt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         custom_user = get_custom_user(request.user)
@@ -1266,15 +1266,42 @@ def gemini_chat(request):
             + f"\nUser: {user_msg}\nAssistant:"
         )
 
-        # Hard cap at 4000 chars to stay safely within free-tier token limit
-        if len(prompt) > 4000:
-            prompt = (
-                "You are SBMS Assistant for the Smart Beneficiary Mapping System. "
-                "Be helpful and brief.\n"
-                f"User: {user_msg}\nAssistant:"
-            )
+        # ── Call Gemini with robust retries and model fallbacks ───────────────────
+        model_names = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
+        response = None
+        last_err = None
 
-        response   = model.generate_content(prompt)
+        for attempt in range(2):
+            for m_name in model_names:
+                try:
+                    model = _genai.GenerativeModel(m_name)
+                    response = model.generate_content(prompt)
+                    break # Success with this model!
+                except Exception as ex:
+                    last_err = ex
+                    err_str = str(ex).lower()
+                    
+                    if 'not found' in err_str or '404' in err_str:
+                        continue # Model not found, try the next model name in the list
+
+                    # Rate limit / quota
+                    if 'quota' in err_str or '429' in err_str or 'exhausted' in err_str:
+                        return JsonResponse({'reply': '⏳ The AI assistant is receiving too many requests. Please wait a few seconds and try again.'})
+                    # Token limit exceeded
+                    if 'token' in err_str or 'too large' in err_str or '400' in err_str:
+                        prompt = (
+                            "You are SBMS Assistant for the Smart Beneficiary Mapping System. "
+                            "Be helpful and brief.\n"
+                            f"User: {user_msg}\nAssistant:"
+                        )
+                        break # Break inner loop, try outer loop (next attempt) with shorter prompt
+
+            if response is not None:
+                break # Outer loop success
+
+        if response is None:
+            raise last_err
+
         reply_text = ""
 
         try:
