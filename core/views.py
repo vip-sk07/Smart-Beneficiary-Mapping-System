@@ -450,7 +450,7 @@ def document_checklist(request, scheme_id):
         try:
             import google.generativeai as _genai, json as _json
             _genai.configure(api_key=api_key)
-            model = _genai.GenerativeModel('gemini-2.5-flash')
+            model = _genai.GenerativeModel('gemini-1.5-flash')
 
             prompt = (
                 "You are a government scheme document expert for India.\n"
@@ -665,7 +665,7 @@ def voice_bot_nlp(request):
         try:
             import google.generativeai as _genai, json as _json
             _genai.configure(api_key=api_key)
-            nlp_model = _genai.GenerativeModel('gemini-2.5-flash')
+            nlp_model = _genai.GenerativeModel('gemini-1.5-flash')
 
             nlp_prompt = (
                 "You are an NLP classifier for an Indian government scheme discovery system.\n"
@@ -791,7 +791,7 @@ def nlp_scheme_finder(request):
                 try:
                     import google.generativeai as _genai, json as _json
                     _genai.configure(api_key=api_key)
-                    nlp_model = _genai.GenerativeModel('gemini-2.5-flash')
+                    nlp_model = _genai.GenerativeModel('gemini-1.5-flash')
 
                     nlp_prompt = (
                         "You are an NLP engine for an Indian government scheme discovery system.\n"
@@ -1219,23 +1219,9 @@ def gemini_chat(request):
 
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model = genai.GenerativeModel('gemini-1.5-flash')
 
-        # ── System / role prompt (matches GeminiBotService) ─────────────────
-        system_prompt = (
-            "You are the AI Assistant for the 'Smart Beneficiary Mapping System' (SBMS), "
-            "a government platform that helps everyday citizens in India discover benefit schemes "
-            "they are personally eligible for, apply for them, track applications, and raise grievances.\n\n"
-            "Your Role:\n"
-            "- Help citizens find schemes they qualify for.\n"
-            "- Explain how to apply, what documents are needed, and what benefits they get.\n"
-            "- Guide users through the SBMS platform (dashboard, categories, applications, grievances).\n"
-            "- Be extremely polite, empathetic, simple, and concise.\n"
-            "- Format replies using markdown (bold for key info, bullet points for steps).\n"
-            "- Respond in English. If user writes in Hindi or regional language, respond in the same language.\n\n"
-        )
-
-        # ── Build system context (sent once as first model turn) ─────────────
+        # ── Build system context ─────────────────────────────────────────────
         custom_user = get_custom_user(request.user)
         system_ctx = (
             "You are the AI Assistant for the 'Smart Beneficiary Mapping System' (SBMS), "
@@ -1251,19 +1237,22 @@ def gemini_chat(request):
         )
 
         if custom_user:
-            from datetime import date
-            today = date.today()
-            dob = custom_user.dob
-            age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-            system_ctx += (
-                f"Current User Profile:\n"
-                f"- Name: {custom_user.name}\n"
-                f"- Age: {age} years\n"
-                f"- Gender: {custom_user.gender or 'Not specified'}\n"
-                f"- Income: ₹{custom_user.income or 'Not specified'}/year\n"
-                f"- Occupation: {custom_user.occupation or 'Not specified'}\n"
-                f"- Education: {custom_user.education or 'Not specified'}\n\n"
-            )
+            try:
+                from datetime import date
+                today = date.today()
+                dob = custom_user.dob
+                age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+                system_ctx += (
+                    f"Current User Profile:\n"
+                    f"- Name: {custom_user.name}\n"
+                    f"- Age: {age} years\n"
+                    f"- Gender: {custom_user.gender or 'Not specified'}\n"
+                    f"- Income: \u20b9{custom_user.income or 'Not specified'}/year\n"
+                    f"- Occupation: {custom_user.occupation or 'Not specified'}\n"
+                    f"- Education: {custom_user.education or 'Not specified'}\n\n"
+                )
+            except Exception:
+                system_ctx += f"Current User: {custom_user.name}\n\n"
             eligible = UserEligibility.objects.filter(
                 user_id=custom_user.user_id, eligibility_status='Eligible'
             ).select_related('scheme')[:20]
@@ -1316,8 +1305,10 @@ def gemini_chat(request):
         return JsonResponse({'reply': reply_text})
 
     except Exception as e:
-        print(f"Gemini API Error: {e}")
-        return JsonResponse({'reply': 'I am having trouble connecting right now. Please try again in a moment.'})
+        import traceback
+        err_detail = traceback.format_exc()
+        print(f"Gemini API Error: {e}\n{err_detail}")
+        return JsonResponse({'reply': f'I am having trouble connecting right now. Please try again in a moment.'})
 
 
 @require_POST
