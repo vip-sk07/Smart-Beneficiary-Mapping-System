@@ -453,9 +453,7 @@ def document_checklist(request, scheme_id):
     # â”€â”€ Gemini call â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if api_key:
         try:
-            import google.generativeai as _genai, json as _json
-            _genai.configure(api_key=api_key)
-            model = _genai.GenerativeModel('gemini-1.5-flash')
+            import json as _json, requests as _requests
 
             prompt = (
                 "You are a government scheme document expert for India.\n"
@@ -474,14 +472,21 @@ def document_checklist(request, scheme_id):
                 "- Output ONLY the JSON array"
             )
 
-            resp = model.generate_content(prompt)
-            raw  = resp.text.strip()
-            if raw.startswith('```'):
-                raw = raw.split('```')[1]
-                if raw.startswith('json'):
-                    raw = raw[4:]
-            checklist = _json.loads(raw.strip())
-            return JsonResponse({'checklist': checklist, 'source': 'gemini'})
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+            payload = {"contents": [{"parts": [{"text": prompt}]}]}
+            resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
+            
+            if resp.status_code == 200:
+                data = resp.json()
+                raw = data['candidates'][0]['content']['parts'][0]['text'].strip()
+                if raw.startswith('```'):
+                    raw = raw.split('```')[1]
+                    if raw.startswith('json'):
+                        raw = raw[4:]
+                checklist = _json.loads(raw.strip())
+                return JsonResponse({'checklist': checklist, 'source': 'gemini'})
+            else:
+                print(f"Gemini API error: {resp.text}")
 
         except Exception as e:
             print(f"Gemini checklist error: {e}")
@@ -668,9 +673,7 @@ def voice_bot_nlp(request):
     api_key = getattr(settings, 'GEMINI_API_KEY', None)
     if api_key:
         try:
-            import google.generativeai as _genai, json as _json
-            _genai.configure(api_key=api_key)
-            nlp_model = _genai.GenerativeModel('gemini-1.5-flash')
+            import json as _json, requests as _requests
 
             nlp_prompt = (
                 "You are an NLP classifier for an Indian government scheme discovery system.\n"
@@ -690,21 +693,26 @@ def voice_bot_nlp(request):
                 "- Output ONLY the JSON, nothing else"
             )
 
-            nlp_resp = nlp_model.generate_content(nlp_prompt)
-            raw = nlp_resp.text.strip()
-            # Strip markdown code fences if Gemini wraps in ```json
-            if raw.startswith('```'):
-                raw = raw.split('```')[1]
-                if raw.startswith('json'):
-                    raw = raw[4:]
-            parsed = _json.loads(raw.strip())
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+            payload = {"contents": [{"parts": [{"text": nlp_prompt}]}]}
+            resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
+            
+            if resp.status_code == 200:
+                data = resp.json()
+                raw = data['candidates'][0]['content']['parts'][0]['text'].strip()
+                if raw.startswith('```'):
+                    raw = raw.split('```')[1]
+                    if raw.startswith('json'):
+                        raw = raw[4:]
+                parsed = _json.loads(raw.strip())
 
-            matched_intent  = parsed.get('intent', 'General Welfare')
-            confidence      = float(parsed.get('confidence', 0.70))
-            gemini_keywords = [k.lower() for k in parsed.get('keywords', [])]
+                matched_intent  = parsed.get('intent', 'General Welfare')
+                confidence      = float(parsed.get('confidence', 0.70))
+                gemini_keywords = [k.lower() for k in parsed.get('keywords', [])]
+            else:
+                raise Exception(f"Gemini API Error: {resp.text}")
 
         except Exception as nlp_err:
-            # Fallback: basic keyword scoring (original logic)
             print(f"Gemini NLP error (falling back): {nlp_err}")
             fallback_map = [
                 ('Agricultural Support',   ['farmer','farming','crop','kisan','agriculture','irrigation'], 0.85),
@@ -794,9 +802,7 @@ def nlp_scheme_finder(request):
             # â”€â”€ Step 1: Gemini keyword + intent extraction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if api_key:
                 try:
-                    import google.generativeai as _genai, json as _json
-                    _genai.configure(api_key=api_key)
-                    nlp_model = _genai.GenerativeModel('gemini-1.5-flash')
+                    import json as _json, requests as _requests
 
                     nlp_prompt = (
                         "You are an NLP engine for an Indian government scheme discovery system.\n"
@@ -817,18 +823,25 @@ def nlp_scheme_finder(request):
                         "- Output ONLY the JSON object, absolutely nothing else"
                     )
 
-                    resp = nlp_model.generate_content(nlp_prompt)
-                    raw = resp.text.strip()
-                    if raw.startswith('```'):
-                        raw = raw.split('```')[1]
-                        if raw.startswith('json'):
-                            raw = raw[4:]
-                    parsed     = _json.loads(raw.strip())
-                    intent     = parsed.get('intent', 'General Welfare')
-                    confidence = round(float(parsed.get('confidence', 0.70)), 2)
-                    keywords   = [k.lower().strip() for k in parsed.get('keywords', []) if k.strip()]
-                    ai_summary = parsed.get('summary', '')
-                    gemini_ok  = True
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                    payload = {"contents": [{"parts": [{"text": nlp_prompt}]}]}
+                    resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
+                    
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        raw = data['candidates'][0]['content']['parts'][0]['text'].strip()
+                        if raw.startswith('```'):
+                            raw = raw.split('```')[1]
+                            if raw.startswith('json'):
+                                raw = raw[4:]
+                        parsed     = _json.loads(raw.strip())
+                        intent     = parsed.get('intent', 'General Welfare')
+                        confidence = round(float(parsed.get('confidence', 0.70)), 2)
+                        keywords   = [k.lower().strip() for k in parsed.get('keywords', []) if k.strip()]
+                        ai_summary = parsed.get('summary', '')
+                        gemini_ok  = True
+                    else:
+                        raise Exception(f"Gemini API Error: {resp.text}")
 
                 except Exception as e:
                     print(f"Gemini NLP finder error (falling back): {e}")
@@ -1223,14 +1236,9 @@ def gemini_chat(request):
         return JsonResponse({'reply': 'AI Chat is currently unavailable.'})
 
     try:
-        # â”€â”€ Always inline import â€” never rely on module-level state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        import google.generativeai as _genai
-        _genai.configure(api_key=api_key)
-        
+        import requests as _requests
 
-        # â”€â”€ Build a tight prompt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         custom_user = get_custom_user(request.user)
-
         user_info = ""
         if custom_user:
             try:
@@ -1245,7 +1253,7 @@ def gemini_chat(request):
 
         # â”€â”€ Conversation history (last 5 turns max) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         SESSION_KEY = f'sbms_chat_{request.user.id}'
-        raw_history = request.session.get(SESSION_KEY, [])[-10:]   # last 10 entries = 5 turns
+        raw_history = request.session.get(SESSION_KEY, [])[-10:]
 
         history_lines = []
         for entry in raw_history:
@@ -1266,75 +1274,41 @@ def gemini_chat(request):
             + f"\nUser: {user_msg}\nAssistant:"
         )
 
-        # ── Call Gemini with robust retries and model fallbacks ───────────────────
-        model_names = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
-        response = None
-        last_err = None
-
-        for attempt in range(2):
-            for m_name in model_names:
-                try:
-                    model = _genai.GenerativeModel(m_name)
-                    response = model.generate_content(prompt)
-                    break # Success with this model!
-                except Exception as ex:
-                    last_err = ex
-                    err_str = str(ex).lower()
-                    
-                    if 'not found' in err_str or '404' in err_str:
-                        continue # Model not found, try the next model name in the list
-
-                    # Rate limit / quota
-                    if 'quota' in err_str or '429' in err_str or 'exhausted' in err_str:
-                        return JsonResponse({'reply': '⏳ The AI assistant is receiving too many requests. Please wait a few seconds and try again.'})
-                    # Token limit exceeded
-                    if 'token' in err_str or 'too large' in err_str or '400' in err_str:
-                        prompt = (
-                            "You are SBMS Assistant for the Smart Beneficiary Mapping System. "
-                            "Be helpful and brief.\n"
-                            f"User: {user_msg}\nAssistant:"
-                        )
-                        break # Break inner loop, try outer loop (next attempt) with shorter prompt
-
-            if response is not None:
-                break # Outer loop success
-
-        if response is None:
-            raise last_err
-
-        reply_text = ""
-
-        try:
-            reply_text = response.text.strip()
-        except Exception:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+        payload = {"contents": [{"parts": [{"text": prompt}]}]}
+        
+        resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
+        
+        if resp.status_code == 429:
+            return JsonResponse({'reply': '⏳ The AI assistant is receiving too many requests. Please wait a few seconds and try again.'})
+        elif resp.status_code != 200:
             try:
-                reply_text = response.candidates[0].content.parts[0].text.strip()
+                err_data = resp.json()
+                err_msg = err_data.get('error', {}).get('message', 'Unknown API Error')
             except Exception:
-                reply_text = "I couldn't process that. Please try rephrasing."
+                err_msg = resp.text
+            if 'API key not valid' in err_msg or 'API_KEY_INVALID' in err_msg:
+                return JsonResponse({'reply': 'Authentication error: Invalid API Key. Please contact administrator.'})
+            elif 'not found' in err_msg.lower():
+                return JsonResponse({'reply': 'AI Model currently offline or unavailable in this region.'})
+            return JsonResponse({'reply': f'Gemini API Error: {err_msg}'})
+            
+        data = resp.json()
+        reply_text = data['candidates'][0]['content']['parts'][0]['text'].strip()
 
-        # â”€â”€ Save to session â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        raw_history = request.session.get(SESSION_KEY, [])
+        # Save to session
         raw_history.append({'role': 'user',  'parts': [user_msg]})
         raw_history.append({'role': 'model', 'parts': [reply_text]})
-        request.session[SESSION_KEY] = raw_history[-12:]   # keep last 6 turns
+        request.session[SESSION_KEY] = raw_history[-12:]
         request.session.modified = True
 
         return JsonResponse({'reply': reply_text})
 
+    except _requests.exceptions.Timeout:
+        return JsonResponse({'reply': 'Request timed out. Please try again.'})
     except Exception as e:
         import traceback
-        tb = traceback.format_exc()
-        e_str = str(e).lower()
-        print(f"[SBMS Chat Error] {type(e).__name__}: {e}\n{tb}")
-
-        if '429' in e_str or 'quota' in e_str or 'exhausted' in e_str:
-            return JsonResponse({'reply': 'Too many requests. Please wait a few seconds and try again.'})
-        if 'timeout' in e_str or 'deadline' in e_str:
-            return JsonResponse({'reply': 'Request timed out. Please try again.'})
-        if 'api_key' in e_str or 'invalid' in e_str or 'permission' in e_str:
-            return JsonResponse({'reply': 'API key issue. Please contact the administrator.'})
-
-        # Log the ACTUAL error type so we can diagnose from Railway logs
+        print(f"[SBMS Chat Error] {type(e).__name__}: {e}\n{traceback.format_exc()}")
         return JsonResponse({'reply': f'Error ({type(e).__name__}). Please try again.'})
 
 
