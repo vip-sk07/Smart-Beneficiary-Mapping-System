@@ -271,7 +271,7 @@
      SBMS AI CHATBOT WIDGET — Animated + Voice NLP
      ============================================================ -->
 {% if user.is_authenticated %}
-<div id="sbms-chat-widget" style="position:fixed;bottom:24px;right:24px;z-index:9999;font-family:'Inter',sans-serif;">
+<div id="sbms-chat-widget" style="position:fixed;bottom:24px;right:24px;z-index:99999;font-family:'Inter',sans-serif;">
 
   <!-- ── Pulse ring behind the toggle button ── -->
   <div id="chat-pulse" style="
@@ -280,6 +280,7 @@
     background:rgba(99,102,241,0.35);
     animation:chatPulse 2s ease-out infinite;
     pointer-events:none;
+    z-index:99998;
   "></div>
 
   <!-- ── Toggle Button ── -->
@@ -288,9 +289,14 @@
     width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;
     background:linear-gradient(135deg,#4f46e5,#06b6d4);
     box-shadow:0 8px 32px rgba(99,102,241,0.5);
-    display:flex;align-items:center;justify-content:center;
+    display:flex !important;
+    align-items:center;
+    justify-content:center;
     transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
     overflow:hidden;
+    z-index:99999;
+    visibility:visible !important;
+    opacity:1 !important;
   ">
     <!-- Robot face (open state) -->
     <svg id="icon-robot" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="transition:opacity 0.2s,transform 0.3s;">
@@ -360,12 +366,6 @@
         </div>
       </div>
       <div style="display:flex;gap:6px;">
-        <button onclick="toggleVoiceMode()" id="voice-mode-btn" title="Switch to Voice Mode" style="
-          width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);
-          background:rgba(255,255,255,0.08);color:#a5b4fc;cursor:pointer;
-          display:flex;align-items:center;justify-content:center;font-size:0.8rem;
-          transition:all 0.2s;
-        ">🎤</button>
         <button onclick="clearChatHistory()" title="Clear Chat" style="
           width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);
           background:rgba(255,255,255,0.08);color:#a5b4fc;cursor:pointer;
@@ -373,18 +373,6 @@
           transition:all 0.2s;
         ">🗑</button>
       </div>
-    </div>
-
-    <!-- Mode indicator -->
-    <div id="voice-mode-banner" style="
-      display:none;
-      padding:6px 16px;
-      background:linear-gradient(90deg,rgba(16,185,129,0.2),rgba(6,182,212,0.1));
-      border-bottom:1px solid rgba(16,185,129,0.2);
-      color:#10b981;font-size:0.72rem;font-weight:600;letter-spacing:0.04em;
-      align-items:center;gap:6px;
-    ">
-      <span style="animation:statusPulse 1s ease-in-out infinite;">●</span> VOICE NLP MODE ACTIVE — Speak your query
     </div>
 
     <!-- Messages -->
@@ -425,34 +413,6 @@
       </div>
     </div>
 
-    <!-- Voice recording UI (hidden) -->
-    <div id="voice-recording-ui" style="
-      display:none;padding:12px 16px;
-      background:rgba(16,185,129,0.08);border-top:1px solid rgba(16,185,129,0.2);
-      align-items:center;gap:12px;justify-content:center;flex-direction:column;
-    ">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div id="voice-wave" style="display:flex;gap:3px;align-items:center;height:32px;">
-          <div style="width:4px;background:#10b981;border-radius:2px;animation:voiceBar 0.8s ease-in-out infinite 0s;"></div>
-          <div style="width:4px;background:#10b981;border-radius:2px;animation:voiceBar 0.8s ease-in-out infinite 0.1s;"></div>
-          <div style="width:4px;background:#10b981;border-radius:2px;animation:voiceBar 0.8s ease-in-out infinite 0.2s;"></div>
-          <div style="width:4px;background:#10b981;border-radius:2px;animation:voiceBar 0.8s ease-in-out infinite 0.3s;"></div>
-          <div style="width:4px;background:#10b981;border-radius:2px;animation:voiceBar 0.8s ease-in-out infinite 0.4s;"></div>
-        </div>
-        <span style="color:#10b981;font-size:0.8rem;font-weight:600;" id="voice-status-text">Listening...</span>
-      </div>
-      <div style="display:flex;gap:10px;">
-        <button onclick="stopVoiceRecording()" style="
-          padding:6px 18px;border-radius:20px;border:none;cursor:pointer;
-          background:#10b981;color:white;font-size:0.78rem;font-weight:600;
-        ">Stop & Send</button>
-        <button onclick="cancelVoiceRecording()" style="
-          padding:6px 18px;border-radius:20px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;
-          background:transparent;color:#94a3b8;font-size:0.78rem;
-        ">Cancel</button>
-      </div>
-    </div>
-
     <!-- Input Area -->
     <div id="text-input-area" style="
       padding:12px 14px;
@@ -460,17 +420,11 @@
       background:rgba(15,23,42,0.8);
       display:flex;gap:8px;align-items:center;
     ">
-      <button onclick="startVoiceInput()" id="mic-btn" title="Voice Input" style="
-        width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);
-        background:rgba(255,255,255,0.05);color:#94a3b8;cursor:pointer;
-        display:flex;align-items:center;justify-content:center;font-size:0.85rem;
-        transition:all 0.2s;flex-shrink:0;
-      ">🎤</button>
       <input
         type="text"
         id="chat-input"
         placeholder="Ask me anything..."
-        onkeydown="if(event.key==='Enter')sendChatMessage()"
+        onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); sendChatMessage(); }"
         style="
           flex:1;background:rgba(255,255,255,0.05);
           border:1px solid rgba(255,255,255,0.12);border-radius:20px;
@@ -480,18 +434,33 @@
         onfocus="this.style.borderColor='rgba(99,102,241,0.6)'"
         onblur="this.style.borderColor='rgba(255,255,255,0.12)'"
       />
-      <button onclick="sendChatMessage()" id="send-btn" style="
-        width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;
-        background:linear-gradient(135deg,#4f46e5,#06b6d4);
-        color:white;font-size:0.85rem;
-        display:flex;align-items:center;justify-content:center;
-        transition:transform 0.2s,box-shadow 0.2s;flex-shrink:0;
-        box-shadow:0 4px 12px rgba(99,102,241,0.4);
-      "
-      onmouseover="this.style.transform='scale(1.1)'"
-      onmouseout="this.style.transform='scale(1)'">
-        ➤
-      </button>
+      <button
+        id="mic-btn"
+        onclick="startInlineVoice()"
+        title="Voice Input"
+        style="
+          width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);
+          background:rgba(255,255,255,0.05);color:#94a3b8;cursor:pointer;
+          display:flex;align-items:center;justify-content:center;
+          transition:all 0.2s;flex-shrink:0;font-size:1rem;
+        "
+        onmouseover="this.style.background='rgba(99,102,241,0.2)';this.style.color='#a5b4fc'"
+        onmouseout="if(!window._micActive){this.style.background='rgba(255,255,255,0.05)';this.style.color='#94a3b8'}"
+      >🎤</button>
+      <button
+        onclick="sendChatMessage()"
+        id="send-btn"
+        style="
+          width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;
+          background:linear-gradient(135deg,#4f46e5,#06b6d4);
+          color:white;font-size:0.85rem;
+          display:flex;align-items:center;justify-content:center;
+          transition:transform 0.2s,box-shadow 0.2s;flex-shrink:0;
+          box-shadow:0 4px 12px rgba(99,102,241,0.4);
+        "
+        onmouseover="this.style.transform='scale(1.1)'"
+        onmouseout="this.style.transform='scale(1)'"
+      >➤</button>
     </div>
   </div>
 </div>
@@ -511,10 +480,6 @@
   0%,100% { transform:translateY(0);   opacity:0.4; }
   50%      { transform:translateY(-5px);opacity:1;   }
 }
-@keyframes voiceBar {
-  0%,100% { height:8px;  opacity:0.6; }
-  50%      { height:28px; opacity:1;   }
-}
 @keyframes msgSlideIn {
   from { opacity:0; transform:translateY(8px); }
   to   { opacity:1; transform:translateY(0);   }
@@ -533,10 +498,8 @@
 <script>
 (function() {
   let isChatOpen = false;
-  let isVoiceMode = false;
-  let isRecording = false;
-  let recognition = null;
-  let voiceTranscript = '';
+  let _recognition = null;
+  window._micActive = false;
 
   const CSRF_TOKEN = '{{ csrf_token }}';
 
@@ -606,122 +569,70 @@
     }
   };
 
-  window.toggleVoiceMode = function() {
-    isVoiceMode = !isVoiceMode;
-    const banner = document.getElementById('voice-mode-banner');
-    const btn = document.getElementById('voice-mode-btn');
-    if (isVoiceMode) {
-      banner.style.display = 'flex';
-      btn.style.background = 'rgba(16,185,129,0.2)';
-      btn.style.borderColor = 'rgba(16,185,129,0.4)';
-      btn.style.color = '#10b981';
-      appendMessage('bot', '🎤 **Voice NLP Mode activated!** Tap the mic button or 🎤 in the input bar and speak your query. I\'ll analyze it and find matching schemes for you.');
-    } else {
-      banner.style.display = 'none';
-      btn.style.background = 'rgba(255,255,255,0.08)';
-      btn.style.borderColor = 'rgba(255,255,255,0.2)';
-      btn.style.color = '#a5b4fc';
-      appendMessage('bot', '💬 Switched back to **text mode**.');
-    }
-  };
+  window.startInlineVoice = function() {
+    const micBtn = document.getElementById('mic-btn');
+    const input  = document.getElementById('chat-input');
 
-  window.startVoiceInput = function() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       appendMessage('bot', '⚠️ Voice input is not supported in your browser. Please use Chrome or Edge.');
       return;
     }
 
-    recognition = new SpeechRecognition();
-    recognition.lang = 'en-IN';
-    recognition.continuous = false;
-    recognition.interimResults = true;
-
-    isRecording = true;
-    voiceTranscript = '';
-    showVoiceUI(true);
-
-    recognition.onresult = function(event) {
-      let interim = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          voiceTranscript += event.results[i][0].transcript;
-        } else {
-          interim += event.results[i][0].transcript;
-        }
-      }
-      const statusEl = document.getElementById('voice-status-text');
-      if (statusEl) statusEl.textContent = (voiceTranscript || interim) ? `"${(voiceTranscript || interim).substring(0,40)}..."` : 'Listening...';
-    };
-
-    recognition.onend = function() {
-      if (isRecording && voiceTranscript) {
-        stopVoiceRecording();
-      } else if (isRecording) {
-        cancelVoiceRecording();
-      }
-    };
-
-    recognition.onerror = function(e) {
-      cancelVoiceRecording();
-      appendMessage('bot', `⚠️ Voice error: ${e.error}. Please try again.`);
-    };
-
-    recognition.start();
-  };
-
-  window.stopVoiceRecording = async function() {
-    isRecording = false;
-    if (recognition) recognition.stop();
-    showVoiceUI(false);
-
-    if (!voiceTranscript.trim()) {
-      appendMessage('bot', '⚠️ No speech detected. Please try again.');
+    // If already recording, stop it
+    if (window._micActive && _recognition) {
+      _recognition.stop();
       return;
     }
 
-    appendMessage('user', `🎤 "${voiceTranscript}"`);
-    showTyping(true);
+    _recognition = new SpeechRecognition();
+    _recognition.lang = 'en-IN';
+    _recognition.continuous = false;
+    _recognition.interimResults = false;
+    _recognition.maxAlternatives = 1;
 
-    try {
-      let endpoint, body;
-      if (isVoiceMode) {
-        endpoint = '/api/ai/voice/';
-        body = JSON.stringify({ query: voiceTranscript });
-      } else {
-        endpoint = '/api/ai/chat/';
-        body = JSON.stringify({ message: voiceTranscript });
+    // Visual: mic button turns red/active
+    window._micActive = true;
+    micBtn.style.background = 'rgba(239,68,68,0.3)';
+    micBtn.style.color = '#ef4444';
+    micBtn.style.borderColor = 'rgba(239,68,68,0.5)';
+    micBtn.innerHTML = '⏹';
+    micBtn.title = 'Stop recording';
+
+    _recognition.onresult = function(event) {
+      const transcript = event.results[0][0].transcript;
+      if (input) {
+        input.value = transcript;
+        input.focus();
+        // Auto-send after a short delay so user can see the text
+        setTimeout(() => {
+          sendChatMessage();
+        }, 600);
       }
+    };
 
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
-        credentials: 'same-origin',
-        body: body,
-      });
-      const data = await res.json();
-      showTyping(false);
+    _recognition.onend = function() {
+      window._micActive = false;
+      micBtn.style.background = 'rgba(255,255,255,0.05)';
+      micBtn.style.color = '#94a3b8';
+      micBtn.style.borderColor = 'rgba(255,255,255,0.15)';
+      micBtn.innerHTML = '🎤';
+      micBtn.title = 'Voice Input';
+    };
 
-      if (isVoiceMode && data.matched_schemes && data.matched_schemes.length > 0) {
-        let replyHtml = (data.reply || '') + '\n\n**Matched Schemes:**\n';
-        data.matched_schemes.forEach(s => {
-          replyHtml += `• <a href="/scheme/${s.id}/apply/" style="color:#06b6d4;">${s.name}</a>\n`;
-        });
-        appendMessage('bot', replyHtml);
-      } else {
-        appendMessage('bot', data.reply || "I couldn't process that. Please try again.");
+    _recognition.onerror = function(e) {
+      window._micActive = false;
+      micBtn.style.background = 'rgba(255,255,255,0.05)';
+      micBtn.style.color = '#94a3b8';
+      micBtn.style.borderColor = 'rgba(255,255,255,0.15)';
+      micBtn.innerHTML = '🎤';
+      micBtn.title = 'Voice Input';
+      if (e.error !== 'no-speech' && e.error !== 'aborted') {
+        appendMessage('bot', `⚠️ Mic error: ${e.error}. Please try again.`);
       }
-    } catch (err) {
-      showTyping(false);
-      appendMessage('bot', '⚠️ Error processing voice query. Please try again.');
-    }
-  };
+    };
 
-  window.cancelVoiceRecording = function() {
-    isRecording = false;
-    if (recognition) recognition.stop();
-    showVoiceUI(false);
-    voiceTranscript = '';
+    _recognition.start();
   };
 
   window.clearChatHistory = async function() {
@@ -772,13 +683,6 @@
     const el = document.getElementById('typing-indicator');
     if (el) el.style.display = show ? 'flex' : 'none';
     if (show) scrollToBottom();
-  }
-
-  function showVoiceUI(show) {
-    const voiceUI = document.getElementById('voice-recording-ui');
-    const textUI  = document.getElementById('text-input-area');
-    if (voiceUI) voiceUI.style.display = show ? 'flex' : 'none';
-    if (textUI)  textUI.style.display  = show ? 'none' : 'flex';
   }
 
   function scrollToBottom() {
