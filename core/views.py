@@ -11,6 +11,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django import forms
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q, Count
 import json
 import random
@@ -1445,3 +1446,188 @@ def scheme_delete(request, scheme_id):
         messages.success(request, 'Scheme deleted successfully!')
         return redirect('admin_schemes')
     return render(request, 'scheme_confirm_delete.html', {'scheme': scheme})
+
+
+@require_POST
+def ai_chat(request):
+    """Unified AI chat endpoint for the chatbot widget."""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        data = json.loads(request.body)
+        user_msg = data.get('message', '').strip()
+    except Exception:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    
+    if not user_msg:
+        return JsonResponse({'error': 'Empty message'}, status=400)
+
+    api_key = getattr(settings, 'GEMINI_API_KEY', None)
+    if not api_key:
+        return JsonResponse({'reply': 'AI Assistant is currently unavailable. Please contact the administrator.'})
+
+    try:
+        import requests as _requests
+        from datetime import date as _date
+
+        custom_user = get_custom_user(request.user)
+        user_info = ""
+        if custom_user:
+            try:
+                dob = custom_user.dob
+                age = _date.today().year - dob.year - ((_date.today().month, _date.today().day) < (dob.month, dob.day))
+                user_info = f"User profile: {custom_user.name}, {age} years old, income ₹{custom_user.income or 'unknown'}/year, occupation: {custom_user.occupation or 'unknown'}."
+            except Exception:
+                user_info = f"User: {getattr(custom_user, 'name', 'Citizen')}."
+
+        # Get top eligible schemes for context
+        eligible_schemes = []
+        if custom_user:
+            from .models import UserEligibility
+            eligible_qs = UserEligibility.objects.filter(
+                user_id=custom_user.user_id, eligibility_status='Eligible'
+            ).select_related('scheme')[:10]
+            eligible_schemes = [ue.scheme.scheme_name for ue in eligible_qs]
+
+        scheme_context = ""
+        if eligible_schemes:
+            scheme_context = f"\nUser's eligible schemes: {', '.join(eligible_schemes)}."
+
+        # Session-based conversation history
+        SESSION_KEY = f'sbms_widget_chat_{request.user.id}'
+        raw_history = request.session.get(SESSION_KEY, [])[-8:]
+        history_lines = []
+        for entry in raw_history:
+            role = entry.get('role', '')
+            text = str((entry.get('parts') or [''])[0])[:300]
+            if role == 'user':
+                history_lines.append(f"User: {text}")
+            elif role == 'model':
+                history_lines.append(f"Assistant: {text}")
+        history_text = "\n".join(history_lines)
+
+        prompt = (
+            "You are the SBMS AI Assistant for the Smart Beneficiary Mapping System — "
+            "an Indian government scheme discovery platform. Your role is to help citizens "
+            "find government benefit schemes they are eligible for, understand how to apply, "
+            "track their applications, and raise grievances.\n"
+            "Be helpful, empathetic, concise, and use simple language. Use markdown formatting "
+            "with bullet points where helpful. If asked what this system is, explain it helps "
+            "citizens easily find and apply for government schemes based on their profile.\n\n"
+            f"{user_info}{scheme_context}\n"
+            + (f"\nConversation history:\n{history_text}\n" if history_text else "")
+            + f"\nUser: {user_msg}\nAssistant:"
+        )
+
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+        payload = {"contents": [{"parts": [{"text": prompt}]}]}
+        resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
+
+        if resp.status_code == 429:
+            return JsonResponse({'reply': '⏳ Too many requests. Please wait a moment and try again.'})
+        elif resp.status_code != 200:
+            return JsonResponse({'reply': 'AI service temporarily unavailable. Please try again.'})
+
+        resp_data = resp.json()
+        reply_text = resp_data['candidates'][0]['content']['parts'][0]['text'].strip()
+
+        # Save to session
+        raw_history.append({'role': 'user', 'parts': [user_msg]})
+        raw_history.append({'role': 'model', 'parts': [reply_text]})
+        request.session[SESSION_KEY] = raw_history[-10:]
+        request.session.modified = True
+
+        return JsonResponse({'reply': reply_text})
+
+    except Exception as e:
+        import traceback
+        print(f"[AI Chat Error] {type(e).__name__}: {e}\n{traceback.format_exc()}")
+        return JsonResponse({'reply': 'Something went wrong. Please try again.'})
+
+
+@require_POST
+def ai_voice_chat(request):
+    """Voice-based NLP endpoint — transcribes intent and returns scheme matches + AI reply."""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
+
+    try:
+        data = json.loads(request.body)
+        query = data.get('query', '').strip()
+    except Exception:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    if not query:
+        return JsonResponse({'error': 'query is required'}, status=400)
+
+    api_key = getattr(settings, 'GEMINI_API_KEY', None)
+    custom_user = get_custom_user(request.user)
+
+    matched_intent = 'General Welfare'
+    confidence = 0.60
+    gemini_keywords = []
+    ai_reply = ""
+
+    if api_key:
+        try:
+            import requests as _requests
+
+            nlp_prompt = (
+                "You are an NLP classifier for an Indian government scheme discovery system.\n"
+                "Analyze the following user voice query and respond with ONLY valid JSON.\n\n"
+                f'User voice query: "{query}"\n\n'
+                "Respond exactly in this JSON format:\n"
+                "{\n"
+                '  "intent": "<one of: Agricultural Support | Educational Support | Women Empowerment | Senior Citizen Welfare | Disability & Health | Business & MSME | Housing Support | Unemployment & Labour | General Welfare>",\n'
+                '  "confidence": <float 0.0-1.0>,\n'
+                '  "keywords": ["<word1>", "<word2>", "<word3>"],\n'
+                '  "reply": "<a short friendly 1-2 sentence response acknowledging what the user is looking for>"\n'
+                "}\n"
+                "Output ONLY the JSON, no markdown, no explanation."
+            )
+
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+            payload = {"contents": [{"parts": [{"text": nlp_prompt}]}]}
+            resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
+
+            if resp.status_code == 200:
+                raw = resp.json()['candidates'][0]['content']['parts'][0]['text'].strip()
+                if raw.startswith('```'):
+                    raw = raw.split('```')[1]
+                    if raw.startswith('json'):
+                        raw = raw[4:]
+                parsed = json.loads(raw.strip())
+                matched_intent = parsed.get('intent', 'General Welfare')
+                confidence = float(parsed.get('confidence', 0.70))
+                gemini_keywords = [k.lower() for k in parsed.get('keywords', [])]
+                ai_reply = parsed.get('reply', '')
+
+        except Exception as e:
+            print(f"Voice NLP error: {e}")
+            gemini_keywords = [w for w in query.lower().split() if len(w) > 3][:5]
+
+    # Search for matching schemes
+    matched_schemes = []
+    if custom_user:
+        from .models import UserEligibility
+        eligible_qs = UserEligibility.objects.filter(
+            user_id=custom_user.user_id, eligibility_status='Eligible'
+        ).select_related('scheme')
+
+        search_terms = gemini_keywords or [w.lower() for w in query.split() if len(w) > 3]
+
+        def score_scheme(scheme):
+            text = ((scheme.scheme_name or '') + ' ' + (scheme.description or '') + ' ' + (scheme.benefit_type or '')).lower()
+            return sum(1 for kw in search_terms if kw in text)
+
+        scored = sorted([(score_scheme(ue.scheme), ue.scheme) for ue in eligible_qs], key=lambda x: x[0], reverse=True)
+        matched_schemes = [{'id': s.scheme_id, 'name': s.scheme_name} for sc, s in scored if sc > 0][:5]
+
+    return JsonResponse({
+        'intent': matched_intent,
+        'confidence': round(confidence, 2),
+        'keywords': gemini_keywords,
+        'reply': ai_reply or f"I found schemes related to your query about {matched_intent.lower()}.",
+        'matched_schemes': matched_schemes,
+    })

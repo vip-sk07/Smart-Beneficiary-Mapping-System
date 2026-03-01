@@ -58,7 +58,8 @@ urlpatterns = [
 
     # Gemini Chatbot API
     path('api/gemini-chat/', views.gemini_chat, name='gemini_chat'),
-    path('api/ai/chat/', views.gemini_chat, name='gemini_chat_alias'),
+    path('api/ai/chat/', views.ai_chat, name='ai_chat'),
+    path('api/ai/voice/', views.ai_voice_chat, name='ai_voice_chat'),
     path('api/clear-chat/',  views.clear_chat,  name='clear_chat'),
 
     # Admin Panel Improvements
