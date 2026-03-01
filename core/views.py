@@ -1455,8 +1455,8 @@ def ai_chat(request):
         return JsonResponse({'error': 'Unauthorized'}, status=401)
 
     try:
-        data = json.loads(request.body)
-        user_msg = data.get('message', '').strip()
+        body = json.loads(request.body)
+        user_msg = body.get('message', '').strip()
     except Exception:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
@@ -1464,91 +1464,113 @@ def ai_chat(request):
         return JsonResponse({'error': 'Empty message'}, status=400)
 
     api_key = getattr(settings, 'GEMINI_API_KEY', None)
-    if not api_key or api_key == 'your_actual_key' or api_key.startswith('your_'):
-        return JsonResponse({'reply': '⚠️ AI Assistant is not configured yet. Please add a valid GEMINI_API_KEY in the Railway environment variables.'})
+    if not api_key or str(api_key).startswith('your'):
+        return JsonResponse({'reply': '⚠️ GEMINI_API_KEY is not configured in Railway environment variables.'})
 
-    try:
-        import requests as _requests
-        from datetime import date as _date
+    import requests as _req
+    from datetime import date as _d
 
-        custom_user = get_custom_user(request.user)
-        user_info = ""
-        if custom_user:
-            try:
-                dob = custom_user.dob
-                age = _date.today().year - dob.year - ((_date.today().month, _date.today().day) < (dob.month, dob.day))
-                user_info = f"User profile: {custom_user.name}, {age} years old, income ₹{custom_user.income or 'unknown'}/year, occupation: {custom_user.occupation or 'unknown'}."
-            except Exception:
-                user_info = f"User: {getattr(custom_user, 'name', 'Citizen')}."
+    # Build user context
+    custom_user = get_custom_user(request.user)
+    user_info = ""
+    if custom_user:
+        try:
+            dob = custom_user.dob
+            age = _d.today().year - dob.year - ((_d.today().month, _d.today().day) < (dob.month, dob.day))
+            user_info = f"User: {custom_user.name}, {age}yrs, ₹{custom_user.income or '?'}/yr income, {custom_user.occupation or 'unknown occupation'}."
+        except Exception:
+            user_info = f"User: {getattr(custom_user, 'name', 'Citizen')}."
 
-        eligible_schemes = []
-        if custom_user:
+    eligible_schemes = []
+    if custom_user:
+        try:
             from .models import UserEligibility
-            eligible_qs = UserEligibility.objects.filter(
+            eq = UserEligibility.objects.filter(
                 user_id=custom_user.user_id, eligibility_status='Eligible'
-            ).select_related('scheme')[:10]
-            eligible_schemes = [ue.scheme.scheme_name for ue in eligible_qs]
+            ).select_related('scheme')[:8]
+            eligible_schemes = [ue.scheme.scheme_name for ue in eq]
+        except Exception:
+            pass
 
-        scheme_context = ""
-        if eligible_schemes:
-            scheme_context = f"\nUser's eligible schemes: {', '.join(eligible_schemes)}."
+    scheme_ctx = f" Eligible schemes: {', '.join(eligible_schemes)}." if eligible_schemes else ""
 
-        SESSION_KEY = f'sbms_widget_chat_{request.user.id}'
-        raw_history = request.session.get(SESSION_KEY, [])[-8:]
-        history_lines = []
-        for entry in raw_history:
-            role = entry.get('role', '')
-            text = str((entry.get('parts') or [''])[0])[:300]
-            if role == 'user':
-                history_lines.append(f"User: {text}")
-            elif role == 'model':
-                history_lines.append(f"Assistant: {text}")
-        history_text = "\n".join(history_lines)
+    # Session history
+    SK = f'sbms_chat_{request.user.id}'
+    history = request.session.get(SK, [])[-6:]
+    hist_text = ""
+    for h in history:
+        r = h.get('role', '')
+        t = str((h.get('parts') or [''])[0])[:200]
+        if r == 'user': hist_text += f"User: {t}\n"
+        elif r == 'model': hist_text += f"Assistant: {t}\n"
 
-        prompt = (
-            "You are the SBMS AI Assistant for the Smart Beneficiary Mapping System — "
-            "an Indian government scheme discovery platform. Your role is to help citizens "
-            "find government benefit schemes they are eligible for, understand how to apply, "
-            "track their applications, and raise grievances.\n"
-            "Be helpful, empathetic, concise, and use simple language. Use markdown formatting "
-            "with bullet points where helpful.\n\n"
-            f"{user_info}{scheme_context}\n"
-            + (f"\nConversation history:\n{history_text}\n" if history_text else "")
-            + f"\nUser: {user_msg}\nAssistant:"
-        )
+    prompt = (
+        "You are SBMS Assistant for India's Smart Beneficiary Mapping System. "
+        "Help citizens find government schemes, apply, track applications, and raise grievances. "
+        "Be brief, helpful, use simple language and markdown.\n"
+        f"{user_info}{scheme_ctx}\n"
+        + (f"History:\n{hist_text}" if hist_text else "")
+        + f"User: {user_msg}\nAssistant:"
+    )
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={api_key}"
-        payload = {"contents": [{"parts": [{"text": prompt}]}]}
-        resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=20)
+    # Try models in order of preference
+    models_to_try = [
+        'gemini-1.5-flash',
+        'gemini-1.5-flash-latest',
+        'gemini-pro',
+    ]
 
-        if resp.status_code == 429:
-            return JsonResponse({'reply': '⏳ The AI service is busy right now. Please wait 10 seconds and try again.'})
-        elif resp.status_code == 400:
-            err = resp.json().get('error', {}).get('message', '')
-            return JsonResponse({'reply': f'⚠️ Request error: {err}'})
-        elif resp.status_code == 403 or resp.status_code == 401:
-            return JsonResponse({'reply': '⚠️ Invalid Gemini API Key. Please update GEMINI_API_KEY in Railway environment variables.'})
-        elif resp.status_code != 200:
-            return JsonResponse({'reply': f'⚠️ AI service error (HTTP {resp.status_code}). Please try again.'})
+    last_status = None
+    last_body = None
 
-        resp_data = resp.json()
-        candidates = resp_data.get('candidates', [])
-        if not candidates:
-            return JsonResponse({'reply': '⚠️ No response from AI. Please try again.'})
+    for model_name in models_to_try:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+            payload = {"contents": [{"parts": [{"text": prompt}]}]}
+            resp = _req.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=20)
+            last_status = resp.status_code
+            last_body = resp.text
 
-        reply_text = candidates[0]['content']['parts'][0]['text'].strip()
+            if resp.status_code == 200:
+                data = resp.json()
+                candidates = data.get('candidates', [])
+                if candidates:
+                    reply = candidates[0]['content']['parts'][0]['text'].strip()
+                    # Save to session
+                    history.append({'role': 'user', 'parts': [user_msg]})
+                    history.append({'role': 'model', 'parts': [reply]})
+                    request.session[SK] = history[-8:]
+                    request.session.modified = True
+                    return JsonResponse({'reply': reply})
+                # No candidates - try next model
+                continue
 
-        raw_history.append({'role': 'user', 'parts': [user_msg]})
-        raw_history.append({'role': 'model', 'parts': [reply_text]})
-        request.session[SESSION_KEY] = raw_history[-10:]
-        request.session.modified = True
+            elif resp.status_code == 429:
+                # Real rate limit - no point trying other models with same key
+                return JsonResponse({'reply': '⏳ Gemini API rate limit reached. Please wait 30 seconds and try again. (Free tier: 15 requests/minute)'})
 
-        return JsonResponse({'reply': reply_text})
+            elif resp.status_code in (401, 403):
+                return JsonResponse({'reply': '⚠️ Invalid or expired Gemini API Key. Please update GEMINI_API_KEY in Railway → Variables.'})
 
-    except Exception as e:
-        import traceback
-        print(f"[AI Chat Error] {type(e).__name__}: {e}\n{traceback.format_exc()}")
-        return JsonResponse({'reply': f'⚠️ Error: {str(e)[:100]}. Please try again.'})
+            elif resp.status_code == 404:
+                # Model not found, try next
+                continue
+
+            else:
+                # Other error, try next model
+                continue
+
+        except _req.exceptions.Timeout:
+            continue
+        except Exception as ex:
+            print(f"[AI Chat] Error with {model_name}: {ex}")
+            continue
+
+    # All models failed
+    print(f"[AI Chat] All models failed. Last status: {last_status}, body: {last_body[:200] if last_body else 'None'}")
+    if last_status == 429:
+        return JsonResponse({'reply': '⏳ API rate limit reached. Please wait 1 minute and try again.'})
+    return JsonResponse({'reply': f'⚠️ AI unavailable (tried {len(models_to_try)} models, last HTTP status: {last_status}). Check Railway logs for details.'})
 
 
 @require_POST
