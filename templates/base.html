@@ -562,9 +562,14 @@
       });
       const data = await res.json();
       showTyping(false);
-      appendMessage('bot', data.reply || "I couldn't understand that. Please try again.");
+      if (data.error && !data.reply) {
+        appendMessage('bot', `⚠️ ${data.error}`);
+      } else {
+        appendMessage('bot', data.reply || "I couldn't understand that. Please try again.");
+      }
     } catch (err) {
       showTyping(false);
+      console.error('[SBMS Chat]', err);
       appendMessage('bot', '⚠️ Connection error. Please check your internet and try again.');
     }
   };

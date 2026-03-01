@@ -1453,19 +1453,19 @@ def ai_chat(request):
     """Unified AI chat endpoint for the chatbot widget."""
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
-    
+
     try:
         data = json.loads(request.body)
         user_msg = data.get('message', '').strip()
     except Exception:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
-    
+
     if not user_msg:
         return JsonResponse({'error': 'Empty message'}, status=400)
 
     api_key = getattr(settings, 'GEMINI_API_KEY', None)
-    if not api_key:
-        return JsonResponse({'reply': 'AI Assistant is currently unavailable. Please contact the administrator.'})
+    if not api_key or api_key == 'your_actual_key' or api_key.startswith('your_'):
+        return JsonResponse({'reply': '⚠️ AI Assistant is not configured yet. Please add a valid GEMINI_API_KEY in the Railway environment variables.'})
 
     try:
         import requests as _requests
@@ -1481,7 +1481,6 @@ def ai_chat(request):
             except Exception:
                 user_info = f"User: {getattr(custom_user, 'name', 'Citizen')}."
 
-        # Get top eligible schemes for context
         eligible_schemes = []
         if custom_user:
             from .models import UserEligibility
@@ -1494,7 +1493,6 @@ def ai_chat(request):
         if eligible_schemes:
             scheme_context = f"\nUser's eligible schemes: {', '.join(eligible_schemes)}."
 
-        # Session-based conversation history
         SESSION_KEY = f'sbms_widget_chat_{request.user.id}'
         raw_history = request.session.get(SESSION_KEY, [])[-8:]
         history_lines = []
@@ -1513,26 +1511,33 @@ def ai_chat(request):
             "find government benefit schemes they are eligible for, understand how to apply, "
             "track their applications, and raise grievances.\n"
             "Be helpful, empathetic, concise, and use simple language. Use markdown formatting "
-            "with bullet points where helpful. If asked what this system is, explain it helps "
-            "citizens easily find and apply for government schemes based on their profile.\n\n"
+            "with bullet points where helpful.\n\n"
             f"{user_info}{scheme_context}\n"
             + (f"\nConversation history:\n{history_text}\n" if history_text else "")
             + f"\nUser: {user_msg}\nAssistant:"
         )
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
-        resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
+        resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=20)
 
         if resp.status_code == 429:
-            return JsonResponse({'reply': '⏳ Too many requests. Please wait a moment and try again.'})
+            return JsonResponse({'reply': '⏳ The AI service is busy right now. Please wait 10 seconds and try again.'})
+        elif resp.status_code == 400:
+            err = resp.json().get('error', {}).get('message', '')
+            return JsonResponse({'reply': f'⚠️ Request error: {err}'})
+        elif resp.status_code == 403 or resp.status_code == 401:
+            return JsonResponse({'reply': '⚠️ Invalid Gemini API Key. Please update GEMINI_API_KEY in Railway environment variables.'})
         elif resp.status_code != 200:
-            return JsonResponse({'reply': 'AI service temporarily unavailable. Please try again.'})
+            return JsonResponse({'reply': f'⚠️ AI service error (HTTP {resp.status_code}). Please try again.'})
 
         resp_data = resp.json()
-        reply_text = resp_data['candidates'][0]['content']['parts'][0]['text'].strip()
+        candidates = resp_data.get('candidates', [])
+        if not candidates:
+            return JsonResponse({'reply': '⚠️ No response from AI. Please try again.'})
 
-        # Save to session
+        reply_text = candidates[0]['content']['parts'][0]['text'].strip()
+
         raw_history.append({'role': 'user', 'parts': [user_msg]})
         raw_history.append({'role': 'model', 'parts': [reply_text]})
         request.session[SESSION_KEY] = raw_history[-10:]
@@ -1543,7 +1548,7 @@ def ai_chat(request):
     except Exception as e:
         import traceback
         print(f"[AI Chat Error] {type(e).__name__}: {e}\n{traceback.format_exc()}")
-        return JsonResponse({'reply': 'Something went wrong. Please try again.'})
+        return JsonResponse({'reply': f'⚠️ Error: {str(e)[:100]}. Please try again.'})
 
 
 @require_POST
@@ -1562,6 +1567,9 @@ def ai_voice_chat(request):
         return JsonResponse({'error': 'query is required'}, status=400)
 
     api_key = getattr(settings, 'GEMINI_API_KEY', None)
+    if not api_key or api_key == 'your_actual_key' or api_key.startswith('your_'):
+        return JsonResponse({'error': 'AI not configured', 'reply': 'AI not configured.'}, status=503)
+
     custom_user = get_custom_user(request.user)
 
     matched_intent = 'General Welfare'
@@ -1587,7 +1595,7 @@ def ai_voice_chat(request):
                 "Output ONLY the JSON, no markdown, no explanation."
             )
 
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
             payload = {"contents": [{"parts": [{"text": nlp_prompt}]}]}
             resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
 

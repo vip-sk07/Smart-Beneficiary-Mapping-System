@@ -23,6 +23,16 @@ class GeminiBotService:
         )
         self.chats = {}
 
+        if not self.api_key or self.api_key == 'your_actual_key' or self.api_key.startswith('your_'):
+            print("[GeminiBotService] WARNING: GEMINI_API_KEY is not set or is a placeholder.")
+            self.api_key = None
+        
+        self.system_instruction = (
+            "You are SBMS Assistant — AI for the Smart Beneficiary Mapping System, "
+            "an Indian government scheme discovery platform. Be helpful, brief, use markdown."
+        )
+        self.chats = {}
+
     def _get_chat(self, user_id):
         if not self.api_key:
             return None
@@ -30,7 +40,7 @@ class GeminiBotService:
         if user_id not in self.chats:
             try:
                 model = genai.GenerativeModel(
-                    'gemini-2.5-flash',
+                    'gemini-1.5-flash',
                     system_instruction=self.system_instruction
                 )
                 self.chats[user_id] = model.start_chat(history=[])
