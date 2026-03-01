@@ -40,7 +40,7 @@ class GeminiBotService:
         if user_id not in self.chats:
             try:
                 model = genai.GenerativeModel(
-                    'gemini-1.5-flash',
+                    'gemini-2.0-flash-lite',
                     system_instruction=self.system_instruction
                 )
                 self.chats[user_id] = model.start_chat(history=[])

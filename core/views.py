@@ -473,7 +473,7 @@ def document_checklist(request, scheme_id):
                 "- Output ONLY the JSON array"
             )
 
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={api_key}"
             payload = {"contents": [{"parts": [{"text": prompt}]}]}
             resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
             
@@ -694,7 +694,7 @@ def voice_bot_nlp(request):
                 "- Output ONLY the JSON, nothing else"
             )
 
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={api_key}"
             payload = {"contents": [{"parts": [{"text": nlp_prompt}]}]}
             resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
             
@@ -824,7 +824,7 @@ def nlp_scheme_finder(request):
                         "- Output ONLY the JSON object, absolutely nothing else"
                     )
 
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={api_key}"
                     payload = {"contents": [{"parts": [{"text": nlp_prompt}]}]}
                     resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
                     
@@ -1517,7 +1517,7 @@ def ai_chat(request):
             + f"\nUser: {user_msg}\nAssistant:"
         )
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={api_key}"
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
         resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=20)
 
@@ -1595,7 +1595,7 @@ def ai_voice_chat(request):
                 "Output ONLY the JSON, no markdown, no explanation."
             )
 
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={api_key}"
             payload = {"contents": [{"parts": [{"text": nlp_prompt}]}]}
             resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
 
