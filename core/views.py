@@ -472,7 +472,7 @@ def document_checklist(request, scheme_id):
                 "- Output ONLY the JSON array"
             )
 
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
             payload = {"contents": [{"parts": [{"text": prompt}]}]}
             resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
             
@@ -693,7 +693,7 @@ def voice_bot_nlp(request):
                 "- Output ONLY the JSON, nothing else"
             )
 
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
             payload = {"contents": [{"parts": [{"text": nlp_prompt}]}]}
             resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
             
@@ -823,7 +823,7 @@ def nlp_scheme_finder(request):
                         "- Output ONLY the JSON object, absolutely nothing else"
                     )
 
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
                     payload = {"contents": [{"parts": [{"text": nlp_prompt}]}]}
                     resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
                     
@@ -1221,23 +1221,23 @@ import csv
 import google.generativeai as genai
 from .models import Announcement
 from .forms import SchemeForm
+from .gemini_service import gemini_bot_service
 
 @require_POST
 def gemini_chat(request):
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
 
-    user_msg = request.POST.get('message', '').strip()
+    try:
+        data = json.loads(request.body)
+        user_msg = data.get('message', '').strip()
+    except Exception:
+        user_msg = request.POST.get('message', '').strip()
+
     if not user_msg:
         return JsonResponse({'error': 'Empty message'}, status=400)
 
-    api_key = getattr(settings, 'GEMINI_API_KEY', None)
-    if not api_key:
-        return JsonResponse({'reply': 'AI Chat is currently unavailable.'})
-
     try:
-        import requests as _requests
-
         custom_user = get_custom_user(request.user)
         user_info = ""
         if custom_user:
@@ -1251,61 +1251,9 @@ def gemini_chat(request):
             except Exception:
                 user_info = f"User: {getattr(custom_user, 'name', 'Citizen')}."
 
-        # â”€â”€ Conversation history (last 5 turns max) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        SESSION_KEY = f'sbms_chat_{request.user.id}'
-        raw_history = request.session.get(SESSION_KEY, [])[-10:]
-
-        history_lines = []
-        for entry in raw_history:
-            role = entry.get('role', '')
-            text = str((entry.get('parts') or [''])[0])[:400]
-            if role == 'user':
-                history_lines.append(f"User: {text}")
-            elif role == 'model':
-                history_lines.append(f"Assistant: {text}")
-
-        history_text = "\n".join(history_lines)
-
-        prompt = (
-            "You are SBMS Assistant â€” AI for the Smart Beneficiary Mapping System, "
-            "an Indian government scheme discovery platform. Be helpful, brief, use markdown.\n"
-            f"{user_info}\n"
-            + (f"\nPrevious messages:\n{history_text}\n" if history_text else "")
-            + f"\nUser: {user_msg}\nAssistant:"
-        )
-
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-        payload = {"contents": [{"parts": [{"text": prompt}]}]}
-        
-        resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
-        
-        if resp.status_code == 429:
-            return JsonResponse({'reply': '⏳ The AI assistant is receiving too many requests. Please wait a few seconds and try again.'})
-        elif resp.status_code != 200:
-            try:
-                err_data = resp.json()
-                err_msg = err_data.get('error', {}).get('message', 'Unknown API Error')
-            except Exception:
-                err_msg = resp.text
-            if 'API key not valid' in err_msg or 'API_KEY_INVALID' in err_msg:
-                return JsonResponse({'reply': 'Authentication error: Invalid API Key. Please contact administrator.'})
-            elif 'not found' in err_msg.lower():
-                return JsonResponse({'reply': 'AI Model currently offline or unavailable in this region.'})
-            return JsonResponse({'reply': f'Gemini API Error: {err_msg}'})
-            
-        data = resp.json()
-        reply_text = data['candidates'][0]['content']['parts'][0]['text'].strip()
-
-        # Save to session
-        raw_history.append({'role': 'user',  'parts': [user_msg]})
-        raw_history.append({'role': 'model', 'parts': [reply_text]})
-        request.session[SESSION_KEY] = raw_history[-12:]
-        request.session.modified = True
-
+        reply_text = gemini_bot_service.send_message(request.user.id, user_msg, user_info)
         return JsonResponse({'reply': reply_text})
 
-    except _requests.exceptions.Timeout:
-        return JsonResponse({'reply': 'Request timed out. Please try again.'})
     except Exception as e:
         import traceback
         print(f"[SBMS Chat Error] {type(e).__name__}: {e}\n{traceback.format_exc()}")
@@ -1318,9 +1266,12 @@ def clear_chat(request):
     """Clear the user's chat session history."""
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
     SESSION_KEY = f'sbms_chat_{request.user.id}'
     request.session.pop(SESSION_KEY, None)
     request.session.modified = True
+    
+    gemini_bot_service.clear_chat(request.user.id)
     return JsonResponse({'status': 'cleared'})
 
 

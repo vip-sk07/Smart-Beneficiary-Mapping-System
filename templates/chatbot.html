@@ -1,0 +1,169 @@
+{% load static %}
+
+<!-- Floating Button -->
+<button id="chatbot-fab" style="position:fixed;bottom:20px;right:20px;width:60px;height:60px;border-radius:30px;background:var(--primary);color:white;border:none;box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:9999;display:flex;align-items:center;justify-content:center;font-size:1.5rem;transition:all 0.3s; cursor:pointer;">
+    <i class="bi bi-chat-dots-fill"></i>
+</button>
+
+<!-- Chat Window -->
+<div id="chatbot-window" style="position:fixed;bottom:90px;right:20px;width:350px;height:500px;background:var(--surface);border-radius:15px;box-shadow:0 8px 24px rgba(0,0,0,0.2);z-index:9998;display:none;flex-direction:column;border:1px solid var(--border); overflow:hidden; font-family:'Inter', sans-serif;">
+    <!-- Header -->
+    <div style="background:var(--primary);color:white;padding:15px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:10px;">
+            <i class="bi bi-robot" style="font-size:1.2rem;"></i>
+            <span style="font-weight:600;">SBMS AI Assistant</span>
+        </div>
+        <div style="display:flex;gap:10px;">
+            <!-- Clear Chat Button -->
+            <button id="chatbot-clear-btn" style="background:none;border:none;color:white;font-size:1.2rem;cursor:pointer;" title="Clear Chat">
+                <i class="bi bi-trash3"></i>
+            </button>
+            <button id="chatbot-close-btn" style="background:none;border:none;color:white;font-size:1.4rem;line-height:1;margin-top:-2px;cursor:pointer;">
+                &times;
+            </button>
+        </div>
+    </div>
+    
+    <!-- Messages Container -->
+    <div id="chatbot-messages" style="flex:1;padding:15px;overflow-y:auto;background:var(--canvas);display:flex;flex-direction:column;gap:12px;">
+        <div style="align-self:flex-start;background:var(--surface);color:var(--text-main);padding:10px 14px;border-radius:15px;border-bottom-left-radius:0;max-width:85%;word-wrap:break-word;border:1px solid var(--border);font-size:0.9rem;">
+            Hello! I am the AI assistant. How can I help you with government schemes today?
+        </div>
+    </div>
+    
+    <!-- Input Area -->
+    <div style="padding:15px;background:var(--surface);border-top:1px solid var(--border);display:flex;gap:10px;">
+        <input type="text" id="chatbot-input" placeholder="Type a message..." style="flex:1;padding:10px 15px;border:1px solid var(--border);border-radius:20px;background:var(--canvas);color:var(--text-main);outline:none;font-size:0.9rem;" autocomplete="off">
+        <button id="chatbot-send-btn" style="background:var(--primary);color:white;border:none;width:40px;height:40px;border-radius:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+            <i class="bi bi-send-fill"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Add csrf info -->
+<div style="display:none">
+    {% csrf_token %}
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const fab = document.getElementById("chatbot-fab");
+    const chatWindow = document.getElementById("chatbot-window");
+    const closeBtn = document.getElementById("chatbot-close-btn");
+    const clearBtn = document.getElementById("chatbot-clear-btn");
+    const sendBtn = document.getElementById("chatbot-send-btn");
+    const chatInput = document.getElementById("chatbot-input");
+    const messagesContainer = document.getElementById("chatbot-messages");
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+
+    function toggleChat() {
+        if (chatWindow.style.display === "none") {
+            chatWindow.style.display = "flex";
+            chatInput.focus();
+        } else {
+            chatWindow.style.display = "none";
+        }
+    }
+
+    fab.addEventListener("click", toggleChat);
+    closeBtn.addEventListener("click", toggleChat);
+
+    function addMessage(text, isUser=false) {
+        const msgDiv = document.createElement("div");
+        msgDiv.style.padding = "10px 14px";
+        msgDiv.style.borderRadius = "15px";
+        msgDiv.style.maxWidth = "85%";
+        msgDiv.style.wordWrap = "break-word";
+        msgDiv.style.fontSize = "0.9rem";
+        
+        // Simple markdown parsing for bold text - replace **text** with <strong>text</strong>
+        let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        // Simple newlines
+        formattedText = formattedText.replace(/\n/g, '<br/>');
+
+        if (isUser) {
+            msgDiv.style.alignSelf = "flex-end";
+            msgDiv.style.background = "var(--primary)";
+            msgDiv.style.color = "white";
+            msgDiv.style.borderBottomRightRadius = "0";
+            msgDiv.innerHTML = formattedText;
+        } else {
+            msgDiv.style.alignSelf = "flex-start";
+            msgDiv.style.background = "var(--surface)";
+            msgDiv.style.color = "var(--text-main)";
+            msgDiv.style.border = "1px solid var(--border)";
+            msgDiv.style.borderBottomLeftRadius = "0";
+            msgDiv.innerHTML = formattedText;
+        }
+
+        messagesContainer.appendChild(msgDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    async function sendMessage() {
+        const text = chatInput.value.trim();
+        if (!text) return;
+
+        addMessage(text, true);
+        chatInput.value = "";
+        
+        // Disable input while communicating
+        chatInput.disabled = true;
+        sendBtn.disabled = true;
+
+        try {
+            const resp = await fetch("/api/gemini-chat/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken || ""
+                },
+                body: JSON.stringify({ message: text })
+            });
+            const data = await resp.json();
+            
+            if (data.reply) {
+                addMessage(data.reply);
+            } else {
+                addMessage("I am having trouble replying right now."); 
+            }
+        } catch(err) {
+            console.error("Chat error:", err);
+            addMessage("Error connecting to chat service.");
+        } finally {
+            chatInput.disabled = false;
+            sendBtn.disabled = false;
+            chatInput.focus();
+        }
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+    chatInput.addEventListener("keypress", (e) => {
+        if(e.key === "Enter") {
+            sendMessage();
+        }
+    });
+
+    clearBtn.addEventListener("click", async () => {
+        if(!confirm("Are you sure you want to clear chat history?")) return;
+        
+        try {
+            await fetch("/api/clear-chat/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken || ""
+                },
+                body: JSON.stringify({})
+            });
+            // Clear UI
+            while(messagesContainer.children.length > 1) {
+                messagesContainer.removeChild(messagesContainer.lastChild);
+            }
+        } catch(err) {
+            console.error("Clear chat error: ", err);
+        }
+    });
+});
+</script>

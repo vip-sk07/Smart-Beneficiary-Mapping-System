@@ -266,5 +266,9 @@
 </script>
     
     {% block extra_js %}{% endblock %}
+    
+    {% if request.user.is_authenticated %}
+        {% include 'chatbot.html' %}
+    {% endif %}
 </body>
 </html>
