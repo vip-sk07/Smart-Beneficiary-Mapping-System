@@ -270,7 +270,7 @@
     <!-- ============================================================
      SBMS AI CHATBOT WIDGET — Animated + Voice NLP
      ============================================================ -->
-{% if user.is_authenticated %}
+{% if request.user.is_authenticated %}
 <div id="sbms-chat-widget" style="position:fixed;bottom:24px;right:24px;z-index:99999;font-family:'Inter',sans-serif;">
 
   <!-- ── Pulse ring behind the toggle button ── -->
@@ -389,7 +389,7 @@
           border-radius:16px;border-top-left-radius:4px;
           padding:10px 14px;color:#e2e8f0;font-size:0.82rem;line-height:1.5;max-width:80%;
         ">
-          👋 <strong>Namaskar!</strong> I'm your SBMS AI Assistant.<br><br>
+          👋 <strong>Welcome!</strong> I'm your SBMS AI Assistant.<br><br>
           I can help you:<br>
           • Find schemes you're eligible for<br>
           • Guide you through applications<br>
