@@ -18,10 +18,7 @@ import random
 import string
 from typing import Any
 
-try:
-    import google.generativeai as genai
-except ImportError:
-    genai = None
+
 
 from .models import CustomUser, UserCategories, UserEligibility, Scheme, Application, Grievance, Category, RuleEngine, Announcement
 from .forms import (
@@ -425,9 +422,9 @@ def document_checklist(request, scheme_id):
 
     custom_user = get_custom_user(request.user)
     scheme      = get_object_or_404(Scheme, scheme_id=scheme_id)
-    api_key     = getattr(settings, 'GEMINI_API_KEY', None)
+    api_key     = getattr(settings, 'GROQ_API_KEY', None)
 
-    # â”€â”€ Build user summary for Gemini â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # â”€â”€ Build user summary for Groq â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if custom_user:
         from datetime import date
         today = date.today()
@@ -454,7 +451,7 @@ def document_checklist(request, scheme_id):
     # â”€â”€ Gemini call â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if api_key:
         try:
-            import json as _json, requests as _requests
+            import json as _json, requests as _gr
 
             prompt = (
                 "You are a government scheme document expert for India.\n"
@@ -473,21 +470,36 @@ def document_checklist(request, scheme_id):
                 "- Output ONLY the JSON array"
             )
 
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={api_key}"
-            payload = {"contents": [{"parts": [{"text": prompt}]}]}
-            resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
-            
+            groq_payload = {
+                "model": "llama-3.1-8b-instant",
+                "messages": [
+                    {"role": "system", "content": "You are a helpful AI assistant for an Indian government scheme discovery platform."},
+                    {"role": "user", "content": prompt}
+                ],
+                "max_tokens": 300,
+                "temperature": 0.3,
+            }
+            resp = _gr.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                json=groq_payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {api_key}"
+                },
+                timeout=15
+            )
+
             if resp.status_code == 200:
                 data = resp.json()
-                raw = data['candidates'][0]['content']['parts'][0]['text'].strip()
+                raw = data['choices'][0]['message']['content'].strip()
                 if raw.startswith('```'):
                     raw = raw.split('```')[1]
                     if raw.startswith('json'):
                         raw = raw[4:]
                 checklist = _json.loads(raw.strip())
-                return JsonResponse({'checklist': checklist, 'source': 'gemini'})
+                return JsonResponse({'checklist': checklist, 'source': 'groq'})
             else:
-                print(f"Gemini API error: {resp.text}")
+                print(f"Groq API error: {resp.text}")
 
         except Exception as e:
             print(f"Gemini checklist error: {e}")
@@ -671,10 +683,10 @@ def voice_bot_nlp(request):
     confidence     = 0.60
     gemini_keywords = []
 
-    api_key = getattr(settings, 'GEMINI_API_KEY', None)
+    api_key = getattr(settings, 'GROQ_API_KEY', None)
     if api_key:
         try:
-            import json as _json, requests as _requests
+            import json as _json, requests as _gr
 
             nlp_prompt = (
                 "You are an NLP classifier for an Indian government scheme discovery system.\n"
@@ -694,13 +706,28 @@ def voice_bot_nlp(request):
                 "- Output ONLY the JSON, nothing else"
             )
 
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={api_key}"
-            payload = {"contents": [{"parts": [{"text": nlp_prompt}]}]}
-            resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
-            
+            groq_payload = {
+                "model": "llama-3.1-8b-instant",
+                "messages": [
+                    {"role": "system", "content": "You are a helpful AI assistant for an Indian government scheme discovery platform."},
+                    {"role": "user", "content": nlp_prompt}
+                ],
+                "max_tokens": 300,
+                "temperature": 0.3,
+            }
+            resp = _gr.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                json=groq_payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {api_key}"
+                },
+                timeout=15
+            )
+
             if resp.status_code == 200:
                 data = resp.json()
-                raw = data['candidates'][0]['content']['parts'][0]['text'].strip()
+                raw = data['choices'][0]['message']['content'].strip()
                 if raw.startswith('```'):
                     raw = raw.split('```')[1]
                     if raw.startswith('json'):
@@ -711,7 +738,7 @@ def voice_bot_nlp(request):
                 confidence      = float(parsed.get('confidence', 0.70))
                 gemini_keywords = [k.lower() for k in parsed.get('keywords', [])]
             else:
-                raise Exception(f"Gemini API Error: {resp.text}")
+                raise Exception(f"Groq API Error: {resp.text}")
 
         except Exception as nlp_err:
             print(f"Gemini NLP error (falling back): {nlp_err}")
@@ -797,13 +824,13 @@ def nlp_scheme_finder(request):
     if request.method == 'POST':
         query = request.POST.get('query', '').strip()
         if query:
-            api_key = getattr(settings, 'GEMINI_API_KEY', None)
+            api_key = getattr(settings, 'GROQ_API_KEY', None)
             gemini_ok = False
 
             # â”€â”€ Step 1: Gemini keyword + intent extraction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if api_key:
                 try:
-                    import json as _json, requests as _requests
+                    import json as _json, requests as _gr
 
                     nlp_prompt = (
                         "You are an NLP engine for an Indian government scheme discovery system.\n"
@@ -824,13 +851,28 @@ def nlp_scheme_finder(request):
                         "- Output ONLY the JSON object, absolutely nothing else"
                     )
 
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={api_key}"
-                    payload = {"contents": [{"parts": [{"text": nlp_prompt}]}]}
-                    resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
-                    
+                    groq_payload = {
+                        "model": "llama-3.1-8b-instant",
+                        "messages": [
+                            {"role": "system", "content": "You are a helpful AI assistant for an Indian government scheme discovery platform."},
+                            {"role": "user", "content": nlp_prompt}
+                        ],
+                        "max_tokens": 300,
+                        "temperature": 0.3,
+                    }
+                    resp = _gr.post(
+                        "https://api.groq.com/openai/v1/chat/completions",
+                        json=groq_payload,
+                        headers={
+                            "Content-Type": "application/json",
+                            "Authorization": f"Bearer {api_key}"
+                        },
+                        timeout=15
+                    )
+
                     if resp.status_code == 200:
                         data = resp.json()
-                        raw = data['candidates'][0]['content']['parts'][0]['text'].strip()
+                        raw = data['choices'][0]['message']['content'].strip()
                         if raw.startswith('```'):
                             raw = raw.split('```')[1]
                             if raw.startswith('json'):
@@ -842,7 +884,7 @@ def nlp_scheme_finder(request):
                         ai_summary = parsed.get('summary', '')
                         gemini_ok  = True
                     else:
-                        raise Exception(f"Gemini API Error: {resp.text}")
+                        raise Exception(f"Groq API Error: {resp.text}")
 
                 except Exception as e:
                     print(f"Gemini NLP finder error (falling back): {e}")
@@ -1219,19 +1261,20 @@ def resolve_grievance(request, grv_id):
 # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 import csv
-import google.generativeai as genai
+
 from .models import Announcement
 from .forms import SchemeForm
 from .gemini_service import gemini_bot_service
 
 @require_POST
 def gemini_chat(request):
+    """Legacy chat endpoint — now powered by Groq. Kept for URL compatibility."""
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
 
     try:
-        data = json.loads(request.body)
-        user_msg = data.get('message', '').strip()
+        body = json.loads(request.body)
+        user_msg = body.get('message', '').strip()
     except Exception:
         user_msg = request.POST.get('message', '').strip()
 
@@ -1248,7 +1291,7 @@ def gemini_chat(request):
                 age = _date.today().year - dob.year - (
                     (_date.today().month, _date.today().day) < (dob.month, dob.day)
                 )
-                user_info = f"User profile: {custom_user.name}, {age}yrs, income â‚¹{custom_user.income or '?'}/yr, {custom_user.occupation or '?'}."
+                user_info = f"User: {custom_user.name}, {age}yrs, ₹{custom_user.income or '?'}/yr."
             except Exception:
                 user_info = f"User: {getattr(custom_user, 'name', 'Citizen')}."
 
@@ -1257,7 +1300,7 @@ def gemini_chat(request):
 
     except Exception as e:
         import traceback
-        print(f"[SBMS Chat Error] {type(e).__name__}: {e}\n{traceback.format_exc()}")
+        print(f"[Gemini Chat] {type(e).__name__}: {e}\n{traceback.format_exc()}")
         return JsonResponse({'reply': f'Error ({type(e).__name__}). Please try again.'})
 
 
@@ -1450,7 +1493,7 @@ def scheme_delete(request, scheme_id):
 
 @require_POST
 def ai_chat(request):
-    """Unified AI chat endpoint for the chatbot widget."""
+    """Groq-powered AI chat endpoint for the chatbot widget."""
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
 
@@ -1463,9 +1506,9 @@ def ai_chat(request):
     if not user_msg:
         return JsonResponse({'error': 'Empty message'}, status=400)
 
-    api_key = getattr(settings, 'GEMINI_API_KEY', None)
+    api_key = getattr(settings, 'GROQ_API_KEY', None)
     if not api_key or str(api_key).startswith('your'):
-        return JsonResponse({'reply': '⚠️ GEMINI_API_KEY is not configured in Railway environment variables.'})
+        return JsonResponse({'reply': '⚠️ GROQ_API_KEY is not configured in Railway environment variables.'})
 
     import requests as _req
     from datetime import date as _d
@@ -1476,133 +1519,129 @@ def ai_chat(request):
     if custom_user:
         try:
             dob = custom_user.dob
-            age = _d.today().year - dob.year - ((_d.today().month, _d.today().day) < (dob.month, dob.day))
-            user_info = f"User: {custom_user.name}, {age}yrs, ₹{custom_user.income or '?'}/yr income, {custom_user.occupation or 'unknown occupation'}."
+            age = _d.today().year - dob.year - (
+                (_d.today().month, _d.today().day) < (dob.month, dob.day)
+            )
+            user_info = (
+                f"User: {custom_user.name}, {age} years old, "
+                f"income ₹{custom_user.income or 'unknown'}/year, "
+                f"occupation: {custom_user.occupation or 'unknown'}."
+            )
         except Exception:
             user_info = f"User: {getattr(custom_user, 'name', 'Citizen')}."
 
+    # Get eligible schemes for context
     eligible_schemes = []
     if custom_user:
         try:
-            from .models import UserEligibility
             eq = UserEligibility.objects.filter(
-                user_id=custom_user.user_id, eligibility_status='Eligible'
+                user_id=custom_user.user_id,
+                eligibility_status='Eligible'
             ).select_related('scheme')[:8]
             eligible_schemes = [ue.scheme.scheme_name for ue in eq]
         except Exception:
             pass
 
-    scheme_ctx = f" Eligible schemes: {', '.join(eligible_schemes)}." if eligible_schemes else ""
+    scheme_ctx = ""
+    if eligible_schemes:
+        scheme_ctx = f"\nUser's eligible schemes: {', '.join(eligible_schemes)}."
 
-    # Session history
-    SK = f'sbms_chat_{request.user.id}'
-    history = request.session.get(SK, [])[-6:]
-    hist_text = ""
-    for h in history:
-        r = h.get('role', '')
-        t = str((h.get('parts') or [''])[0])[:200]
-        if r == 'user': hist_text += f"User: {t}\n"
-        elif r == 'model': hist_text += f"Assistant: {t}\n"
+    # Build session-based conversation history
+    SK = f'sbms_groq_chat_{request.user.id}'
+    history = request.session.get(SK, [])
 
-    prompt = (
+    # System message
+    system_content = (
         "You are SBMS Assistant for India's Smart Beneficiary Mapping System. "
-        "Help citizens find government schemes, apply, track applications, and raise grievances. "
-        "Be brief, helpful, use simple language and markdown.\n"
-        f"{user_info}{scheme_ctx}\n"
-        + (f"History:\n{hist_text}" if hist_text else "")
-        + f"User: {user_msg}\nAssistant:"
+        "Help citizens find government schemes, understand eligibility, apply, "
+        "track applications, and raise grievances. "
+        "Be brief, helpful, empathetic. Use simple language and markdown.\n"
+        f"{user_info}{scheme_ctx}"
     )
 
-    # Try models in order of preference
-    models_to_try = [
-        'gemini-1.5-flash',
-        'gemini-1.5-flash-latest',
-        'gemini-pro',
-    ]
+    # Build messages array for Groq
+    messages = [{"role": "system", "content": system_content}]
+    messages += history[-8:]  # Last 8 messages for context
+    messages.append({"role": "user", "content": user_msg})
 
-    last_status = None
-    last_body = None
+    try:
+        payload = {
+            "model": "llama-3.1-8b-instant",
+            "messages": messages,
+            "max_tokens": 600,
+            "temperature": 0.7,
+        }
 
-    for model_name in models_to_try:
-        try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
-            payload = {"contents": [{"parts": [{"text": prompt}]}]}
-            resp = _req.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=20)
-            last_status = resp.status_code
-            last_body = resp.text
+        resp = _req.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            json=payload,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}"
+            },
+            timeout=20
+        )
 
-            if resp.status_code == 200:
-                data = resp.json()
-                candidates = data.get('candidates', [])
-                if candidates:
-                    reply = candidates[0]['content']['parts'][0]['text'].strip()
-                    # Save to session
-                    history.append({'role': 'user', 'parts': [user_msg]})
-                    history.append({'role': 'model', 'parts': [reply]})
-                    request.session[SK] = history[-8:]
-                    request.session.modified = True
-                    return JsonResponse({'reply': reply})
-                # No candidates - try next model
-                continue
+        if resp.status_code == 429:
+            print(f"[AI Chat] Groq 429: {resp.text[:200]}")
+            return JsonResponse({'reply': '⏳ Rate limit reached. Please wait a moment and try again.'})
+        elif resp.status_code in (401, 403):
+            print(f"[AI Chat] Groq auth error: {resp.text[:200]}")
+            return JsonResponse({'reply': '⚠️ Invalid GROQ_API_KEY. Please update it in Railway → Variables.'})
+        elif resp.status_code != 200:
+            print(f"[AI Chat] Groq error {resp.status_code}: {resp.text[:200]}")
+            return JsonResponse({'reply': f'⚠️ AI service error (HTTP {resp.status_code}). Please try again.'})
 
-            elif resp.status_code == 429:
-                # Real rate limit - no point trying other models with same key
-                return JsonResponse({'reply': '⏳ Gemini API rate limit reached. Please wait 30 seconds and try again. (Free tier: 15 requests/minute)'})
+        data = resp.json()
+        choices = data.get('choices', [])
+        if not choices:
+            print(f"[AI Chat] Empty choices: {data}")
+            return JsonResponse({'reply': '⚠️ No response from AI. Please try again.'})
 
-            elif resp.status_code in (401, 403):
-                return JsonResponse({'reply': '⚠️ Invalid or expired Gemini API Key. Please update GEMINI_API_KEY in Railway → Variables.'})
+        reply_text = choices[0]['message']['content'].strip()
 
-            elif resp.status_code == 404:
-                # Model not found, try next
-                continue
+        # Save conversation to session
+        history.append({"role": "user", "content": user_msg})
+        history.append({"role": "assistant", "content": reply_text})
+        request.session[SK] = history[-10:]
+        request.session.modified = True
 
-            else:
-                # Other error, try next model
-                continue
+        return JsonResponse({'reply': reply_text})
 
-        except _req.exceptions.Timeout:
-            continue
-        except Exception as ex:
-            print(f"[AI Chat] Error with {model_name}: {ex}")
-            continue
-
-    # All models failed
-    print(f"[AI Chat] All models failed. Last status: {last_status}, body: {last_body[:200] if last_body else 'None'}")
-    if last_status == 429:
-        return JsonResponse({'reply': '⏳ API rate limit reached. Please wait 1 minute and try again.'})
-    return JsonResponse({'reply': f'⚠️ AI unavailable (tried {len(models_to_try)} models, last HTTP status: {last_status}). Check Railway logs for details.'})
+    except _req.exceptions.Timeout:
+        return JsonResponse({'reply': '⏳ Request timed out. Please try again.'})
+    except Exception as e:
+        import traceback
+        print(f"[AI Chat] Exception: {type(e).__name__}: {e}\n{traceback.format_exc()}")
+        return JsonResponse({'reply': f'⚠️ Something went wrong. Please try again.'})
 
 
 @require_POST
 def ai_voice_chat(request):
-    """Voice-based NLP endpoint — transcribes intent and returns scheme matches + AI reply."""
+    """Groq-powered voice NLP endpoint."""
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'Unauthorized'}, status=401)
 
     try:
-        data = json.loads(request.body)
-        query = data.get('query', '').strip()
+        body = json.loads(request.body)
+        query = body.get('query', '').strip()
     except Exception:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
     if not query:
         return JsonResponse({'error': 'query is required'}, status=400)
 
-    api_key = getattr(settings, 'GEMINI_API_KEY', None)
-    if not api_key or api_key == 'your_actual_key' or api_key.startswith('your_'):
-        return JsonResponse({'error': 'AI not configured', 'reply': 'AI not configured.'}, status=503)
-
+    api_key = getattr(settings, 'GROQ_API_KEY', None)
     custom_user = get_custom_user(request.user)
 
     matched_intent = 'General Welfare'
     confidence = 0.60
-    gemini_keywords = []
+    keywords = []
     ai_reply = ""
 
-    if api_key:
+    if api_key and not str(api_key).startswith('your'):
+        import requests as _req
         try:
-            import requests as _requests
-
             nlp_prompt = (
                 "You are an NLP classifier for an Indian government scheme discovery system.\n"
                 "Analyze the following user voice query and respond with ONLY valid JSON.\n\n"
@@ -1612,17 +1651,33 @@ def ai_voice_chat(request):
                 '  "intent": "<one of: Agricultural Support | Educational Support | Women Empowerment | Senior Citizen Welfare | Disability & Health | Business & MSME | Housing Support | Unemployment & Labour | General Welfare>",\n'
                 '  "confidence": <float 0.0-1.0>,\n'
                 '  "keywords": ["<word1>", "<word2>", "<word3>"],\n'
-                '  "reply": "<a short friendly 1-2 sentence response acknowledging what the user is looking for>"\n'
+                '  "reply": "<short friendly 1-2 sentence response acknowledging what the user is looking for>"\n'
                 "}\n"
                 "Output ONLY the JSON, no markdown, no explanation."
             )
 
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={api_key}"
-            payload = {"contents": [{"parts": [{"text": nlp_prompt}]}]}
-            resp = _requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
+            payload = {
+                "model": "llama-3.1-8b-instant",
+                "messages": [
+                    {"role": "system", "content": "You are an NLP classifier. Always respond with valid JSON only."},
+                    {"role": "user", "content": nlp_prompt}
+                ],
+                "max_tokens": 200,
+                "temperature": 0.3,
+            }
+
+            resp = _req.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                json=payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {api_key}"
+                },
+                timeout=15
+            )
 
             if resp.status_code == 200:
-                raw = resp.json()['candidates'][0]['content']['parts'][0]['text'].strip()
+                raw = resp.json()['choices'][0]['message']['content'].strip()
                 if raw.startswith('```'):
                     raw = raw.split('```')[1]
                     if raw.startswith('json'):
@@ -1630,34 +1685,47 @@ def ai_voice_chat(request):
                 parsed = json.loads(raw.strip())
                 matched_intent = parsed.get('intent', 'General Welfare')
                 confidence = float(parsed.get('confidence', 0.70))
-                gemini_keywords = [k.lower() for k in parsed.get('keywords', [])]
+                keywords = [k.lower() for k in parsed.get('keywords', [])]
                 ai_reply = parsed.get('reply', '')
 
         except Exception as e:
-            print(f"Voice NLP error: {e}")
-            gemini_keywords = [w for w in query.lower().split() if len(w) > 3][:5]
+            print(f"[Voice NLP] Error: {e}")
+            keywords = [w for w in query.lower().split() if len(w) > 3][:5]
 
-    # Search for matching schemes
+    # Search matching schemes
     matched_schemes = []
     if custom_user:
-        from .models import UserEligibility
-        eligible_qs = UserEligibility.objects.filter(
-            user_id=custom_user.user_id, eligibility_status='Eligible'
-        ).select_related('scheme')
+        try:
+            eligible_qs = UserEligibility.objects.filter(
+                user_id=custom_user.user_id,
+                eligibility_status='Eligible'
+            ).select_related('scheme')
 
-        search_terms = gemini_keywords or [w.lower() for w in query.split() if len(w) > 3]
+            search_terms = keywords or [w.lower() for w in query.split() if len(w) > 3]
 
-        def score_scheme(scheme):
-            text = ((scheme.scheme_name or '') + ' ' + (scheme.description or '') + ' ' + (scheme.benefit_type or '')).lower()
-            return sum(1 for kw in search_terms if kw in text)
+            def score(scheme):
+                text = (
+                    (scheme.scheme_name or '') + ' ' +
+                    (scheme.description or '') + ' ' +
+                    (scheme.benefit_type or '')
+                ).lower()
+                return sum(1 for kw in search_terms if kw in text)
 
-        scored = sorted([(score_scheme(ue.scheme), ue.scheme) for ue in eligible_qs], key=lambda x: x[0], reverse=True)
-        matched_schemes = [{'id': s.scheme_id, 'name': s.scheme_name} for sc, s in scored if sc > 0][:5]
+            scored = sorted(
+                [(score(ue.scheme), ue.scheme) for ue in eligible_qs],
+                key=lambda x: x[0], reverse=True
+            )
+            matched_schemes = [
+                {'id': s.scheme_id, 'name': s.scheme_name}
+                for sc, s in scored if sc > 0
+            ][:5]
+        except Exception as e:
+            print(f"[Voice NLP] Scheme search error: {e}")
 
     return JsonResponse({
         'intent': matched_intent,
         'confidence': round(confidence, 2),
-        'keywords': gemini_keywords,
-        'reply': ai_reply or f"I found schemes related to your query about {matched_intent.lower()}.",
+        'keywords': keywords,
+        'reply': ai_reply or f"I found schemes related to {matched_intent.lower()}.",
         'matched_schemes': matched_schemes,
     })

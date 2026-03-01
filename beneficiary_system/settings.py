@@ -182,6 +182,7 @@ DEFAULT_FROM_EMAIL  = os.environ.get('EMAIL_HOST_USER', 'noreply@benefitbridge.i
 
 # ── API Keys ───────────────────────────────────────────────────────────────
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
 
 ACCOUNT_LOGIN_METHODS             = {'email'}
 ACCOUNT_SIGNUP_FIELDS             = ['email*', 'password1*', 'password2*']

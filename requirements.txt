@@ -8,4 +8,5 @@ Pillow
 gunicorn
 whitenoise
 python-dotenv
-google-generativeai
+groq
+requests
