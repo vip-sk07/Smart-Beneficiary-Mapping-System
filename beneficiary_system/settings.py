@@ -15,7 +15,10 @@ except ImportError:
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ── Security ───────────────────────────────────────────────────────────────
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-^2w#)8o@q=$e-v$!kba7g3dh4fupg7l^z_ucsxrsdkuzilycy=')
+SECRET_KEY = os.environ.get('SECRET_KEY', '')
+if not SECRET_KEY:
+    import warnings
+    warnings.warn("SECRET_KEY is not set in environment variables!", stacklevel=2)
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # ── Proxy SSL & HTTPS Settings ─────────────────────────────────────────────
