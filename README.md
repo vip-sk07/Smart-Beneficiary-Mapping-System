@@ -11,15 +11,15 @@
 ## 📸 Project Showcase
 
 ### 🚀 Landing Page
-![SBMS Hero Section](./screenshots/landing_page.png)
+![SBMS Hero Section](./screenshots/Landing_Page.png)
 *Discover schemes built specifically for your profile with our intuitive AI-first landing page.*
 
 ### 📊 User Dashboard & AI Assistant
-![User Dashboard](./screenshots/user_dashboard.png)
+![User Dashboard](./screenshots/User_Page.png)
 *Personalized recommendations, eligibility scores, and our signature **SBMS Assistant** powered by Llama 3.1.*
 
 ### 🛡️ Admin Intelligence Suite
-![Admin Dashboard](./screenshots/admin_dashboard.png)
+![Admin Dashboard](./screenshots/Admin_Page.png)
 *Comprehensive analytics for administrators to track platform engagement, eligibility rates, and grievance trends.*
 
 ---
